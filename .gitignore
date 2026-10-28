@@ -1,0 +1,25 @@
+# Build
+**/target/
+# IDE
+.idea/
+*.iml
+.vscode/
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+secrets/
+**/secrets/
+*.local.yml
+*.local.yaml
+# Tooling and generated diagnostics
+**/node_modules/
+.tmp/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local learning notes and collaboration process
+/Docs/explanations/
+/Docs/learning/
+/Docs/process/
