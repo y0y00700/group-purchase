@@ -25,7 +25,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: maven
+          cache: gradle
 
       - name: Build and test
-        run: bash ./mvnw --batch-mode --no-transfer-progress verify
+        run: bash ./gradlew build --no-daemon

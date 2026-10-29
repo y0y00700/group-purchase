@@ -2,13 +2,13 @@
 
 # 실행 환경과 관측
 
-정리 기준: 2026-10-29. Gradle·application.yml·Docker Compose를 사용한다. 현재 코드는 Maven 초기 앱이며 전환과 전체 실행은 아직 구현하지 않았다.
+정리 기준: 2026-10-29. Gradle·application.yml·Docker Compose를 사용한다. 현재는 Gradle 멀티 프로젝트·YAML을 적용한 공동구매 초기 앱 하나이며, 전체 Compose 실행은 후속 구현 대상이다.
 
 <a id="runtime"></a>
 
 ## 버전·빌드·저장소
 
-- Java 21과 Gradle Wrapper를 사용한다. 정확한 Gradle 버전은 현재 Spring Boot와의 호환을 확인해 전환 단계에서 고정한다. Gradle DSL은 Groovy를 초안으로 제안한다.
+- Java 21과 Gradle Wrapper 9.8.2, Groovy DSL을 사용한다. Wrapper 배포본 체크섬과 현재 Spring Boot의 빌드·기동 검증은 [001 결과](../implementation/001-multi-module-build.md)에 기록한다.
 - 단일 저장소에 공동구매·결제·회원·알림·Gateway·Config·Eureka·PG Mock을 각각 실행 가능한 모듈로 둔다. 서비스별 독립 빌드·실행·배포 경계를 유지하고 엔티티·업무 로직을 공유하지 않는다.
 - Spring Boot 4.0.x + Spring Cloud 2025.1.x를 호환 조합 후보로 채택한다. Resilience4j·Spring Security·Spring Session JDBC·Kafka 등 연동 라이브러리를 포함해 의존성 및 기동을 검증한 뒤 정확한 패치 버전을 고정한다. 후보 채택이 연동 검증 완료를 뜻하지 않는다.
 - PostgreSQL·Kafka·Docker 이미지 등의 정확한 버전은 최소 실행 구성을 만들 때 확인·고정한다. 공통 설정·모듈 경로·이미지 빌드 방식도 해당 구현 설계에 포함한다.
@@ -35,7 +35,7 @@ Kafka 단일 브로커에서 acks=all·프로듀서 멱등성·소비 멱등성�
 
 Eureka·Config·Gateway와 업무 서비스·PG Mock의 최소 연결을 구성하고 Prometheus·Grafana 등 관측 구성은 관측·검증 합의와 연결한다. 내부 API 비공개·서비스별 자격 증명·환경별 쿠키 설정은 인증 설계를 유지한다.
 
-Compose 실행 정의는 루트 `compose.yml`에 둔다. CI 공급자·저장소 원격 위치·서버 배포 대상과 환경별 프로필의 상세 값은 구현 계획에서 정한다. 로컬 검증부터 가능한 구성으로 만들고 실제 CI·배포의 외부 작업은 해당 구현 요청을 따른다.
+Compose 실행 정의는 루트 `compose.yml`에 둔다. CI는 GitHub Actions에서 Java 21로 Gradle 빌드·테스트를 실행한다. 이미지 검증은 실행 서비스를 추가할 때 연결하고, 외부 이미지 게시·서버 배포 대상과 환경별 프로필의 상세 값은 해당 구현 계획에서 정한다. 로컬 검증부터 가능한 구성으로 만들고 실제 CI·배포의 외부 작업은 해당 구현 요청을 따른다.
 
 ### YAML 설정과 전체 기동 계획
 

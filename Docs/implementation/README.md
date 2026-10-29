@@ -1,11 +1,12 @@
 # 구현 계획과 기록
 
-한 번에 하나의 공통 구성 또는 도메인 기능을 다룬다. 현재 구현은 단일 Spring Boot 초기 앱이며 Gradle 전환 계획은 검토 대기다.
+한 번에 하나의 공통 구성 또는 도메인 기능을 다룬다. 현재는 Gradle 멀티 프로젝트에 공동구매 서비스 초기 앱 하나를 두며, 001의 로컬 빌드·기동과 PR의 GitHub CI 검증을 완료했다. 다음은 Config Server 상세 계획 작성·검토다.
 
 | 구분 | 문서 | 상태 |
 |---|---|---|
-| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 제안·검토 대기 |
-| 다음 작업 | [001: Gradle 멀티 모듈·YAML 설정 전환](plan/001-multi-module-build.md) | 검토 대기 |
+| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001 완료·후속 단계 검토 대기 |
+| 완료 계획 | [001: Gradle 멀티 모듈·YAML 설정 전환](plan/001-multi-module-build.md) | 완료 |
+| 완료 기록 | [001: Gradle·YAML·CI 전환](001-multi-module-build.md) | 로컬·GitHub CI 검증 완료 |
 | 완료 기록 | [000: 초기 프로젝트 생성·범위 결정](000-initial-project.md) | 생성·빌드 검증 완료 |
 
 <a id="workflow"></a>
