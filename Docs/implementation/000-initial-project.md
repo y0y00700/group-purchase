@@ -30,3 +30,24 @@
 - [Spring Initializr](https://start.spring.io/): 기본 프로젝트 생성.
 - [Spring Boot 4.0 시스템 요구사항](https://docs.spring.io/spring-boot/4.0/system-requirements.html): Java·Maven 지원 범위 확인.
 - [Maven Wrapper](https://maven.apache.org/tools/wrapper/): 재현 가능한 Maven 실행.
+
+<a id="scope-decision"></a>
+
+## 생성 범위 결정 (ADR-0001)
+
+- 날짜: 2026-10-28
+- 상태: 채택 — 사용자 요청
+
+### 배경
+
+사용자는 저장소에 구축 과정을 단계별 커밋으로 남기려 한다. 첫 생성에서 서비스·공통 기반 모듈까지 한꺼번에 만들면 이후 단계의 변경 범위가 섞인다.
+
+### 결정
+
+단일 Spring Boot 프로젝트만 생성한다. 서비스 모듈·MSA 공통 구성은 후속 작업에서 단계별로 추가한다. 문서는 프로젝트의 Docs 안에서 설계·구현·설명·판단·산출물·진행 원칙으로 분류한다.
+
+### 영향
+
+기존 MSA 설계의 서비스 경계는 목표 구조로 유지한다. 현재 디렉터리와 실행 상태를 최종 MSA 구성으로 해석하지 않는다. 이후 커밋·원격 반영은 사용자가 요청한 작업 범위에 따른다.
+
+이 기록은 2026-10-28의 생성·검증 사실이다. 이후 빌드 도구는 Gradle로 변경하기로 했으며 [001 전환 계획](plan/001-multi-module-build.md)을 검토 중이다.

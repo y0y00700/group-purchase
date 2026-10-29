@@ -1,18 +1,42 @@
-# Docs
+# 목표 달성형 공동구매 문서
 
-프로젝트 관련 문서와 산출물은 이 디렉터리에서 관리한다. 기존 설계 기록 15개를 아래 위치로 옮기고 문서 간 상대 링크를 갱신했다.
+<a id="project-goal"></a>
 
-| 경로 | 내용 |
+## 목표와 현재 상태
+
+판매자가 상품과 기준 수량을 등록하고, 참여 모집 후 기한 안의 유효 결제가 기준 수량을 채우면 구매를 확정하는 서비스다. 미달로 무산되면 취소·환불한다. 마감 경합·장시간 업무·보상 복구를 구현·검증할 수 있어 한정 수량 주문·좌석 예약·B2B 발주 후보를 비교한 뒤 이 주제를 선택했다.
+
+취업용 개인 프로젝트로, 구현 → 정합성·장애·부하 검증 → 관측·분석 → 대안·트레이드오프 비교 → 설계·구현 변경 → 같은 조건 재검증까지 근거를 남기는 것이 목표다.
+
+- 현재 구현: Java 21·Spring Boot 4.0.9의 단일 초기 앱. Maven 기반 생성과 기본 테스트 1개·패키징 검증을 완료했다.
+- 확정한 다음 방향: **Gradle Wrapper로 빌드, application.yml로 서비스 설정, Docker Compose로 전체 일괄 기동**.
+- 현재 검토 대상: [001: Gradle 멀티 모듈·YAML 전환](implementation/plan/001-multi-module-build.md). 코드 전환은 아직 착수하지 않았다.
+- 설계 합의는 목표 구조이며 전체 MSA 실행·업무 기능·성능 측정의 완료를 뜻하지 않는다. ERD·SA·인프라 도식은 작성 대기다.
+
+<a id="design"></a>
+
+## 설계
+
+| 문서 | 책임 범위 |
 |---|---|
-| [design](design/README.md) | 요구사항·도메인·결제·API·인증·실행 환경·검증 설계 기록 |
-| [implementation](implementation/README.md) | 단계별 구현 범위·변경 내용·실행 방법·검증 결과 |
-| explanations (로컬 전용: `Docs/explanations/README.md`) | 요청받은 개념 설명과 학습 기록 |
-| [decisions](decisions/README.md) | 선택 근거·대안·트레이드오프·재검토·ADR |
-| [artifacts](artifacts/README.md) | ERD·SA·인프라 설계도 원본 및 열람용 출력 |
-| process (로컬 전용: `Docs/process/README.md`) | 협업·설계 진행 원칙과 문서 이동 기록 |
+| [business-rules.md](design/business-rules.md) | MVP 요구사항, 수량·기한, 공동구매·참여 상태, 취소·재참여, 상품 수정·게시 |
+| [architecture.md](design/architecture.md) | 기술 선택, 서비스 책임·소유권, 외부 API·멱등성, 세션·CSRF·권한·내부 신뢰 |
+| [payment-and-messaging.md](design/payment-and-messaging.md) | Saga, 수량 확보, 취소·마감 경합, Outbox·소비·DLT·운영 복구, 데이터·트랜잭션·메시지 계약 |
+| [operations.md](design/operations.md) | Gradle·YAML·Compose, DB·Kafka 물리 구성, 초기 운영값·비밀값·보관·HTTP 장애 대응·로그·메트릭·운영 알림 |
+| [verification.md](design/verification.md) | 기능·정합성·권한·장애 시나리오, k6 부하·초기 목표, 검증 근거·완료 기준 |
 
-[프로젝트 개요](프로젝트%20개요.md)에서 최신 범위와 합의 상태를 확인한다. 현재 코드는 단일 Spring Boot 초기 프로젝트이며, 기존 문서의 MSA 구성은 목표 설계다. 구현 완료·실행 검증과 설계 합의를 구분한다.
+각 주제의 상세 정책은 위 문서 한곳에서 관리한다. 개요·인계에 같은 합의를 반복해서 복사하지 않고 관련 절을 연결한다. 구체적인 테이블·쿼리·필드·설정값은 해당 구현 계획에서 정한다.
 
-설계도는 아직 작성 대기다. 각 산출물을 작성할 때 원본·출력·관련 설계 기록·구현 반영 여부를 연결한다.
+## 계획·결과·선택 근거
 
-학습·설명 문서(Docs/explanations/)와 협업 진행 문서(Docs/process/)는 .gitignore로 제외해 로컬에서 관리한다.
+- [구현 계획과 기록](implementation/README.md): 계획 작성 → 사용자 검토 → 수정 반영 → 요청한 단계 구현·검증 → 결과 기록.
+- [전체 구현 로드맵](implementation/plan/roadmap.md): 공통 구성과 도메인을 하나씩 구현하는 순서 제안.
+- [설계 재검토 목록](decisions/design-review.md): R-01~R-22의 선택·재검토 조건·대안·트레이드오프와 문제 분석 양식.
+- [초기 프로젝트 생성·범위 결정](implementation/000-initial-project.md): 당시 빌드·검증 결과와 ADR-0001.
+- [설계 산출물](artifacts/README.md): ERD·아키텍처·인프라 도식의 작성 기준과 상태.
+
+## 문서 관리
+
+파일명은 영문 kebab-case로 짓고 내용은 한국어로 작성한다. 안내는 이 문서와 구현 안내에 모으고 빈 폴더용 README는 만들지 않는다. 구현 계획·결과와 결정 근거는 목적이 달라 구분해 관리한다. 실제 수행·검증한 범위만 완료로 표시한다.
+
+협업·학습 원칙과 최신 세션 인계는 로컬 전용 `Docs/process/collaboration.md`에서 관리하고, 설명 요청이 생기면 `Docs/explanations/`에 주제별 노트를 만든다. 두 경로는 기존처럼 Git에서 제외한다. 문서 통합·이동 기록은 로컬 `Docs/process/document-migration.json`에 남긴다.
