@@ -9,7 +9,7 @@
 취업용 개인 프로젝트로, 구현 → 정합성·장애·부하 검증 → 관측·분석 → 대안·트레이드오프 비교 → 설계·구현 변경 → 같은 조건 재검증까지 근거를 남기는 것이 목표다.
 
 - 현재 구현: Java 21·Spring Boot 4.0.9·Gradle Wrapper 9.8.2의 멀티 프로젝트에 공동구매 서비스 초기 앱 하나를 둔다. 서비스 설정은 `application.yml`로 관리한다.
-- 현재 작업: [001: Gradle·YAML·CI 전환 결과](implementation/001-multi-module-build.md). 로컬 빌드·기존 테스트와 YAML 설정 로딩을 검증했으며 PR의 GitHub CI를 확인 중이다.
+- 최근 완료: [001: Gradle·YAML·CI 전환 결과](implementation/001-multi-module-build.md). 로컬 빌드·기존 테스트·YAML 설정 로딩·앱 실행과 PR의 GitHub CI를 검증했다.
 - 다음 계획: Config Server부터 이미지·Docker Compose 정의를 누적해 전체 일괄 기동 구성을 만든다. 상세 계획은 다음 단계에서 작성·검토한다.
 - 설계 합의는 목표 구조이며 전체 MSA 실행·업무 기능·성능 측정의 완료를 뜻하지 않는다. ERD·SA·인프라 도식은 작성 대기다.
 

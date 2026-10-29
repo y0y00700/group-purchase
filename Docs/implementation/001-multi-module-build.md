@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 로컬 구현·검증 완료. PR의 GitHub Actions 확인 대기.
+상태: 완료 — 로컬 구현·검증과 PR의 GitHub Actions 성공 확인. main 병합은 별도다.
 
 관련 계획: [001 전환 계획](plan/001-multi-module-build.md). 시작 기준은 `641f7eb`이며 작업 브랜치는 `chore/gradle-multi-module`이다.
 
@@ -44,7 +44,7 @@ Gradle 전체 빌드 성공 후 `pom.xml`·`mvnw`·`mvnw.cmd`·`.mvn/`을 제거
 | Wrapper 버전 | `.\gradlew.bat --version` | Gradle 9.8.2, launcher JVM 21.0.12.1 |
 | 전체 빌드 | `.\gradlew.bat clean build --no-daemon --console=plain` | BUILD SUCCESSFUL, 서비스 컴파일·테스트·패키징 완료 |
 | 선택 모듈 | `.\gradlew.bat :group-purchase-service:test :group-purchase-service:build --no-daemon --console=plain` | BUILD SUCCESSFUL, 직전 전체 빌드의 동일 입력에 대한 태스크 UP-TO-DATE |
-| 테스트 결과 | `build/test-results/test/TEST-com.example.grouppurchase.GroupPurchaseApplicationTests.xml` | 테스트 1개·실패/오류/건너뜀 0. 컨텍스트와 YAML의 앱 이름 검증 |
+| 테스트 결과 | `services/group-purchase-service/build/test-results/test/TEST-com.example.grouppurchase.GroupPurchaseApplicationTests.xml` | 테스트 1개·실패/오류/건너뜀 0. 컨텍스트와 YAML의 앱 이름 검증 |
 | 개발 실행 | `.\gradlew.bat :group-purchase-service:bootRun --no-daemon --console=plain` | `Started GroupPurchaseApplication`, 앱 이름 `group-purchase`, 종료 코드 0 |
 | 실행 JAR | Java 21로 `java -jar services/group-purchase-service/build/libs/group-purchase-service-0.0.1-SNAPSHOT.jar` | `Started GroupPurchaseApplication`, 앱 이름 `group-purchase`, 종료 코드 0 |
 | 패키징 경계 | Boot JAR의 manifest·설정 파일과 루트 출력 확인 | JarLauncher·기존 Start-Class 확인, `BOOT-INF/classes/application.yml` 포함, properties 없음, 루트 실행 JAR 없음 |
@@ -57,7 +57,13 @@ Gradle 전체 빌드 성공 후 `pom.xml`·`mvnw`·`mvnw.cmd`·`.mvn/`을 제거
 
 워크플로는 `main` 대상 PR·`main` push·수동 실행을 지원한다. Java 21·Gradle 캐시에서 `bash ./gradlew build --no-daemon`을 실행하며, 검사 이름은 `Build and test`다.
 
-PR 생성 후 실제 실행 링크·검증 커밋·결과를 이 절에 기록한다. 현재 이 기록만으로 원격 CI 성공이나 Ruleset 적용을 의미하지 않는다. Ruleset 설정·main 병합·자동 배포는 이번 변경에서 수행하지 않는다.
+- PR: [#1 Gradle 멀티 모듈·YAML·CI 전환](https://github.com/y0y00700/group-purchase/pull/1).
+- 구현 검증 커밋: `503da1e24c30475a24033d6e836ada97100e1fb9`.
+- 실행: [CI #40865871756](https://github.com/y0y00700/group-purchase/actions/runs/40865871756), `pull_request` 이벤트.
+- 결과: Ubuntu runner의 `Build and test` 성공, 소요 시간 1분 2초. Java 21 설정·Gradle 빌드·테스트·캐시 처리까지 성공했다.
+- 이 실행은 위 구현 커밋에 대한 근거다. 이후 완료 문서 갱신 커밋의 CI 결과는 PR의 최신 검사에서 확인한다.
+
+Ruleset 설정·main 병합·자동 배포는 이번 변경에서 수행하지 않는다.
 
 ## 다음 작업
 
@@ -68,6 +74,7 @@ Config Server의 상세 계획을 작성·검토한다. 후속 단계에서 Spri
 - [Spring Boot 4.0 Gradle 플러그인](https://docs.spring.io/spring-boot/4.0/gradle-plugin/index.html)
 - [Spring Boot의 Gradle BOM 관리](https://docs.spring.io/spring-boot/4.0/gradle-plugin/managing-dependencies.html)
 - [Gradle Wrapper와 배포본 검증](https://docs.gradle.org/current/userguide/gradle_wrapper.html)
-- [Gradle 공식 배포 메타데이터](https://services.gradle.org/versions/current)
+- [Gradle 9.8.2 배포본 체크섬](https://services.gradle.org/distributions/gradle-9.8.2-bin.zip.sha256)
+- [Gradle 9.8.2 Wrapper JAR 체크섬](https://services.gradle.org/distributions/gradle-9.8.2-wrapper.jar.sha256)
 
 [구현 목록](README.md) · [전체 순서](plan/roadmap.md)

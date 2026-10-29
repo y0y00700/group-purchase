@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 구현 중
+상태: 완료 — 로컬 빌드·기동과 PR의 GitHub CI 검증 완료. main 병합은 별도다.
 
 진행 합의 범위: Gradle 멀티 모듈·`application.yml`·기존 CI 전환과 검증·결과 기록. 전체 일괄 기동은 후속 단계에서 Docker Compose로 구성한다. 2026-10-29 사용자 진행 요청으로 착수했다. [구현 결과](../001-multi-module-build.md)에서 실제 진행·검증 상태를 관리한다.
 
@@ -109,6 +109,7 @@ Gradle 사용은 사용자 요청으로 정해졌다. 구조 제안은 루트의
 - 2026-10-29 사용자 확인: 서비스 설정은 `application.yml`, 전체 일괄 기동은 Docker Compose를 뜻한 것으로 확정. 파일명 확인 대기와 별도 설정 이름 지정 방안을 제거.
 - 2026-10-29 CI 추가 후 계획 검토: 사용자가 생성한 Maven용 GitHub Actions 워크플로를 확인했다. 첫 전환 범위에 Gradle CI 명령·캐시 변경과 실제 실행 결과 확인을 추가했다. GitHub의 Ruleset 적용 여부와 CI 성공 여부는 아직 확인하지 않았다.
 - 2026-10-29 구현 착수: 사용자의 "ok 진행하자" 요청으로 001의 Gradle 멀티 모듈·YAML·기존 CI 전환, 검증·결과 기록 범위 진행에 합의했다. Groovy DSL과 기존 앱의 서비스 모듈 이동을 적용한다. 후속 Config·업무 기능 구현과 main 병합은 이번 단계에 포함하지 않는다.
+- 2026-10-29 구현 완료: Gradle 9.8.2로 고정하고 전체·선택 빌드, 기존 테스트의 YAML 검증, bootRun·실행 JAR, PR의 Ubuntu CI를 확인했다. 검증 커밋·실행 링크는 [001 결과](../001-multi-module-build.md)에 기록했다.
 
 합의한 Gradle 멀티 프로젝트·Groovy DSL과 기존 앱의 `services/group-purchase-service/` 이동을 적용한다. 환경별 프로필과 단계별 Compose 연결은 사용하는 서비스의 후속 계획에서 구체화한다.
 
