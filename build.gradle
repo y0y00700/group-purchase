@@ -1,0 +1,25 @@
+plugins {
+  id 'base'
+  id 'org.springframework.boot' version '4.0.9' apply false
+}
+
+subprojects {
+  group = 'com.example'
+  version = '0.0.1-SNAPSHOT'
+
+  pluginManager.withPlugin('java') {
+    java {
+      toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+      }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+      options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Test).configureEach {
+      useJUnitPlatform()
+    }
+  }
+}

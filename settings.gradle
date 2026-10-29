@@ -1,0 +1,17 @@
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    mavenCentral()
+  }
+}
+
+rootProject.name = 'group-purchase'
+
+include 'group-purchase-service'
+project(':group-purchase-service').projectDir = file('services/group-purchase-service')

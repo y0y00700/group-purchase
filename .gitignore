@@ -1,5 +1,7 @@
 # Build
 **/target/
+.gradle/
+**/build/
 # IDE
 .idea/
 *.iml
