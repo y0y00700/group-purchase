@@ -15,3 +15,6 @@ rootProject.name = 'group-purchase'
 
 include 'group-purchase-service'
 project(':group-purchase-service').projectDir = file('services/group-purchase-service')
+
+include 'config-server'
+project(':config-server').projectDir = file('infrastructure/config-server')

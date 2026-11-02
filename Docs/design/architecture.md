@@ -2,7 +2,7 @@
 
 # 아키텍처와 API·인증
 
-정리 기준: 2026-10-29. 목표 서비스 경계와 계약을 설명한다. 현재 구현은 Gradle 멀티 프로젝트에 공동구매 서비스 초기 앱 하나를 둔 단계다.
+정리 기준: 2026-10-30. 목표 서비스 경계와 계약을 설명한다. 현재 구현은 Config Server와 중앙 설정을 받는 공동구매 초기 웹 앱이며, 업무 기능은 후속 단계다.
 
 <a id="technology"></a>
 
@@ -27,7 +27,7 @@
 | 운영 알림 | Alertmanager, 로컬 테스트 수신기 | Kafka를 거치지 않는 장애 알림의 묶음·중복 억제·전달 검증 |
 | 부하·성능 테스트 | k6 | 부하 발생, 응답·업무 처리 성능 검증 |
 
-2026-10-29 사용자 요청으로 Gradle Wrapper 9.8.2·멀티 프로젝트와 `application.yml`을 적용했다. 실제 변경·검증 범위는 [001 결과](../implementation/001-multi-module-build.md)를 따른다. Java 21·Spring Boot 4.0.9는 유지했고 Cloud 2025.1.x는 연동 검증 전 후보다. Cloud·후속 라이브러리의 정확한 연동 버전은 해당 단계에서 확인·고정한다. 전체 Compose 기동은 후속 서비스 추가와 함께 구성한다.
+2026-10-29 사용자 요청으로 Gradle Wrapper 9.8.2·멀티 프로젝트와 `application.yml`을 적용했다. 2026-10-30 [002 결과](../implementation/002-config-server.md)에서 Java 21·Spring Boot 4.0.9·Cloud BOM 2025.1.4·Config 5.0.6의 연동과 두 앱의 Compose 기동을 검증했다. 후속 라이브러리는 해당 단계에서 연동 버전을 확인·고정하고 Compose 구성을 누적한다.
 
 <a id="service-boundaries"></a>
 

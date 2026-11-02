@@ -1,60 +1,86 @@
 # 목표 달성형 공동구매
 
-Java 21 · Spring Boot 4.0.9 · Gradle Wrapper 9.8.2
+Java 21 · Spring Boot 4.0.9 · Spring Cloud 2025.1.4 · Gradle Wrapper 9.8.2
 
-Gradle 멀티 프로젝트 안에 공동구매 서비스 초기 앱 하나를 둔다. 애플리케이션 진입점과 컨텍스트·YAML 설정 로딩 테스트를 포함하며, 서비스 설정은 `application.yml`로 관리한다. 업무 API와 MSA 공통 구성은 후속 단계에서 추가한다.
+Gradle 멀티 프로젝트에 Config Server와 공동구매 서비스 초기 앱을 둔다. Config Server가 같은 저장소의 일반 YAML 설정을 제공하고, 공동구매 앱은 해당 환경의 필수 설정을 받은 뒤 HTTP 서버를 시작한다. 업무 API·Eureka·Gateway·DB·Kafka는 후속 단계다.
 
-전체 일괄 기동은 다음 Config Server 단계부터 서비스별 Docker Compose 정의를 누적해 구성한다. 현재 앱에는 웹 의존성이 없으므로 실행 시 컨텍스트를 시작한 뒤 정상 종료하며 HTTP 서버를 제공하지 않는다.
+## 빠른 실행과 직접 확인
 
-## 구조
+Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 8080·8888 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다.
+
+```powershell
+docker compose config --quiet
+docker compose up --build -d --wait --wait-timeout 180
+docker compose ps
+Invoke-RestMethod http://localhost:8888/actuator/health
+Invoke-RestMethod http://localhost:8080/actuator/health
+Invoke-RestMethod http://localhost:8080/actuator/info | ConvertTo-Json -Depth 5
+```
+
+두 서비스가 `healthy`이고 헬스 응답의 `status`가 `UP`이어야 한다. `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. Config 조회는 `http://localhost:8888/group-purchase/docker`에서 할 수 있다. `/`에 사용자 화면은 없다.
+
+```powershell
+# 실행 로그
+docker compose logs --tail=100
+
+# 종료: 이 Compose 프로젝트의 컨테이너·네트워크를 제거한다.
+docker compose down
+```
+
+**설정 변경·잘못된 프로필·Config 중단과 복구까지 직접 확인하는 방법은 [002 결과의 사용자 직접 테스트](Docs/implementation/002-config-server.md#manual-tests)를 따른다.**
+
+## 빌드와 자동 테스트
+
+JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Wrapper가 고정한 Gradle 배포본을 내려받으므로 Gradle 별도 설치는 필요 없다.
+
+```powershell
+.\gradlew.bat build
+.\gradlew.bat :config-server:test :group-purchase-service:test
+```
+
+테스트는 임시 포트의 실제 Config Server와 임시 설정 파일을 직접 제어한다. 미리 실행한 서비스나 Docker에 의존하지 않는다. HTML 결과는 각 실행 모듈의 `build/reports/tests/test/index.html`에 생성된다.
+
+호스트 개발 실행은 두 터미널에서 순서대로 수행한다. Compose를 실행 중이면 먼저 `docker compose down`으로 같은 포트를 비운다.
+
+```powershell
+# 터미널 1: 준비된 뒤 터미널 2를 실행한다.
+.\gradlew.bat :config-server:bootRun
+
+# 터미널 2: 기본 local 프로필로 Config 설정을 받는다.
+.\gradlew.bat :group-purchase-service:bootRun
+```
+
+터미널 실행 종료는 각각 Ctrl+C다. macOS·Linux에서는 `bash ./gradlew build`와 `bash ./gradlew :config-server:bootRun`처럼 Wrapper를 호출하고 HTTP 확인에는 `curl`을 사용한다.
+
+## 구조와 설정
 
 ```text
 group-purchase/
-├── settings.gradle
-├── build.gradle
-├── gradlew / gradlew.bat
+├── settings.gradle / build.gradle / gradlew / gradlew.bat
 ├── gradle/wrapper/
-├── services/
-│   └── group-purchase-service/
-│       ├── build.gradle
-│       └── src/
-│           ├── main/java/com/example/grouppurchase/
-│           ├── main/resources/application.yml
-│           └── test/java/com/example/grouppurchase/
+├── compose.yml
+├── config-repo/                     # 공통·서비스별·환경별 일반 YAML
+├── infrastructure/config-server/    # native 파일 백엔드·저장소 헬스
+├── services/group-purchase-service/ # Config 수신·필수 설정 검증·헬스/info
 ├── .github/workflows/ci.yml
 └── Docs/
 ```
 
-## 빌드와 실행
+앱 이름은 기존 `group-purchase`를 유지한다. Gradle·Compose 이름 `group-purchase-service`와 달라 중앙 파일 이름은 `group-purchase*.yml`이다.
 
-JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Gradle을 별도 설치할 필요는 없다. Wrapper가 체크섬으로 검증한 고정 버전을 내려받으며 첫 빌드에는 네트워크 연결이 필요하다.
-
-```powershell
-# 전체 빌드와 테스트
-.\gradlew.bat clean build
-
-# 공동구매 서비스만 테스트·빌드
-.\gradlew.bat :group-purchase-service:test :group-purchase-service:build
-
-# 개발 실행
-.\gradlew.bat :group-purchase-service:bootRun
-
-# 빌드한 실행 JAR 실행
-& "$env:JAVA_HOME\bin\java.exe" -jar services/group-purchase-service/build/libs/group-purchase-service-0.0.1-SNAPSHOT.jar
-```
-
-macOS·Linux에서는 같은 태스크를 `bash ./gradlew clean build`, `bash ./gradlew :group-purchase-service:bootRun`처럼 실행한다. JAR 실행에는 Java 21의 `java -jar`를 사용한다.
-
-실행 가능한 Boot JAR는 `services/group-purchase-service/build/libs/`에 생성된다. `-plain.jar`는 의존성을 포함하지 않는 일반 JAR이며, 직접 실행할 때는 위 명령의 Boot JAR를 사용한다. 루트는 빌드 구성을 관리하고 실행 JAR를 만들지 않는다.
+- Config 주소·앱 이름·프로필 등 최초 접속 값은 앱 시작 설정에 둔다. 호스트 기본 주소는 `http://localhost:8888`, Compose 주소는 `http://config-server:8888`이다.
+- 중앙 설정 폴더는 Config 컨테이너에 읽기 전용으로 마운트한다. 비밀값은 이 폴더나 이미지에 넣지 않고 필요한 서비스에 별도로 주입한다.
+- 설정 누락·환경 불일치·Config 접속 실패는 기동 실패로 처리한다. 설정 변경은 클라이언트 재시작으로 반영한다.
+- 기동 후 Config 장애는 이미 받은 설정을 없애지 않는다. 클라이언트의 헬스는 Config의 지속적인 가용성에 종속시키지 않으며 새 기동에는 Config가 필요하다.
+- 호스트 포트는 `127.0.0.1`에만 바인딩한다. 클라이언트는 `health`와 허용한 설정 식별 정보 `info`만 Actuator로 노출한다.
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR과 `main` push에서 Java 21로 `bash ./gradlew build --no-daemon`을 실행한다. Actions 화면의 수동 실행도 지원한다. 검사 이름은 `Build and test`로 유지한다. PR 병합을 검사 성공에 연결하는 Ruleset은 GitHub 저장소에서 별도로 관리한다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행하도록 구성했다. 후자는 두 이미지 빌드·헬스 대기·실제 설정값 확인과 정리를 수행한다. 002 변경에 대한 원격 GitHub 실행은 아직 수행하지 않았으며, 로컬 검증 결과는 [002 결과](Docs/implementation/002-config-server.md)에 구분해 기록했다.
 
 ## 문서
 
 - [문서·설계·현재 진행 상태](Docs/README.md)
-- [구현 계획과 기록](Docs/implementation/README.md)
-- [Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)
-- [이번 프로젝트 생성 기록](Docs/implementation/000-initial-project.md)
-- [설계 산출물 관리](Docs/artifacts/README.md)
+- [구현 계획·진행 규칙·직접 테스트 안내 기준](Docs/implementation/README.md)
+- [002 Config Server 계획](Docs/implementation/plan/002-config-server.md) · [구현 결과·직접 테스트](Docs/implementation/002-config-server.md)
+- [001 Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)

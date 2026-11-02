@@ -2,7 +2,7 @@
 
 # 실행 환경과 관측
 
-정리 기준: 2026-10-29. Gradle·application.yml·Docker Compose를 사용한다. 현재는 Gradle 멀티 프로젝트·YAML을 적용한 공동구매 초기 앱 하나이며, 전체 Compose 실행은 후속 구현 대상이다.
+정리 기준: 2026-10-30. Gradle·application.yml·Docker Compose를 사용한다. 현재 Config Server와 공동구매 초기 웹 앱의 중앙 설정·Compose 실행을 구현했으며, 후속 서비스·인프라는 단계별로 누적한다.
 
 <a id="runtime"></a>
 
@@ -10,7 +10,7 @@
 
 - Java 21과 Gradle Wrapper 9.8.2, Groovy DSL을 사용한다. Wrapper 배포본 체크섬과 현재 Spring Boot의 빌드·기동 검증은 [001 결과](../implementation/001-multi-module-build.md)에 기록한다.
 - 단일 저장소에 공동구매·결제·회원·알림·Gateway·Config·Eureka·PG Mock을 각각 실행 가능한 모듈로 둔다. 서비스별 독립 빌드·실행·배포 경계를 유지하고 엔티티·업무 로직을 공유하지 않는다.
-- Spring Boot 4.0.x + Spring Cloud 2025.1.x를 호환 조합 후보로 채택한다. Resilience4j·Spring Security·Spring Session JDBC·Kafka 등 연동 라이브러리를 포함해 의존성 및 기동을 검증한 뒤 정확한 패치 버전을 고정한다. 후보 채택이 연동 검증 완료를 뜻하지 않는다.
+- Spring Boot 4.0.9 + Cloud BOM 2025.1.4·Config 5.0.6은 [002 결과](../implementation/002-config-server.md)에서 의존성·실제 연동을 검증했다. Resilience4j·Spring Security·Spring Session JDBC·Kafka 등 후속 라이브러리는 각 단계에서 검증·고정한다.
 - PostgreSQL·Kafka·Docker 이미지 등의 정확한 버전은 최소 실행 구성을 만들 때 확인·고정한다. 공통 설정·모듈 경로·이미지 빌드 방식도 해당 구현 설계에 포함한다.
 
 초기에는 한 저장소에서 관련 변경과 검증을 추적하는 비용을 줄인다. 저장소·공유 코드 경계와 버전 재검토는 MVP 설계 재검토 목록 R-14를 따른다.
@@ -24,7 +24,7 @@
 | 실행 기준 | Docker Compose 기반 로컬 재현 환경부터 완성 |
 | PostgreSQL | 서버 하나에 서비스별 DB·계정 분리. 서비스는 자신이 소유한 DB에 접근 |
 | Kafka | 초기 브로커 1개. 다중 브로커·복제 기반 장애 검증은 후속 범위 |
-| Config | 같은 저장소의 파일로 일반 설정 관리 |
+| Config | 같은 저장소 `config-repo/`의 일반 YAML을 native 백엔드로 제공. Compose 읽기 전용 마운트, 설정 변경은 클라이언트 재시작으로 반영 |
 | 비밀값 | Git에서 제외하고 Compose secrets 등의 방식으로 서비스에 주입 |
 | 실행 구분 | 개발용·전체 실행·검증용 프로필 구분 |
 | 초기 CI | 빌드·테스트·이미지 빌드. 서버 자동 배포는 후속 범위 |

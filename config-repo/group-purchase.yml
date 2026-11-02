@@ -1,0 +1,7 @@
+server:
+  port: 8080
+
+app:
+  configuration:
+    service: group-purchase
+    revision: "002-v1"
