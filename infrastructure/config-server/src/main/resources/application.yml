@@ -18,6 +18,12 @@ spring:
             group-purchase-docker:
               name: group-purchase
               profiles: docker
+            eureka-server-local:
+              name: eureka-server
+              profiles: local
+            eureka-server-docker:
+              name: eureka-server
+              profiles: docker
 
 server:
   port: 8888

@@ -163,6 +163,7 @@ class ConfigClientIntegrationTests {
                 "--CONFIG_SERVER_URL=" + url,
                 // The in-process server test dependency disables Config Client by default.
                 "--spring.cloud.config.enabled=true",
+                "--eureka.client.enabled=false",
                 "--server.port=0", "--spring.main.banner-mode=off", "--logging.level.root=OFF"));
         if (profile != null) {
             args.add("--spring.profiles.active=" + profile);
@@ -197,6 +198,7 @@ class ConfigClientIntegrationTests {
                     "--spring.cloud.config.server.native.add-label-locations=false",
                     "--spring.cloud.config.server.accept-empty=false",
                     "--spring.cloud.config.server.health.enabled=false",
+                    "--eureka.client.enabled=false",
                     "--spring.main.banner-mode=off", "--logging.level.root=OFF");
         }
 

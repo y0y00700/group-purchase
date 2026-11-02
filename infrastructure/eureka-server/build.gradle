@@ -1,0 +1,23 @@
+plugins {
+  id 'java'
+  id 'org.springframework.boot'
+}
+
+description = 'Standalone service registry'
+
+dependencies {
+  implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+  implementation platform("org.springframework.cloud:spring-cloud-dependencies:${rootProject.springCloudVersion}")
+  implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+  implementation 'org.springframework.cloud:spring-cloud-starter-config'
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation project(':config-server')
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+  systemProperty 'test.config-repo', rootProject.file('config-repo').absolutePath
+}

@@ -18,3 +18,6 @@ project(':group-purchase-service').projectDir = file('services/group-purchase-se
 
 include 'config-server'
 project(':config-server').projectDir = file('infrastructure/config-server')
+
+include 'eureka-server'
+project(':eureka-server').projectDir = file('infrastructure/eureka-server')
