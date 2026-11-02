@@ -210,4 +210,6 @@ docker compose down
 
 단일 Eureka이며 HA·인증·외부 배포를 구현하지 않았다. 앱 헬스 UP은 등록 성공이나 업무 준비 상태 전체를 보장하지 않는다. 캐시에 오래된 주소가 남을 수 있으며 실제 서비스 요청 실패와 라우팅은 Gateway 단계에서 검증한다. 선택의 재검토 조건은 [R-23](../decisions/design-review.md#r-23-단일-eureka와-등록발견-복구)을 따른다.
 
-구현 커밋 `120471f`를 `feat/eureka-server`에 push하고 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. GitHub Actions는 PR 변경에 따라 빌드·테스트와 이미지·Compose 검증을 실행한다. 최신 head의 완료·성공 여부는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. PR 병합은 수행하지 않았다.
+구현 커밋 `120471f`를 `feat/eureka-server`에 push하고 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. 최초 원격 실행에서 이미지·Compose는 통과했으나 복구 테스트가 다른 클라이언트의 캐시 수렴을 원래 앱의 수렴과 동일하게 취급해 즉시 검사한 부분이 실패했다. 원래 앱의 발견 캐시도 제한시간 안에 별도로 갱신되는지 기다리도록 수정했다. Windows 재검증에서는 임시 로그 파일 삭제 시 잠금 오류도 관측해, 서버 출력을 메모리로 수집하고 프로세스·출력 읽기 스레드를 모두 종료하도록 정리했다. 운영 설정·재시도 정책·검증할 기대 결과는 유지했다.
+
+보완 후 Windows에서 등록·발견 통합 테스트 2개를 다시 실행해 통과했다. GitHub Actions는 PR 변경에 따라 전체 빌드·테스트와 이미지·Compose 검증을 실행한다. 최신 head의 완료·성공 여부는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. PR 병합은 수행하지 않았다.

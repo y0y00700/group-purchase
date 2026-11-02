@@ -3,13 +3,14 @@ package com.example.grouppurchase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.configserver.ConfigServerApplication;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import java.util.function.BooleanSupplier;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -32,9 +32,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 class ServiceDiscoveryIntegrationTests {
 
     private static ConfigurableApplicationContext config;
-
-    @TempDir
-    Path diagnostics;
 
     @BeforeAll
     static void startConfig() {
@@ -88,7 +85,8 @@ class ServiceDiscoveryIntegrationTests {
     @Test
     void startsWithoutEurekaAndRecoversAfterRegistryRestartWithoutRestartingApp() throws Exception {
         int registryPort = freePort();
-        try (var app = startApp(registryPort, freePort())) {
+        int servicePort = freePort();
+        try (var app = startApp(registryPort, servicePort)) {
             var discovery = app.getBean(DiscoveryClient.class);
             assertThat(get(URI.create(url(app) + "/actuator/health")).statusCode()).isEqualTo(200);
             assertThat(discovery.getInstances("group-purchase")).isEmpty();
@@ -104,13 +102,15 @@ class ServiceDiscoveryIntegrationTests {
                     await("a fresh client discovers the recovered registration", () ->
                             !observer.getBean(DiscoveryClient.class).getInstances("group-purchase").isEmpty());
                 }
-                assertThat(discovery.getInstances("group-purchase")).hasSize(1);
+                // The original client and the observer refresh their caches independently.
+                await("the original client refreshes its own cache after registry recovery", () ->
+                        containsPort(discovery, servicePort)
+                                && discovery.getInstances("group-purchase").size() == 1);
             }
         }
     }
 
     private RegistryProcess startRegistry(int port) throws Exception {
-        Path log = Files.createTempFile(diagnostics, "eureka-", ".log");
         var process = new ProcessBuilder(
                 Path.of(System.getProperty("java.home"), "bin", "java").toString(), "-Xmx256m",
                 "-jar", System.getProperty("test.eureka-jar"),
@@ -118,11 +118,21 @@ class ServiceDiscoveryIntegrationTests {
                 "--eureka.server.use-read-only-response-cache=false",
                 "--eureka.server.response-cache-auto-expiration-in-seconds=1",
                 "--spring.main.banner-mode=off", "--logging.level.root=WARN")
-                .redirectErrorStream(true).redirectOutput(log.toFile()).start();
-        var fixture = new RegistryProcess(process);
+                .redirectErrorStream(true).start();
+        var output = new ByteArrayOutputStream();
+        var reader = Thread.ofVirtual().start(() -> {
+            try (var stream = process.getInputStream()) {
+                stream.transferTo(output);
+            } catch (IOException exception) {
+                // Preserve diagnostic failures without losing the server's preceding output.
+                try { output.write(exception.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+                catch (IOException ignored) { /* ByteArrayOutputStream does not perform file I/O. */ }
+            }
+        });
+        var fixture = new RegistryProcess(process, reader, output);
         try {
             await("isolated Eureka server readiness", () -> {
-                if (!process.isAlive()) throw new AssertionError("Eureka exited; log: " + readLog(log));
+                if (!process.isAlive()) throw new AssertionError("Eureka exited; log: " + fixture.diagnostics());
                 try {
                     return get(URI.create("http://localhost:" + port + "/actuator/health")).statusCode() == 200;
                 } catch (Exception exception) { return false; }
@@ -130,7 +140,7 @@ class ServiceDiscoveryIntegrationTests {
             return fixture;
         } catch (Throwable failure) {
             fixture.close();
-            throw new AssertionError("Eureka startup failed: " + readLog(log), failure);
+            throw new AssertionError("Eureka startup failed: " + fixture.diagnostics(), failure);
         }
     }
 
@@ -199,12 +209,12 @@ class ServiceDiscoveryIntegrationTests {
         try (var socket = new ServerSocket(0)) { return socket.getLocalPort(); }
     }
 
-    private static String readLog(Path path) {
-        try { return Files.readString(path); }
-        catch (Exception exception) { return path.toString(); }
-    }
+    private record RegistryProcess(Process process, Thread reader, ByteArrayOutputStream output)
+            implements AutoCloseable {
+        String diagnostics() {
+            return output.toString(java.nio.charset.StandardCharsets.UTF_8);
+        }
 
-    private record RegistryProcess(Process process) implements AutoCloseable {
         @Override
         public void close() throws Exception {
             process.destroy();
@@ -214,6 +224,8 @@ class ServiceDiscoveryIntegrationTests {
                     throw new IllegalStateException("Could not stop Eureka fixture");
                 }
             }
+            reader.join(5000);
+            if (reader.isAlive()) throw new IllegalStateException("Could not finish reading Eureka diagnostics");
         }
     }
 
