@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001·002 완료와 PR #2 병합을 확인했다. 003 Eureka Server·첫 등록/발견·이미지·Compose·장애/복구·Windows JAR의 로컬 검증을 완료했으며 원격 CI는 미실행이다. 다음은 API Gateway 상세 계획이다.
+상태: 001·002 완료와 PR #2 병합을 확인했다. 003 Eureka Server·첫 등록/발견·이미지·Compose·장애/복구·Windows JAR의 로컬 검증을 완료하고 PR #3을 생성했다. 최신 원격 결과는 [PR #3 Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. 다음은 API Gateway 상세 계획이다.
 
 ## 진행 방식
 

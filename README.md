@@ -84,7 +84,7 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 세 이미지 빌드·헬스 대기·실제 설정값·등록 주소 호출과 정리를 수행하도록 확장했다. 이번 003 변경의 원격 CI는 아직 실행하지 않았다. 이전 PR #2 최종 head의 [CI #41373781570](https://github.com/y0y00700/group-purchase/actions/runs/41373781570)는 두 검사 성공이며, 이번 로컬 검증과 구분한다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 세 이미지 빌드·헬스 대기·실제 설정값·등록 주소 호출과 정리를 수행하도록 확장했다. 003 변경은 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)으로 올렸으며 최신 head의 원격 결과는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인한다. 로컬 검증 근거·한계·직접 테스트는 [003 결과](Docs/implementation/003-eureka-server.md)를 따른다.
 
 ## 문서
 

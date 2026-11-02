@@ -6,7 +6,7 @@
 |---|---|---|
 | 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~003 로컬 검증 완료·후속 단계 계획 대기 |
 | 완료 계획 | [003: Eureka Server와 첫 서비스 등록·발견](plan/003-eureka-server.md) | 구현·로컬 검증 완료 |
-| 완료 기록 | [003: Eureka 구현·직접 테스트](003-eureka-server.md) | 총 23개 자동 테스트·이미지·Compose·장애/복구·Windows JAR 검증 완료, 원격 CI 미실행 |
+| 완료 기록 | [003: Eureka 구현·직접 테스트](003-eureka-server.md) | 총 23개 자동 테스트·이미지·Compose·장애/복구·Windows JAR 검증 완료, PR #3 검토 대기·원격 결과는 Checks 참조 |
 | 완료 계획 | [002: Config Server와 첫 클라이언트 연동](plan/002-config-server.md) | 구현·로컬 검증 완료 |
 | 완료 기록 | [002: Config Server 구현·직접 테스트](002-config-server.md) | 자동 테스트 13개·이미지·Compose·GitHub CI 검증 완료, PR #2 병합 완료 |
 | 완료 계획 | [001: Gradle 멀티 모듈·YAML 설정 전환](plan/001-multi-module-build.md) | 완료 |

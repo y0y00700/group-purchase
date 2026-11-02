@@ -6,11 +6,11 @@
 
 - 저장소: [y0y00700/group-purchase](https://github.com/y0y00700/group-purchase)
 - 최근 완료 PR: [#2 Config Server와 첫 클라이언트 연동](https://github.com/y0y00700/group-purchase/pull/2). 2026-11-02 병합 완료를 확인했다. 병합 커밋은 `56f3474`다.
-- 현재 로컬 브랜치: `feat/eureka-server`. 최신 `origin/main`의 `56f3474`에서 만들었고 계획 문서 변경을 보존해 003을 구현했다. 이번 변경은 아직 커밋·push하지 않았으며 새 PR은 생성하지 않았다.
-- 구현 커밋: `b95fd76` — Config Server·첫 클라이언트·이미지·Compose·테스트·직접 테스트 규칙.
+- 현재 PR: [#3 Eureka Server와 첫 서비스 등록·발견](https://github.com/y0y00700/group-purchase/pull/3). 브랜치 `feat/eureka-server`, 대상 `main`이며 검토 대기다. PR 병합은 수행하지 않았다.
+- 구현 커밋: `120471f` — Eureka 서버·첫 클라이언트 등록/발견·이미지·Compose·23개 테스트·직접 테스트 문서. 최신 `origin/main`의 `56f3474`에서 시작해 전용 브랜치에 push했다.
 - 기존 [PR #1 Gradle 전환](https://github.com/y0y00700/group-purchase/pull/1)은 병합 완료 상태임을 2026-11-02 확인했다.
 - PR 최종 head `b20925e`의 [CI #41373781570](https://github.com/y0y00700/group-purchase/actions/runs/41373781570)에서 Build and test·Images and Compose smoke test가 모두 성공했음을 재확인했다. 실제 검증 기록은 [002 결과](implementation/002-config-server.md)를 따른다.
-- 최근 완료: [003 Eureka 구현·직접 테스트](implementation/003-eureka-server.md). 사용자 계획 검토 완료·구현 요청에 따라 구현했고 자동 테스트 총 23개, 세 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 이번 변경의 원격 CI는 미실행이다.
+- 최근 완료: [003 Eureka 구현·직접 테스트](implementation/003-eureka-server.md). 자동 테스트 총 23개, 세 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 후속 PR 생성 요청을 반영했다. 이번 최신 head의 CI는 [PR #3 Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인하고 이전 PR #2의 성공 기록과 구분한다.
 
 ## 완료 범위
 
@@ -38,7 +38,7 @@ python scripts/check-discovery.py
 
 ## 다음 작업과 진행 규칙
 
-1. 003은 구현·로컬 검증 완료다. 사용자 추가 요청이 커밋·push·PR이라면 현재 변경과 테스트 결과를 확인한 뒤 해당 범위를 진행한다. 이번 인계가 원격 작업을 추가로 승인하는 것은 아니다.
+1. PR #3의 최신 head·변경·Checks·병합 상태를 확인한다. 이번 PR 생성 요청을 병합 승인으로 해석하지 않는다.
 2. 다음 기능은 API Gateway 기본 라우팅이다. 진행 요청을 받으면 상세 계획을 먼저 작성·검토한다.
 3. Gateway 계획에는 서비스 이름 기반 전달, 공개·내부 경로 구분, 대상 장애·라우팅 실패, 이미지·Compose·CI와 직접 테스트를 포함한다. 회원 인증은 기존 로드맵의 별도 단계다.
 4. Config 최초 접속이 Eureka 조회를 필요로 하는 순환 구조를 만들지 않는다. 서비스 이름·Config 주소·활성 프로필은 최초 접속 전에 결정한다.
@@ -48,4 +48,4 @@ python scripts/check-discovery.py
 
 ## 새 채팅 시작 문구
 
-> 목표 달성형 공동구매 프로젝트를 이어가자. AGENTS.md와 Docs/handoff.md, Docs/implementation/003-eureka-server.md를 읽어줘. Eureka 구현과 로컬 검증까지 완료했고 다음 기능은 API Gateway 기본 라우팅이야. 현재 브랜치·변경·요청한 작업 범위를 확인해 이어가고, 새 기능은 계획부터 검토하며 구현 결과에는 내가 직접 테스트할 방법을 포함해줘.
+> 목표 달성형 공동구매 프로젝트를 이어가자. AGENTS.md와 Docs/handoff.md, Docs/implementation/003-eureka-server.md를 읽고 PR #3의 최신 head·Checks·병합 상태를 확인해줘. Eureka 구현·로컬 검증과 PR 생성까지 마쳤고 다음 기능은 API Gateway 기본 라우팅이야. 새 기능은 계획부터 검토하며 구현 결과에는 내가 직접 테스트할 방법을 포함해줘.

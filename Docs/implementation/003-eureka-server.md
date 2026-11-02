@@ -2,7 +2,7 @@
 
 작성일: 2026-11-02
 
-상태: 구현·로컬 자동 테스트·이미지·Compose·장애/복구·Windows JAR local 검증 완료. 원격 CI는 미실행이며 PR은 생성하지 않았다.
+상태: 구현·로컬 자동 테스트·이미지·Compose·장애/복구·Windows JAR local 검증 완료. 2026-11-02 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. 최신 head의 원격 결과는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인한다.
 
 [구현 계획](plan/003-eureka-server.md) · [구현 목록](README.md) · [전체 로드맵](plan/roadmap.md)
 
@@ -210,4 +210,4 @@ docker compose down
 
 단일 Eureka이며 HA·인증·외부 배포를 구현하지 않았다. 앱 헬스 UP은 등록 성공이나 업무 준비 상태 전체를 보장하지 않는다. 캐시에 오래된 주소가 남을 수 있으며 실제 서비스 요청 실패와 라우팅은 Gateway 단계에서 검증한다. 선택의 재검토 조건은 [R-23](../decisions/design-review.md#r-23-단일-eureka와-등록발견-복구)을 따른다.
 
-CI 구성은 추가했지만 원격 push·PR 생성·GitHub Actions 실행은 이번 요청에서 수행하지 않았다. 원격 CI 성공을 이번 변경의 실행 결과로 표시하지 않는다.
+구현 커밋 `120471f`를 `feat/eureka-server`에 push하고 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. GitHub Actions는 PR 변경에 따라 빌드·테스트와 이미지·Compose 검증을 실행한다. 최신 head의 완료·성공 여부는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. PR 병합은 수행하지 않았다.
