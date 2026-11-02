@@ -86,7 +86,7 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 네 이미지 빌드·헬스 대기·실제 설정값·등록 주소와 Gateway 전달 검사·정리를 수행하도록 정의했다. 004 변경의 원격 CI는 아직 실행되지 않았으며 로컬 검증 근거·한계·직접 테스트는 [004 결과](Docs/implementation/004-api-gateway.md)를 따른다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 네 이미지 빌드·헬스 대기·실제 설정값·등록 주소와 Gateway 전달 검사·정리를 수행한다. [PR #4](https://github.com/y0y00700/group-purchase/pull/4)의 코드 커밋에서 두 검사가 성공했다. 로컬 검증 근거·한계·직접 테스트와 최종 head 확인 상태는 [004 결과](Docs/implementation/004-api-gateway.md)를 따른다.
 
 ## 문서
 

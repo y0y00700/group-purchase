@@ -4,7 +4,7 @@
 
 작성일: 2026-11-02
 
-상태: 구현·로컬 검증 완료. 원격 CI는 로컬 브랜치 변경이라 미실행이다.
+상태: 구현·로컬 검증 완료. [PR #4](https://github.com/y0y00700/group-purchase/pull/4)의 코드 커밋 `c16c7cb`에서 [CI #41436116472](https://github.com/y0y00700/group-purchase/actions/runs/41436116472)의 두 검사가 성공했다. 문서 갱신 후 최종 head의 CI는 PR Checks에서 별도 확인한다.
 
 [구현 계획](plan/004-api-gateway.md) · [구현 목록](README.md) · [전체 로드맵](plan/roadmap.md)
 
@@ -32,7 +32,7 @@
 | Windows JAR local 연동 | `JAVA_HOME`의 Java 21로 공동구매 앱·Gateway를 함께 실행. local 프로필 Config 수신, `localhost:8080` 단일 등록, Gateway ping 200·내부 경로 404·info 환경 local 확인 |
 | Eureka 없는 기동과 회복 | Eureka를 멈춘 상태에서 Gateway JAR 기동·헬스 UP·ping 503, 서버 복구 후 **동일 Gateway PID 26632**에서 ping 200. 대상 앱도 Windows JAR로 유지 |
 | 기동 실패 | Config 주소 `127.0.0.1:59999` 접속 거절, 오타 프로필 `dockre`에서 Gateway JAR이 각각 종료 코드 1로 기동 거절 |
-| 원격 CI | 현재 로컬 브랜치 변경으로, GitHub Actions의 새 정의는 아직 실행되지 않음 |
+| 원격 CI | PR #4 코드 커밋 `c16c7cb`의 CI #41436116472에서 Build and test·Images and Compose smoke test 모두 성공. Gateway 경로·비공개 경로 검사와 종료 단계까지 통과 |
 
 Gateway 자동 테스트는 Config를 끈 전용 `application.yml`을 사용한다. 따라서 fixture의 라우트·인스턴스 공급자만으로 Config·Eureka 연동을 증명하지 않는다. 실제 Docker와 Windows JAR 연동을 별도로 검증했다. Windows `PATH`의 기본 `java`는 17이라 첫 JAR 실행이 class file version 65를 거절했다. 이후 `JAVA_HOME`의 Java 21로 실행해 확인했다.
 
@@ -159,6 +159,6 @@ docker compose down
 
 ## 남은 작업과 한계
 
-- GitHub CI의 최종 성공 여부는 원격 실행이 생기면 해당 head에서 확인한다. 로컬에서 workflow 정의를 수정한 것만으로 통과로 표시하지 않는다.
+- 위 원격 CI는 코드 커밋 `c16c7cb`의 결과다. 이 문서를 추가 갱신한 최종 PR head의 결과는 PR Checks에서 다시 확인한다.
 - 502·504의 실제 Compose 장애 재현과 전체 요청 소요시간 보장은 검증 범위와 구분한다. 자동 테스트는 제어 가능한 fixture로 상태 매핑을 확인한다.
 - Gateway 8000의 경로 제한은 기존 8080·8761·8888 진단용 호스트 포트를 닫지 않는다. 회원 인증과 내부 호출자 신뢰는 로드맵의 후속 단계다.

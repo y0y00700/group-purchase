@@ -10,7 +10,7 @@
 
 - 현재 구현: Java 21·Spring Boot 4.0.9·Cloud 2025.1.4·Gradle Wrapper 9.8.2의 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 웹 앱을 둔다. 중앙 설정 수신·서비스 등록/발견·Gateway GET 전달과 네 서비스의 Compose 기동을 구현했다.
 - 최근 완료: [003: Eureka Server 구현·직접 테스트](implementation/003-eureka-server.md). 자동 테스트 총 23개, 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 2026-11-02 [PR #3](https://github.com/y0y00700/group-purchase/pull/3) 병합과 최종 head·병합 main의 CI 두 검사 성공을 확인했다. 최신 인계는 [handoff.md](handoff.md)를 따른다.
-- 최근 구현: [004 API Gateway 기본 라우팅](implementation/plan/004-api-gateway.md)의 로컬 검증 완료. [결과와 직접 테스트](implementation/004-api-gateway.md)에 28개 테스트·Compose·Windows JAR 근거와 원격 CI 미실행 범위를 기록했다. 다음은 PostgreSQL 실행 기반 계획이다.
+- 최근 구현: [004 API Gateway 기본 라우팅](implementation/plan/004-api-gateway.md)의 로컬 검증과 [PR #4](https://github.com/y0y00700/group-purchase/pull/4) 코드 커밋 CI 두 검사 성공을 확인했다. [결과와 직접 테스트](implementation/004-api-gateway.md)에 28개 테스트·Compose·Windows JAR 근거를 기록했다. 다음은 PostgreSQL 실행 기반 계획이다.
 - 설계 합의는 목표 구조이며 전체 MSA 실행·업무 기능·성능 측정의 완료를 뜻하지 않는다. ERD·SA·인프라 도식은 작성 대기다.
 
 <a id="design"></a>
@@ -29,7 +29,7 @@
 
 ## 계획·결과·선택 근거
 
-- [프로젝트 인계](handoff.md): PR·브랜치·검증 근거·직접 실행·다음 Gateway 단계의 시작점.
+- [프로젝트 인계](handoff.md): PR·브랜치·검증 근거·직접 실행·다음 PostgreSQL 단계의 시작점.
 - [구현 계획과 기록](implementation/README.md): 계획 작성 → 사용자 검토 → 수정 반영 → 요청한 단계 구현·검증 → 결과 기록.
 - [전체 구현 로드맵](implementation/plan/roadmap.md): 공통 구성과 도메인을 하나씩 구현하는 순서 제안.
 - [설계 재검토 목록](decisions/design-review.md): R-01~R-23의 선택·재검토 조건·대안·트레이드오프와 문제 분석 양식.

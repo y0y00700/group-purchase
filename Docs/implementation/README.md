@@ -6,7 +6,7 @@
 |---|---|---|
 | 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~004 로컬 검증 완료·다음 단계 계획 대기 |
 | 완료 계획 | [004: API Gateway 기본 라우팅](plan/004-api-gateway.md) | 구현·로컬 검증 완료 |
-| 완료 기록 | [004: Gateway 구현·직접 테스트](004-api-gateway.md) | 28개 자동 테스트·네 이미지/Compose·Windows JAR·대상/Eureka 복구 검증 완료, 원격 CI 미실행 |
+| 완료 기록 | [004: Gateway 구현·직접 테스트](004-api-gateway.md) | 28개 자동 테스트·네 이미지/Compose·Windows JAR·대상/Eureka 복구 검증 완료, PR #4 코드 커밋 CI 두 검사 성공 |
 | 완료 계획 | [003: Eureka Server와 첫 서비스 등록·발견](plan/003-eureka-server.md) | 구현·로컬 검증 완료 |
 | 완료 기록 | [003: Eureka 구현·직접 테스트](003-eureka-server.md) | 총 23개 자동 테스트·이미지·Compose·장애/복구·Windows JAR·PR 최종 head와 병합 main CI 검증 완료, PR #3 병합 완료 |
 | 완료 계획 | [002: Config Server와 첫 클라이언트 연동](plan/002-config-server.md) | 구현·로컬 검증 완료 |
