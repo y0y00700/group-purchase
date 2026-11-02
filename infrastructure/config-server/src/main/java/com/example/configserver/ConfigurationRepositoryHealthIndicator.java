@@ -19,7 +19,7 @@ public class ConfigurationRepositoryHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            for (String service : List.of("group-purchase", "eureka-server")) {
+            for (String service : List.of("group-purchase", "eureka-server", "api-gateway")) {
                 for (String profile : List.of("local", "docker")) {
                     Environment configuration = repository.findOne(service, profile, null);
                     if (!service.equals(value(configuration, "app.configuration.service"))

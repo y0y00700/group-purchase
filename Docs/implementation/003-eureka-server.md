@@ -2,7 +2,7 @@
 
 작성일: 2026-11-02
 
-상태: 구현·로컬 자동 테스트·이미지·Compose·장애/복구·Windows JAR local 검증 완료. 2026-11-02 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. 최신 head의 원격 결과는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인한다.
+상태: 구현·로컬 검증·원격 CI·PR 병합 완료. 2026-11-02 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)의 최종 head `2914c1d`와 병합 main `a2a88dc`에서 CI 두 검사 성공을 확인했다. 최신 상태는 [프로젝트 인계](../handoff.md)를 따른다.
 
 [구현 계획](plan/003-eureka-server.md) · [구현 목록](README.md) · [전체 로드맵](plan/roadmap.md)
 
@@ -212,4 +212,4 @@ docker compose down
 
 구현 커밋 `120471f`를 `feat/eureka-server`에 push하고 사용자 요청으로 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했다. 최초 원격 실행에서 이미지·Compose는 통과했으나 복구 테스트가 다른 클라이언트의 캐시 수렴을 원래 앱의 수렴과 동일하게 취급해 즉시 검사한 부분이 실패했다. 원래 앱의 발견 캐시도 제한시간 안에 별도로 갱신되는지 기다리도록 수정했다. Windows 재검증에서는 임시 로그 파일 삭제 시 잠금 오류도 관측해, 서버 출력을 메모리로 수집하고 프로세스·출력 읽기 스레드를 모두 종료하도록 정리했다. 운영 설정·재시도 정책·검증할 기대 결과는 유지했다.
 
-보완 후 Windows에서 등록·발견 통합 테스트 2개를 다시 실행해 통과했다. GitHub Actions는 PR 변경에 따라 전체 빌드·테스트와 이미지·Compose 검증을 실행한다. 최신 head의 완료·성공 여부는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. PR 병합은 수행하지 않았다.
+보완 후 Windows에서 등록·발견 통합 테스트 2개를 다시 실행해 통과했다. 최종 head `2914c1d`의 [CI #41401664562](https://github.com/y0y00700/group-purchase/actions/runs/41401664562)에서 전체 빌드·테스트와 이미지·Compose 검사가 모두 성공했다. 2026-11-02 재확인 시 PR은 병합 완료였으며, 병합 main `a2a88dc`의 [CI #41402512856](https://github.com/y0y00700/group-purchase/actions/runs/41402512856)도 두 검사 모두 성공했다.

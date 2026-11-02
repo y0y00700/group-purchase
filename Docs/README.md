@@ -8,9 +8,9 @@
 
 취업용 개인 프로젝트로, 구현 → 정합성·장애·부하 검증 → 관측·분석 → 대안·트레이드오프 비교 → 설계·구현 변경 → 같은 조건 재검증까지 근거를 남기는 것이 목표다.
 
-- 현재 구현: Java 21·Spring Boot 4.0.9·Cloud 2025.1.4·Gradle Wrapper 9.8.2의 멀티 프로젝트에 Config Server·Eureka Server·공동구매 초기 웹 앱을 둔다. 중앙 설정 수신과 서비스 등록·발견, 세 서비스의 Compose 기동을 구현했다.
-- 최근 완료: [003: Eureka Server 구현·직접 테스트](implementation/003-eureka-server.md). 자동 테스트 총 23개, 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 2026-11-02 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)을 생성했으며 최신 원격 결과는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인한다. PR은 검토 대상으로 남아 있다.
-- 다음 계획: API Gateway 기본 라우팅 상세 계획 작성·검토. 후속 서비스도 각 단계의 이미지·Compose 정의를 누적해 전체 일괄 기동 구성을 확장한다.
+- 현재 구현: Java 21·Spring Boot 4.0.9·Cloud 2025.1.4·Gradle Wrapper 9.8.2의 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 웹 앱을 둔다. 중앙 설정 수신·서비스 등록/발견·Gateway GET 전달과 네 서비스의 Compose 기동을 구현했다.
+- 최근 완료: [003: Eureka Server 구현·직접 테스트](implementation/003-eureka-server.md). 자동 테스트 총 23개, 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 2026-11-02 [PR #3](https://github.com/y0y00700/group-purchase/pull/3) 병합과 최종 head·병합 main의 CI 두 검사 성공을 확인했다. 최신 인계는 [handoff.md](handoff.md)를 따른다.
+- 최근 구현: [004 API Gateway 기본 라우팅](implementation/plan/004-api-gateway.md)의 로컬 검증 완료. [결과와 직접 테스트](implementation/004-api-gateway.md)에 28개 테스트·Compose·Windows JAR 근거와 원격 CI 미실행 범위를 기록했다. 다음은 PostgreSQL 실행 기반 계획이다.
 - 설계 합의는 목표 구조이며 전체 MSA 실행·업무 기능·성능 측정의 완료를 뜻하지 않는다. ERD·SA·인프라 도식은 작성 대기다.
 
 <a id="design"></a>

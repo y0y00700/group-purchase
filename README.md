@@ -2,11 +2,11 @@
 
 Java 21 · Spring Boot 4.0.9 · Spring Cloud 2025.1.4 · Gradle Wrapper 9.8.2
 
-Gradle 멀티 프로젝트에 Config Server·Eureka Server·공동구매 초기 앱을 둔다. Eureka와 공동구매 앱은 Config에서 환경별 일반 설정을 받고, 공동구매 앱은 Eureka에 등록·발견한다. 업무 API·Gateway·DB·Kafka는 후속 단계다.
+Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱을 둔다. Gateway는 Eureka에서 공동구매 앱을 찾아 공개한 GET ping 요청을 전달한다. 업무 API·DB·Kafka는 후속 단계다.
 
 ## 빠른 실행과 직접 확인
 
-Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 8080·8761·8888 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. 등록 검사 스크립트에는 Python 3이 필요하다.
+Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 8000·8080·8761·8888 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. 검사 스크립트에는 Python 3이 필요하다.
 
 ```powershell
 docker compose config --quiet
@@ -17,9 +17,11 @@ Invoke-RestMethod http://localhost:8761/actuator/health
 Invoke-RestMethod http://localhost:8080/actuator/health
 Invoke-RestMethod http://localhost:8080/actuator/info | ConvertTo-Json -Depth 5
 python scripts/check-discovery.py
+python scripts/check-gateway.py
+Invoke-RestMethod http://localhost:8000/api/group-purchases/ping | ConvertTo-Json
 ```
 
-세 서비스가 `healthy`이고 헬스 응답의 `status`가 `UP`이어야 한다. 공동구매 `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. 등록 검사는 최대 180초 동안 UP 인스턴스를 기다리고 등록된 주소의 실제 호출까지 확인한다. Eureka 대시보드는 `http://localhost:8761/`, Config 조회는 `http://localhost:8888/group-purchase/docker`다. 공동구매 `/`에 사용자 화면은 없다.
+네 서비스가 `healthy`이고 헬스 응답의 `status`가 `UP`이어야 한다. 공동구매 `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. 등록 검사는 UP 인스턴스와 주소 도달성을 확인하고 Gateway 검사는 실제 ping 200과 비공개 경로 404를 확인한다. Eureka 대시보드는 `http://localhost:8761/`, Config 조회는 `http://localhost:8888/group-purchase/docker`다. 공동구매 `/`에 사용자 화면은 없다.
 
 ```powershell
 # 실행 로그
@@ -29,7 +31,7 @@ docker compose logs --tail=100
 docker compose down
 ```
 
-**현재 세 서비스의 정상 실행·등록 해제·Eureka/Config 장애·복구·강제 종료는 [003 직접 테스트](Docs/implementation/003-eureka-server.md#manual-tests)를 따른다.** Config 설정 변경 설명과 이전 단계 검증은 [002 결과](Docs/implementation/002-config-server.md#manual-tests)에 있다.
+**Gateway 전달·차단·대상 중단/복구는 [004 직접 테스트](Docs/implementation/004-api-gateway.md#manual-tests)를 따른다.** Eureka 등록 해제·복구·강제 종료는 [003 직접 테스트](Docs/implementation/003-eureka-server.md#manual-tests), Config 설정 변경은 [002 결과](Docs/implementation/002-config-server.md#manual-tests)를 따른다.
 
 ## 빌드와 자동 테스트
 
@@ -84,7 +86,7 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 세 이미지 빌드·헬스 대기·실제 설정값·등록 주소 호출과 정리를 수행하도록 확장했다. 003 변경은 [PR #3](https://github.com/y0y00700/group-purchase/pull/3)으로 올렸으며 최신 head의 원격 결과는 [Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)에서 확인한다. 로컬 검증 근거·한계·직접 테스트는 [003 결과](Docs/implementation/003-eureka-server.md)를 따른다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 네 이미지 빌드·헬스 대기·실제 설정값·등록 주소와 Gateway 전달 검사·정리를 수행하도록 정의했다. 004 변경의 원격 CI는 아직 실행되지 않았으며 로컬 검증 근거·한계·직접 테스트는 [004 결과](Docs/implementation/004-api-gateway.md)를 따른다.
 
 ## 문서
 
@@ -93,4 +95,5 @@ GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and 
 - [구현 계획·진행 규칙·직접 테스트 안내 기준](Docs/implementation/README.md)
 - [002 Config Server 계획](Docs/implementation/plan/002-config-server.md) · [구현 결과·직접 테스트](Docs/implementation/002-config-server.md)
 - [003 Eureka 계획](Docs/implementation/plan/003-eureka-server.md) · [구현 결과·직접 테스트](Docs/implementation/003-eureka-server.md)
+- [004 Gateway 계획](Docs/implementation/plan/004-api-gateway.md) · [구현 결과·직접 테스트](Docs/implementation/004-api-gateway.md)
 - [001 Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)

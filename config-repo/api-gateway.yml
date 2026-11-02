@@ -1,0 +1,54 @@
+server:
+  port: 8000
+
+management:
+  server:
+    port: 9000
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    config:
+      enabled: false
+
+app:
+  configuration:
+    service: api-gateway
+    revision: "004-v1"
+
+spring:
+  cloud:
+    discovery:
+      client:
+        health-indicator:
+          enabled: false
+        composite-indicator:
+          enabled: false
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          routes:
+            - id: group-purchase-ping
+              uri: lb://group-purchase
+              predicates:
+                - Path=/api/group-purchases/ping
+                - Method=GET
+          httpclient:
+            connect-timeout: 1000
+            response-timeout: 5s
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: true
+    timeout:
+      connect-timeout: 1000
+      connect-request-timeout: 1000
+      socket-timeout: 5000
