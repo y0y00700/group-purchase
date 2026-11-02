@@ -3,6 +3,7 @@ WORKDIR /workspace
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 COPY infrastructure/config-server ./infrastructure/config-server
+COPY infrastructure/eureka-server ./infrastructure/eureka-server
 COPY services/group-purchase-service ./services/group-purchase-service
 RUN bash ./gradlew :group-purchase-service:bootJar --no-daemon
 

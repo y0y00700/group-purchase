@@ -19,13 +19,15 @@ public class ConfigurationRepositoryHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            for (String profile : List.of("local", "docker")) {
-                Environment configuration = repository.findOne("group-purchase", profile, null);
-                if (!"group-purchase".equals(value(configuration, "app.configuration.service"))
-                        || !profile.equals(value(configuration, "app.configuration.environment"))
-                        || !(value(configuration, "app.configuration.revision") instanceof String revision)
-                        || revision.isBlank()) {
-                    return Health.down().build();
+            for (String service : List.of("group-purchase", "eureka-server")) {
+                for (String profile : List.of("local", "docker")) {
+                    Environment configuration = repository.findOne(service, profile, null);
+                    if (!service.equals(value(configuration, "app.configuration.service"))
+                            || !profile.equals(value(configuration, "app.configuration.environment"))
+                            || !(value(configuration, "app.configuration.revision") instanceof String revision)
+                            || revision.isBlank()) {
+                        return Health.down().build();
+                    }
                 }
             }
             return Health.up().build();

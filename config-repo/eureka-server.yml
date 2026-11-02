@@ -1,0 +1,23 @@
+server:
+  port: 8761
+
+app:
+  configuration:
+    service: eureka-server
+    revision: "003-v1"
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: true
+
+spring:
+  cloud:
+    discovery:
+      client:
+        health-indicator:
+          enabled: false
+        composite-indicator:
+          enabled: false

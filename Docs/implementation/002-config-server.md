@@ -4,7 +4,7 @@
 
 갱신일: 2026-11-02
 
-상태: 구현·로컬 자동 테스트·이미지·Compose·GitHub CI 검증 완료. [PR #2](https://github.com/y0y00700/group-purchase/pull/2) 검토 대기이며 병합은 수행하지 않았다.
+상태: 구현·로컬 자동 테스트·이미지·Compose·GitHub CI 검증 완료. 2026-11-02 재개 시 [PR #2](https://github.com/y0y00700/group-purchase/pull/2)의 병합 완료를 확인했다. PR 최종 head는 `b20925e`, 병합 커밋은 `56f3474`이다. 최종 head의 [CI #41373781570](https://github.com/y0y00700/group-purchase/actions/runs/41373781570)에서 두 검사가 성공했다. 아래 PR 생성 당시 기록과 구분한다.
 
 [구현 계획](plan/002-config-server.md) · [구현 목록](README.md) · [전체 로드맵](plan/roadmap.md)
 

@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001의 Gradle·YAML·CI 전환 완료. 002 Config Server·첫 클라이언트·로컬 이미지·Compose·GitHub CI 검증 완료. PR #2 검토 대기이며 후속 순서와 범위는 구현 계획 제안이다.
+상태: 001·002 완료와 PR #2 병합을 확인했다. 003 Eureka Server·첫 등록/발견·이미지·Compose·장애/복구·Windows JAR의 로컬 검증을 완료하고 PR #3을 생성했다. 최신 원격 결과는 [PR #3 Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. 다음은 API Gateway 상세 계획이다.
 
 ## 진행 방식
 
@@ -71,11 +71,11 @@
 
 2026-10-29 CI 추가 반영: Maven 빌드·테스트용 GitHub Actions 워크플로가 저장소에 추가되었다. 1단계에서 Gradle 명령·캐시로 함께 전환하고 이후 기능별 검증을 해당 구현 단계부터 CI에 연결한다. 21단계는 기존 CI의 확장·정리이며, CI 도입을 마지막 단계까지 미루는 뜻이 아니다. 실제 실행 성공과 Ruleset 적용 여부는 별도로 확인한다.
 
-2026-10-29 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 2026-10-30에는 [002 결과](../002-config-server.md)의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 다음 작업은 Eureka Server 상세 계획 작성·검토다.
+2026-10-29 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 2026-10-30에는 [002 결과](../002-config-server.md)의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 2026-11-02 PR #2 병합과 최종 head의 CI 성공을 확인하고 [003 Eureka 계획](003-eureka-server.md)을 작성했다.
 
 ## 다음 검토 대상
 
-001과 [002: Config Server와 첫 클라이언트 연동](002-config-server.md)의 구현·로컬 검증을 마쳤다. 다음은 Eureka Server의 상세 계획이며 아직 작성·구현하지 않았다. Config 최초 접속의 비순환 구조를 유지하면서 등록·조회·재등록과 Compose 확장을 다룬다.
+001~[003: Eureka Server와 첫 서비스 등록·발견](003-eureka-server.md)의 구현·로컬 검증을 마쳤다. 실제 근거와 잔여 한계는 [003 결과](../003-eureka-server.md)를 따른다. 다음 검토 대상은 API Gateway 기본 라우팅 상세 계획이며 아직 작성·구현하지 않았다. Eureka 서비스 이름으로 요청 전달, 공개·내부 경로 구분, 대상 장애와 라우팅 실패, 이미지·Compose·직접 테스트 범위를 먼저 검토한다.
 
 ## 근거
 

@@ -10,7 +10,7 @@
 
 - Java 21과 Gradle Wrapper 9.8.2, Groovy DSL을 사용한다. Wrapper 배포본 체크섬과 현재 Spring Boot의 빌드·기동 검증은 [001 결과](../implementation/001-multi-module-build.md)에 기록한다.
 - 단일 저장소에 공동구매·결제·회원·알림·Gateway·Config·Eureka·PG Mock을 각각 실행 가능한 모듈로 둔다. 서비스별 독립 빌드·실행·배포 경계를 유지하고 엔티티·업무 로직을 공유하지 않는다.
-- Spring Boot 4.0.9 + Cloud BOM 2025.1.4·Config 5.0.6은 [002 결과](../implementation/002-config-server.md)에서 의존성·실제 연동을 검증했다. Resilience4j·Spring Security·Spring Session JDBC·Kafka 등 후속 라이브러리는 각 단계에서 검증·고정한다.
+- Spring Boot 4.0.9 + Cloud BOM 2025.1.4·Config 5.0.6은 [002 결과](../implementation/002-config-server.md)에서 의존성·실제 연동을 검증했다. [003 결과](../implementation/003-eureka-server.md)에서 Netflix 5.0.3·Eureka Client 2.0.6의 등록·발견·장애/복구와 local/docker 주소를 검증했다. Resilience4j·Spring Security·Spring Session JDBC·Kafka 등 후속 라이브러리는 각 단계에서 검증·고정한다.
 - PostgreSQL·Kafka·Docker 이미지 등의 정확한 버전은 최소 실행 구성을 만들 때 확인·고정한다. 공통 설정·모듈 경로·이미지 빌드 방식도 해당 구현 설계에 포함한다.
 
 초기에는 한 저장소에서 관련 변경과 검증을 추적하는 비용을 줄인다. 저장소·공유 코드 경계와 버전 재검토는 MVP 설계 재검토 목록 R-14를 따른다.

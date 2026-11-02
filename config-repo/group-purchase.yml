@@ -5,3 +5,29 @@ app:
   configuration:
     service: group-purchase
     revision: "002-v1"
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    should-enforce-registration-at-init: false
+    healthcheck:
+      enabled: true
+    timeout:
+      connect-timeout: 1000
+      connect-request-timeout: 1000
+      socket-timeout: 5000
+  instance:
+    instance-id: "${spring.application.name}:${app.configuration.environment}:${spring.cloud.client.hostname}:${server.port}"
+    prefer-ip-address: false
+    health-check-url-path: /actuator/health
+    status-page-url-path: /actuator/info
+
+spring:
+  cloud:
+    discovery:
+      client:
+        health-indicator:
+          enabled: false
+        composite-indicator:
+          enabled: false

@@ -21,6 +21,26 @@ services:
       retries: 12
       start_period: 30s
 
+  eureka-server:
+    build:
+      context: .
+      dockerfile: infrastructure/eureka-server/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_URL: http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "http://localhost:8761/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stop_grace_period: 30s
+
   group-purchase-service:
     build:
       context: .
@@ -31,6 +51,8 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
     healthcheck:
@@ -39,3 +61,4 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    stop_grace_period: 30s

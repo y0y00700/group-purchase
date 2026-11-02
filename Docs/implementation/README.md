@@ -1,12 +1,14 @@
 # 구현 계획과 기록
 
-한 번에 하나의 공통 구성 또는 도메인 기능을 다룬다. 002의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 다음은 Eureka Server 상세 계획 작성·검토다. 매 단계의 결과에는 사용자 직접 테스트 방법을 포함한다.
+한 번에 하나의 공통 구성 또는 도메인 기능을 다룬다. 003의 Eureka Server·첫 등록/발견·로컬 이미지·Compose·장애/복구·Windows JAR 검증을 완료했다. 다음은 API Gateway 기본 라우팅 상세 계획이다. 매 단계의 결과에는 사용자 직접 테스트 방법을 포함한다.
 
 | 구분 | 문서 | 상태 |
 |---|---|---|
-| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001·002 로컬 검증 완료·후속 단계 검토 대기 |
+| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~003 로컬 검증 완료·후속 단계 계획 대기 |
+| 완료 계획 | [003: Eureka Server와 첫 서비스 등록·발견](plan/003-eureka-server.md) | 구현·로컬 검증 완료 |
+| 완료 기록 | [003: Eureka 구현·직접 테스트](003-eureka-server.md) | 총 23개 자동 테스트·이미지·Compose·장애/복구·Windows JAR 검증 완료, PR #3 검토 대기·원격 결과는 Checks 참조 |
 | 완료 계획 | [002: Config Server와 첫 클라이언트 연동](plan/002-config-server.md) | 구현·로컬 검증 완료 |
-| 완료 기록 | [002: Config Server 구현·직접 테스트](002-config-server.md) | 자동 테스트 13개·이미지·Compose·GitHub CI 검증 완료, PR #2 검토 대기 |
+| 완료 기록 | [002: Config Server 구현·직접 테스트](002-config-server.md) | 자동 테스트 13개·이미지·Compose·GitHub CI 검증 완료, PR #2 병합 완료 |
 | 완료 계획 | [001: Gradle 멀티 모듈·YAML 설정 전환](plan/001-multi-module-build.md) | 완료 |
 | 완료 기록 | [001: Gradle·YAML·CI 전환](001-multi-module-build.md) | 로컬·GitHub CI 검증 완료 |
 | 완료 기록 | [000: 초기 프로젝트 생성·범위 결정](000-initial-project.md) | 생성·빌드 검증 완료 |
