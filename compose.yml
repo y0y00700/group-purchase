@@ -1,0 +1,41 @@
+name: group-purchase
+
+services:
+  config-server:
+    build:
+      context: .
+      dockerfile: infrastructure/config-server/Dockerfile
+    environment:
+      CONFIG_REPO_LOCATION: file:/config-repo/
+    volumes:
+      - type: bind
+        source: ./config-repo
+        target: /config-repo
+        read_only: true
+    ports:
+      - "127.0.0.1:8888:8888"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  group-purchase-service:
+    build:
+      context: .
+      dockerfile: services/group-purchase-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_URL: http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s

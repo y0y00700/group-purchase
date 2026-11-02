@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001의 Gradle·YAML·CI 전환 완료. 후속 순서와 범위는 검토 대기인 구현 계획 제안이다.
+상태: 001의 Gradle·YAML·CI 전환 완료. 002 Config Server·첫 클라이언트·로컬 이미지·Compose·GitHub CI 검증 완료. PR #2 검토 대기이며 후속 순서와 범위는 구현 계획 제안이다.
 
 ## 진행 방식
 
@@ -71,11 +71,11 @@
 
 2026-10-29 CI 추가 반영: Maven 빌드·테스트용 GitHub Actions 워크플로가 저장소에 추가되었다. 1단계에서 Gradle 명령·캐시로 함께 전환하고 이후 기능별 검증을 해당 구현 단계부터 CI에 연결한다. 21단계는 기존 CI의 확장·정리이며, CI 도입을 마지막 단계까지 미루는 뜻이 아니다. 실제 실행 성공과 Ruleset 적용 여부는 별도로 확인한다.
 
-같은 날 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 다음 작업은 Config Server의 상세 계획 작성·검토다.
+2026-10-29 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 2026-10-30에는 [002 결과](../002-config-server.md)의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 다음 작업은 Eureka Server 상세 계획 작성·검토다.
 
-## 첫 검토 대상
+## 다음 검토 대상
 
-[001: Gradle 멀티 모듈·YAML 설정 전환](001-multi-module-build.md)을 먼저 검토한다. 현재 수행한 것은 계획 작성·수정이며 애플리케이션·빌드 파일은 아직 전환하지 않았다.
+001과 [002: Config Server와 첫 클라이언트 연동](002-config-server.md)의 구현·로컬 검증을 마쳤다. 다음은 Eureka Server의 상세 계획이며 아직 작성·구현하지 않았다. Config 최초 접속의 비순환 구조를 유지하면서 등록·조회·재등록과 Compose 확장을 다룬다.
 
 ## 근거
 

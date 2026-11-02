@@ -3,6 +3,8 @@ plugins {
   id 'org.springframework.boot' version '4.0.9' apply false
 }
 
+ext.springCloudVersion = '2025.1.4'
+
 subprojects {
   group = 'com.example'
   version = '0.0.1-SNAPSHOT'

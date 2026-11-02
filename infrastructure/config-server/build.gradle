@@ -1,0 +1,25 @@
+plugins {
+  id 'java'
+  id 'org.springframework.boot'
+}
+
+description = 'Central configuration server'
+
+dependencies {
+  implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+  implementation platform("org.springframework.cloud:spring-cloud-dependencies:${rootProject.springCloudVersion}")
+  implementation 'org.springframework.cloud:spring-cloud-config-server'
+  implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('bootRun') {
+  environment 'CONFIG_REPO_LOCATION', rootProject.file('config-repo').toURI().toString()
+}
+
+tasks.named('test') {
+  systemProperty 'test.config-repo', rootProject.file('config-repo').absolutePath
+}

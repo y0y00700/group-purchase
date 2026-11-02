@@ -1,0 +1,17 @@
+.git
+.github
+.gradle
+.tmp
+.idea
+.vscode
+Docs
+**/build
+**/target
+**/node_modules
+**/.env
+**/.env.*
+**/secrets
+**/*.local.yml
+**/*.local.yaml
+**/*.log
+config-repo
