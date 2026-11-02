@@ -6,7 +6,7 @@
 |---|---|---|
 | 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001·002 로컬 검증 완료·후속 단계 검토 대기 |
 | 완료 계획 | [002: Config Server와 첫 클라이언트 연동](plan/002-config-server.md) | 구현·로컬 검증 완료 |
-| 완료 기록 | [002: Config Server 구현·직접 테스트](002-config-server.md) | 자동 테스트 13개·이미지·Compose 검증 완료, 원격 CI 미수행 |
+| 완료 기록 | [002: Config Server 구현·직접 테스트](002-config-server.md) | 자동 테스트 13개·이미지·Compose·GitHub CI 검증 완료, PR #2 검토 대기 |
 | 완료 계획 | [001: Gradle 멀티 모듈·YAML 설정 전환](plan/001-multi-module-build.md) | 완료 |
 | 완료 기록 | [001: Gradle·YAML·CI 전환](001-multi-module-build.md) | 로컬·GitHub CI 검증 완료 |
 | 완료 기록 | [000: 초기 프로젝트 생성·범위 결정](000-initial-project.md) | 생성·빌드 검증 완료 |

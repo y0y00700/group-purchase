@@ -2,7 +2,9 @@
 
 작성일: 2026-10-30
 
-상태: 구현·로컬 자동 테스트·이미지·Compose 검증 완료. 원격 GitHub Actions 실행은 미수행이다.
+갱신일: 2026-11-02
+
+상태: 구현·로컬 자동 테스트·이미지·Compose·GitHub CI 검증 완료. [PR #2](https://github.com/y0y00700/group-purchase/pull/2) 검토 대기이며 병합은 수행하지 않았다.
 
 [구현 계획](plan/002-config-server.md) · [구현 목록](README.md) · [전체 로드맵](plan/roadmap.md)
 
@@ -16,7 +18,7 @@
 - Config Server의 추가 헬스 검사는 첫 클라이언트의 local/docker 설정을 실제로 읽어 필수 식별값을 확인한다. Compose는 이 준비 상태 뒤에 클라이언트를 기동한다.
 - 클라이언트의 원격 Config 헬스 검사는 끈다. 받은 설정을 유지하는 실행 중 앱과 새 설정을 받아야 하는 신규 기동을 구분하기 위해서다. Config 중단 시 기존 클라이언트는 실행을 유지하지만 새 기동은 실패한다.
 - 이미지 두 개와 루트 `compose.yml`을 추가했다. 비root 사용자, 읽기 전용 설정 마운트, `127.0.0.1` 호스트 포트, 이미지에 실제 포함된 curl 헬스 검사를 사용한다.
-- 기존 CI 빌드·테스트를 유지하고 이미지·Compose·설정 확인 job을 추가했다. 로컬 변경을 push하거나 PR을 병합하지 않았다.
+- 기존 CI 빌드·테스트를 유지하고 이미지·Compose·설정 확인 job을 추가했다. 2026-11-02 사용자 요청으로 구현 커밋을 push하고 PR #2를 생성했다. PR 병합은 수행하지 않았다.
 
 `AGENTS.md`와 [구현 진행 규칙](README.md#사용자-직접-테스트-방법)에 매 단계의 사용자 직접 테스트 안내를 필수로 추가했다. 로컬 전용 협업 원칙에도 같은 요청을 반영했다.
 
@@ -84,6 +86,19 @@ docker compose ps
 Windows 호스트에서도 두 실행 JAR를 임시 포트 18888·18080으로 띄워 `file:./config-repo/` 경로와 기본 local 프로필의 `local / 002-v1` 수신·헬스를 확인하고 해당 임시 프로세스를 종료했다. 호스트 실행 로그는 `.tmp/002-local-*.log`에 남겼다.
 
 로컬 근거: `.tmp/002-build.log`, 각 모듈의 `build/test-results/test/TEST-*.xml`, `.tmp/002-compose-build.log`, `.tmp/002-bad-profile.log`. 로그·빌드 산출물은 Git 제외다. 원격 CI 성공을 이 로컬 결과로 대신 표시하지 않는다.
+
+## PR과 GitHub CI 검증
+
+2026-11-02 사용자 요청으로 최신 origin/main `4143251`에서 `feat/config-server`를 분리하고 구현 커밋 `b95fd76ac94d3dbafc744797bc9df4144da6f783`을 push했다. [PR #2](https://github.com/y0y00700/group-purchase/pull/2)의 대상은 main이다. 기존 Gradle 전환 PR #1은 병합 완료 상태임을 확인했다.
+
+[CI #41373439233](https://github.com/y0y00700/group-purchase/actions/runs/41373439233)은 구현 커밋 `b95fd76`을 대상으로 실행했고 두 검사가 모두 성공했다.
+
+| 원격 검사 | 실제 결과 |
+|---|---|
+| Build and test | Ubuntu·Java 21의 Gradle 전체 빌드·테스트 성공 |
+| Images and Compose smoke test | Compose 정의·두 이미지 빌드·healthy 대기·docker/002-v1 적용값·컨테이너 정리 성공 |
+
+위 근거는 구현 커밋에 대한 기록이다. 후속 문서 커밋을 포함한 최신 상태는 [PR #2 Checks](https://github.com/y0y00700/group-purchase/pull/2/checks)에서 확인한다. 다음 작업·브랜치·직접 실행·재개 문구는 [프로젝트 인계](../handoff.md)에 정리했다.
 
 <a id="manual-tests"></a>
 
@@ -200,7 +215,7 @@ docker compose down
 - native 설정은 현재 체크아웃의 파일을 제공한다. Config 다중 인스턴스·Git label·동적 refresh·외부 비밀값 관리 제품은 적용하지 않았다.
 - Config의 저장소 헬스는 현재 첫 클라이언트의 local/docker 설정을 대상으로 한다. 후속 서비스를 추가할 때 검증 대상도 확장한다.
 - 외부 인터넷에 공개하는 배포 환경·운영용 설정 접근 인증·TLS는 이번 로컬 실행 검증 범위에 포함하지 않는다.
-- CI 정의는 추가했고 동등한 로컬 빌드·이미지·Compose 검증을 수행했다. 이 변경의 GitHub Actions 실행은 push 후 별도로 확인해야 한다.
+- 로컬 검증과 구현 커밋의 GitHub CI 두 검사 성공을 확인했다. 후속 커밋의 검증은 PR의 최신 Checks를 기준으로 확인한다.
 - 다음 구현 대상은 Eureka Server이며, 진행 전에 해당 상세 계획을 검토한다.
 
 ## 근거

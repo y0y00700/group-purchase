@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001의 Gradle·YAML·CI 전환 완료. 002 Config Server·첫 클라이언트·로컬 이미지·Compose 검증 완료. 002 원격 CI는 미수행이며 후속 순서와 범위는 구현 계획 제안이다.
+상태: 001의 Gradle·YAML·CI 전환 완료. 002 Config Server·첫 클라이언트·로컬 이미지·Compose·GitHub CI 검증 완료. PR #2 검토 대기이며 후속 순서와 범위는 구현 계획 제안이다.
 
 ## 진행 방식
 

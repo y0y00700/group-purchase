@@ -76,10 +76,11 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행하도록 구성했다. 후자는 두 이미지 빌드·헬스 대기·실제 설정값 확인과 정리를 수행한다. 002 변경에 대한 원격 GitHub 실행은 아직 수행하지 않았으며, 로컬 검증 결과는 [002 결과](Docs/implementation/002-config-server.md)에 구분해 기록했다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. 후자는 두 이미지 빌드·헬스 대기·실제 설정값 확인과 정리를 수행한다. 2026-11-02 구현 커밋 `b95fd76`의 [CI #41373439233](https://github.com/y0y00700/group-purchase/actions/runs/41373439233)에서 두 검사가 성공했다. 최신 커밋 상태는 [PR #2 Checks](https://github.com/y0y00700/group-purchase/pull/2/checks), 로컬·원격 검증 근거는 [002 결과](Docs/implementation/002-config-server.md)를 따른다.
 
 ## 문서
 
+- [프로젝트 인계·다음 작업](Docs/handoff.md)
 - [문서·설계·현재 진행 상태](Docs/README.md)
 - [구현 계획·진행 규칙·직접 테스트 안내 기준](Docs/implementation/README.md)
 - [002 Config Server 계획](Docs/implementation/plan/002-config-server.md) · [구현 결과·직접 테스트](Docs/implementation/002-config-server.md)
