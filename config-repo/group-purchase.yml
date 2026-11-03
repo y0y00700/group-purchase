@@ -24,6 +24,23 @@ eureka:
     status-page-url-path: /actuator/info
 
 spring:
+  datasource:
+    username: group_purchase_app
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 3000
+  flyway:
+    schemas: app
+    default-schema: app
+    create-schemas: true
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: false
+    connect-retries: 0
+  sql:
+    init:
+      mode: never
   cloud:
     discovery:
       client:

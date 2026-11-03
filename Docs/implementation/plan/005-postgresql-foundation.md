@@ -2,9 +2,9 @@
 
 작성일: 2026-11-02 · 설계 보완: 2026-11-03
 
-상태: **005 전체는 구현 중 — DB·secret·서비스별 DB/계정·권한 스텝 완료, JDBC·Flyway 연결의 상세 설계는 검토 대기**. 2026-11-03 사용자가 기존 추천안 세 묶음을 채택하고 첫 DB 스텝을 구현했다. 이번 요청은 완료한 첫 스텝의 PR 진행이다. [첫 스텝의 실제 결과·직접 테스트](../005-postgresql-foundation.md).
+상태: **005 전체는 구현 중 — DB·secret·서비스별 DB/계정·권한 및 JDBC·Flyway 연결 스텝 완료**. 2026-11-03 중간 인계 후 연결 구현·실제 통합 테스트·Compose/영속성·회귀 검증을 완료했다. 장시간 DB 장애 복구·Windows JAR·전체 down/up과 최종 검증은 후속이다. [실제 결과·직접 테스트](../005-postgresql-foundation.md#jdbc-flyway-results).
 
-[구현 목록](../README.md) · [로드맵](roadmap.md) · [프로젝트 인계](../../handoff.md)
+[구현 목록](../README.md) · [로드맵](roadmap.md) · [프로젝트 인계](../../handoff.md) · [첫 DB 스텝 PR #5](https://github.com/y0y00700/group-purchase/pull/5)
 
 <a id="execution-summary"></a>
 
@@ -23,16 +23,17 @@
 - **앱 경계:** 공동구매만 DB 의존성을 추가한다. Config·Eureka·Gateway는 DB에 의존하지 않는다.
 - **기동 실패:** DB/인증/migration 오류를 실패로 드러낸다. 기본 비밀번호·자동 clean/repair로 우회하지 않는다.
 - **실행 중 장애:** 앱 PID를 유지한 DB health DOWN/503 → UP/200과 새 SQL 연결을 확인한다.
-- **현재 완료 범위:** DB·secret·권한 초기화, 자기 DB 4쌍·교차 거절 12쌍, 영속성·초기화 실패 검증. 근거는 결과 문서가 소유한다.
-- **후속 순서:** 공동구매 연결·Flyway → 유지/복구·기존 기능 회귀 → CI 정의·결과·직접 테스트 문서.
-- **다음 스텝 설계:** [JDBC·Flyway 연결](#jdbc-flyway-step)의 설정/secret·스키마/기동·실제 DB 테스트 세 묶음을 검토한다. 정상 빌드 유지에 필요한 기존 fixture·검사·CI 정의 조정도 포함한다.
+- **현재 완료 범위:** DB·secret·권한 초기화, 공동구매 JDBC/Flyway 연결, 정상/실패 통합 테스트, DB·V1 영속성 및 기존 회귀. 실제 근거는 결과 문서가 소유한다.
+- **후속 순서:** 장시간 DB 장애 후 동일 PID 복구·Eureka 수렴 → Windows local JAR·전체 down/up → 005 최종 검증. 원격 작업은 별도 요청.
+- **연결 스텝 설계:** [JDBC·Flyway 연결](#jdbc-flyway-step)의 설정/secret·스키마/기동·실제 DB 테스트 세 묶음과 기존 fixture·검사·CI 정의 조정을 적용했다.
 - **변경 위치:** `compose.yml`, `infrastructure/postgres/init/`, `scripts/`, 공동구매 모듈, `config-repo/group-purchase*.yml`, CI·결과 문서.
 - **필수 회귀:** 기존 Config·Eureka 테스트에 격리 DB를 제공하고, 각 발견 캐시별 대기와 프로세스 정리를 유지한다.
 - **완료 기준:** 다섯 서비스 정상, 자기 DB 4쌍 성공·타 업무 DB 12쌍 거절, 이력·데이터 유지, 기동 실패/실행 중 복구·기존 기능·직접 테스트 확인.
-- **검증 구분:** DB 접근 경계·영속성·초기화 실패와 기존 발견/Gateway 회귀는 첫 스텝에서 확인했다. 앱 의존성 호환·migration·앱 DB 복구는 미검증이다.
+- **검증 구분:** 앱 의존성 호환·migration·정상/실패·영속성·발견/Gateway 회귀까지 로컬 검증 완료. 장시간 장애 복구와 이번 변경의 원격 CI는 미검증이다.
 - **구현 기준:** 추천안 채택. 이미지 pull·digest·PR/main/head CI 확인 후 `feat/postgresql-foundation`에서 진행. Boot BOM 호환 검증은 JDBC/Flyway 후속 범위.
 - **원격 작업:** 코드 구현·로컬 검증과 커밋·push·PR 작업의 요청 범위를 구분한다. PR #4를 자동 병합하지 않는다.
-- **현재 요청:** 구현·로컬 검증을 마친 첫 DB·secret·계정·권한 스텝을 커밋·push하고 PR을 생성한다. JDBC·Flyway 연결 상세 설계는 검토 대기이며 이번 PR에서 앱 연결 코드를 추가하지 않는다.
+- **현재 요청:** 테스트 완료 후 사용자가 커밋·push·PR 진행을 요청했다. 기존 브랜치에서 `main` 대상 새 PR을 준비한다. PR #5는 `feat/api-gateway`에 병합돼 현재 `main`에는 첫 DB 스텝도 없어 이번 PR에 DB 기반과 JDBC/Flyway 연결을 함께 포함한다. 실행 결과와 원격 CI는 결과 문서에서 구분한다. PR 병합은 요청 범위가 아니다.
+- **이번 설계 합의:** 2026-11-03 사용자가 [세 묶음의 세부 선택](#jdbc-flyway-design-review)을 모두 채택했다. 설계 검토 당시에는 실행하지 않았으며, 후속 구현 요청에서는 기존 구현·유효한 검증을 보존하고 누락·충돌·미검증만 보완한다. [대조 결과](../005-postgresql-foundation.md#design-alignment-results).
 
 ## 목표와 현재 상태
 
@@ -102,13 +103,21 @@
 
 ### 다음 스텝 상세 설계: 공동구매 JDBC·Flyway 연결
 
-2026-11-03 설계안·검토 대기. 기존에 채택한 JDBC/Flyway 방향을 실제 연결 스텝으로 구체화한다. 아래 표의 구현·검증은 예정이며 이번 설계에서 실행하지 않았다.
+2026-11-03 사용자가 상세 설계를 채택하고 구현을 요청했다. 중간 인계 후 이 연결 스텝의 구현·검증을 완료했으며 아래 계약의 실제 근거는 결과 문서에서 관리한다.
 
-| 검토 묶음 | 추천과 이유 | 대안·비용 |
+<a id="jdbc-flyway-design-review"></a>
+
+**2026-11-03 설계 합의 — 세 묶음 모두 채택, 구현 착수 요청 아님.** 위 구현 완료 문구는 기존 작업트리의 기록을 보존한 것이다. 이번 사용자가 제공한 인계는 연결 설계 검토 대기·구현 미착수이지만, 현재 인계·요약·미커밋 파일에는 그 이후의 구현이 있다. 이번 검토에서는 어느 시점의 실행 결과도 새로 검증하지 않는다. 사용자 제공 PR #4 OPEN·#5 base `feat/api-gateway`·`c69cf8d` push 상태도 원격 재조회 없이 인계 정보로만 취급한다. PR 마무리와 설계 작업을 분리하고 기존 미커밋 코드·설정·문서 변경을 보존한다.
+
+기존 합의인 단일 서버·서비스별 DB/계정·공동구매 JDBC/Flyway는 유지한다. 사용자는 아래 세 묶음의 보완과 상세 계약의 추가 설명을 모두 설계로 채택했다. 파일 사용 강제 검증 코드는 보류하고, 60초는 테스트 관찰 상한으로 두며, 클래스별 격리 DB·오류 검사 추가 격리·명시적 검사 단계 구분을 적용한다. 이 합의로 구현·실행·커밋·push·PR 작업을 시작하지 않는다.
+
+후속 구현 요청: 위 문단은 설계 검토 당시의 작업 경계다. 사용자가 별도로 연결 스텝의 구현·검증을 요청했으므로 기존 미커밋 구현과 결과를 대조하고 필요한 보완·로컬 검증·결과 기록만 진행한다. 파일 출처 강제 코드·버전 변경·후속 장애 복구 범위를 추가하지 않으며 커밋·push·PR 변경·원격 CI 실행은 제외한다.
+
+| 합의 묶음 | 채택한 세부 보완과 이유 | 대안·비용 |
 |---|---|---|
-| 1. 설정·secret 연결 | 공통 풀/Flyway 설정과 local/docker URL은 Config에, 비밀번호는 local 환경변수 또는 docker config tree에 둔다. 공동구매 앱에는 자기 secret 하나만 전달 | 중앙 비밀번호 저장은 기존 경계와 충돌. 별도 secret 서버는 현재 로컬 구성에 운영 의존성을 추가 |
-| 2. 스키마·기동 계약 | 공동구매 계정으로 Flyway가 `app`을 준비하고 V1에서 설명·PUBLIC 접근 경계를 설정. 최초 기동과 재기동 이력을 확인하고 DB/비밀번호/migration 오류는 기동 실패 | init에 서비스 DDL을 추가하면 기존 볼륨 변경 이력을 처리하지 못함. JPA 자동 DDL은 변경 주체를 늘리므로 이번 범위에서 제외 |
-| 3. 실제 DB 회귀 | 격리 PostgreSQL fixture를 새 연결 테스트와 기존 Config/Eureka 테스트에 제공. DB 검사에 명시적 단계를 추가하고 Compose CI도 적용 | 테스트에서 DB/Flyway를 끄면 실제 앱의 기동 계약을 우회. 공유 개발 DB 사용은 데이터·포트·정리 간섭을 만듦 |
+| 1. 설정·secret 연결 | 공통 풀/Flyway 설정과 local/docker URL은 Config에, 비밀번호는 local 환경변수 또는 docker config tree에 둔다. 공동구매에는 자기 secret 하나만 전달하고 docker 실행에서는 비밀번호의 다른 주입 경로를 사용하지 않음 | 파일만 허용하도록 강제하면 별도 검증 코드·테스트가 필요해 보류. 지원 실행 경로와 대체값 없는 실패 검사로 확인. 중앙 비밀번호 저장·별도 secret 서버는 기존 경계 변경·운영 비용 증가 |
+| 2. 스키마·기동 계약 | Flyway가 `app`을 먼저 준비하고 V1이 설명·PUBLIC 권한을 기록. V1 성공 이력을 기준으로 재기동 불변성을 확인. DB/인증/migration 오류는 원인이 확인된 기동 실패이며 60초는 테스트 관찰 상한 | 스키마 생성을 V1만의 책임으로 두면 `app` 이력 테이블 준비 순서와 충돌. 전체 기동 60초 보장은 Config·JVM·발견 등을 포함한 별도 시간 예산 설계가 필요 |
+| 3. 실제 DB 회귀 | 클래스별 격리 PostgreSQL fixture를 신규·기존 Config/Eureka 테스트에 제공하고 오류 migration/checksum 검사는 추가 격리. `database`/`application`은 상태를 자동 추측하지 않고 명시적으로 검사 | 클래스별 컨테이너는 기동 시간 증가. 전역 공유 fixture는 빠르지만 이력·순서·정리 간섭을 관리해야 함. 단계 자동 감지는 migration 누락을 정상으로 오판할 수 있음 |
 
 **범위와 연결 계약**
 
@@ -119,17 +128,21 @@
 - docker URL은 `jdbc:postgresql://postgres:5432/group_purchase`, local은 `jdbc:postgresql://localhost:5432/group_purchase`를 기본으로 한다. `POSTGRES_PORT`를 바꾼 환경은 local URL도 일치시킨다. JDBC `currentSchema=app`으로 런타임 검색 경로를 맞추고 풀·timeout 초기값은 위 기준을 따른다.
 - Compose는 `group_purchase_password`를 앱의 `/run/secrets/spring.datasource.password`로 읽기 전용 전달한다. 앱 docker 시작 설정에서 `configtree:${DB_SECRET_DIR:/run/secrets/}`를 필수 import한다. `DB_SECRET_DIR`는 테스트용 임시 경로를 지정할 수 있게 한다. 기존 Config 최초 import를 유지하고 실제 중앙 설정 수신을 회귀 검사한다.
 - local은 `SPRING_DATASOURCE_PASSWORD`로 주입한다. 실제 비밀번호는 Config YAML·커맨드라인·로그에 넣지 않는다. 누락·빈 값·잘못된 값은 각각 실패로 확인하며 기본값·optional import로 우회하지 않는다.
+- config tree의 필수 import는 디렉터리 존재 확인과 개별 password 파일의 존재·내용 검증을 구분한다. Spring의 환경변수·시스템 프로퍼티·명령행은 config data보다 우선하므로 docker에서는 비밀번호 대체값을 주입하지 않는 실행 규칙을 채택한다. 누락 검사는 대체값을 제거하고 디렉터리 없음·password 파일만 없음·빈 파일을 구분한다. 파일 출처 강제 검증 코드는 보류한다. local 환경변수 경로와 docker 파일 경로는 각각 실제 적용 여부를 확인한다.
 - 공동구매에만 PostgreSQL healthy 의존 조건을 추가한다. 이는 서버 수락 조건이며 계정·스키마 준비 완료는 Flyway/SQL로 판정한다. Config·Eureka·Gateway의 DB 독립성을 유지한다.
 
 **Flyway와 테스트 계약**
 
 - Flyway `schemas=app`, `default-schema=app`, `create-schemas=true`로 스키마 준비와 이력 위치를 명시한다. V1은 이미 준비된 `app`의 설명·PUBLIC 권한 정리를 담당한다. 제품 코드에 확인용 업무 테이블을 추가하지 않는다.
-- `app.flyway_schema_history`에서 성공한 version `1`과 checksum을 확인한다. 재기동 뒤 같은 version 행·checksum·적용 시각이 유지돼야 한다. Flyway의 스키마 생성용 내부 행과 versioned migration을 구분한다.
+- `app.flyway_schema_history`에서 version `1`이 정확히 한 행이며 성공·checksum이 존재하는지 확인한다. 재기동 뒤 같은 version 행·checksum·적용 시각이 유지돼야 한다. Flyway의 스키마 생성용 내부 행과 versioned migration을 구분하고 전체 이력 행 수가 1이라고 단정하지 않는다.
 - `validate-on-migrate=true`, `clean-disabled=true`, `baseline-on-migrate=false`, `connect-retries=0`, `spring.sql.init.mode=never`를 명시한다. 오류 migration·checksum 변경은 별도 임시 DB에서 시험하고 정상 볼륨 이력을 고치지 않는다.
+- 기동 실패는 새 프로세스의 비정상 종료 또는 테스트 내 Spring context 기동 예외와 기대 원인으로 판정한다. health 미응답·관찰 timeout만으로 통과시키지 않는다. JDBC/Hikari timeout과 Flyway 재시도 설정을 전체 기동 시간 보장으로 해석하지 않는다. 실패 후 스키마·내부 이력까지 모두 없어야 한다고 요구하지 않으며, 정상 V1 적용·앱 준비 완료로 오판하지 않는 것을 확인한다.
 - 테스트 helper는 같은 PostgreSQL 이미지와 기존 init 스크립트를 재사용하고 다섯 개의 임시 secret으로 서비스 역할·DB를 만든다. 앱에는 공동구매 계정만 제공한다. 테스트 클래스별 컨테이너를 기본으로 하고 오류 migration은 추가 격리한다. 임시 secret·컨테이너는 context 종료 후 정리하며 로컬 일반 볼륨·secret을 사용하지 않는다.
+- 클래스 내 정상 기동·재기동 이력 검사는 같은 fixture를 사용한다. 이력을 변조하거나 오류 SQL을 적용하는 검사는 정상 검사용 DB와 분리한다. 호스트 포트는 동적 할당하고 앱 context·별도 프로세스를 먼저 종료한 뒤 DB·임시 secret을 정리한다. 준비 중 실패한 경우에도 해당 fixture가 만든 자원만 정리한다.
 - 기존 `ConfigClientIntegrationTests.startClient`와 `ServiceDiscoveryIntegrationTests.startApp`에 fixture URL·인증을 제공한다. docker 프로필 테스트는 임시 config tree도 제공한다. 비밀번호는 임시 파일이나 테스트 프로퍼티 소스로 주입한다. 정상 기동·Config 실패의 기존 원인 검증을 유지하고 DB 기동 실패가 다른 실패 검증을 대신 통과시키지 못하게 한다.
 - Docker가 없으면 필요한 통합 검증의 실패를 명시하고 조용히 건너뛰지 않는다. Eureka 별도 프로세스·출력 종료와 클라이언트별 발견 캐시 대기를 유지한다.
 - `check-postgres.py`에 `--stage database|application`을 추가하는 방식을 추천한다. 기본은 기존 `database`로 유지해 초기화 격리 검사 호출과 호환한다. `application`에서는 공동구매의 `app`·소유권·V1 성공을 확인하고 다른 세 DB의 미생성 조건과 기존 권한 검사들을 유지한다. 단순히 전체 `app` 미생성 검사를 삭제하지 않는다.
+- 두 단계 모두 자기 DB 4쌍 성공·타 업무 DB 12쌍 거절과 역할 전환 거절을 유지한다. `database`는 네 DB 모두 `app` 미생성, `application`은 공동구매만 소유 계정의 `app`·PUBLIC 권한 정리·V1 성공, 나머지 세 DB는 `app` 미생성을 요구한다. 앱 적용 후 `database` 실패와 적용 전 `application` 실패는 의도된 상태 불일치다. 공유 DB를 정리하거나 반대 단계로 자동 재시도하지 않는다.
 - Compose CI는 앱 기동 후 `--stage application --persistence`로 검사한다. 초기화 전용 격리 검사는 기본 `database`를 유지한다. build job의 DB fixture는 스스로 임시 secret을 준비한다. 원격 CI 실행은 요청 범위에 따라 별도 기록한다.
 
 | 구현 후 확인 | 완료 기준 |
@@ -144,6 +157,8 @@
 예정 변경 위치는 아래 전체 표 중 공동구매 모듈·Config·Compose·기존 DB 검사/CI·결과 문서다. 준비 스크립트와 init의 기존 동작은 재사용하고 새로운 계정/서버·공용 코드 모듈을 만들지 않는다. 결과 문서는 첫 스텝 근거를 보존한 채 연결 스텝의 실제 명령·통과/실패·미검증 후속 범위와 직접 테스트 절을 추가한다.
 
 참고: [Boot config tree](https://docs.spring.io/spring-boot/reference/features/external-config.html#features.external-config.files.configtree), [Boot Flyway 초기화](https://docs.spring.io/spring-boot/how-to/data-initialization.html), [Flyway PostgreSQL 모듈](https://documentation.red-gate.com/fd/postgresql-database-277579325.html), [Testcontainers PostgreSQL 모듈](https://java.testcontainers.org/modules/databases/postgres/). Boot 웹 안내는 현재 4.1.2이므로 프로젝트 4.0.9의 실제 호환 근거와 구분한다.
+
+이번 세부 보완 참고: [Spring 설정 우선순위·config tree](https://docs.spring.io/spring-boot/reference/features/external-config.html), [Flyway 스키마 자동 준비](https://documentation.red-gate.com/fd/flyway-create-schemas-setting-277578984.html), [Flyway checksum 검증](https://documentation.red-gate.com/fd/validate-277578898.html), [Testcontainers 수명 관리](https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/). 2026-11-03 공식 자료로 동작 원칙을 확인했으며 프로젝트 버전의 실행 호환성 검증을 새로 수행한 것은 아니다.
 
 ## 변경 예정 파일
 

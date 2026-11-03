@@ -49,7 +49,7 @@ jobs:
         run: docker compose up --build --wait --wait-timeout 180
 
       - name: Check database boundaries and persistence
-        run: python3 scripts/check-postgres.py --persistence
+        run: python3 scripts/check-postgres.py --stage application --persistence
 
       - name: Check applied configuration
         run: |

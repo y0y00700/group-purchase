@@ -11,16 +11,22 @@ dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-webmvc'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'
   implementation 'org.springframework.boot:spring-boot-starter-validation'
+  implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+  implementation 'org.springframework.boot:spring-boot-starter-flyway'
+  implementation 'org.flywaydb:flyway-database-postgresql'
+  runtimeOnly 'org.postgresql:postgresql'
   implementation 'org.springframework.cloud:spring-cloud-starter-config'
   implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation project(':config-server')
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
   dependsOn ':eureka-server:bootJar'
+  systemProperty 'test.postgres-init', rootProject.file('infrastructure/postgres/init/010-service-databases.sh').absolutePath
   systemProperty 'test.config-repo', rootProject.file('config-repo').absolutePath
   systemProperty 'test.eureka-jar', project(':eureka-server').layout.buildDirectory
       .file('libs/eureka-server-0.0.1-SNAPSHOT.jar').get().asFile.absolutePath

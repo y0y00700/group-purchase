@@ -72,7 +72,12 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       CONFIG_SERVER_URL: http://config-server:8888
+    secrets:
+      - source: group_purchase_password
+        target: spring.datasource.password
     depends_on:
+      postgres:
+        condition: service_healthy
       config-server:
         condition: service_healthy
       eureka-server:
@@ -109,7 +114,7 @@ services:
       start_period: 30s
     stop_grace_period: 30s
 
-# Only PostgreSQL receives bootstrap credentials in this step.
+# PostgreSQL receives bootstrap credentials; each app receives only its own secret.
 secrets:
   postgres_password:
     file: ./secrets/postgres_password

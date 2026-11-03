@@ -32,11 +32,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 class ServiceDiscoveryIntegrationTests {
 
     private static ConfigurableApplicationContext config;
+    private static PostgresFixture database;
 
     @BeforeAll
-    static void startConfig() {
+    static void startConfig() throws Exception {
+        database = new PostgresFixture();
         config = new SpringApplicationBuilder(ConfigServerApplication.class).run(
-                "--spring.config.name=config-fixture", "--spring.profiles.active=native", "--server.port=0",
+                "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
+                    "--spring.config.name=config-fixture", "--spring.profiles.active=native", "--server.port=0",
                 "--spring.cloud.config.enabled=false", "--eureka.client.enabled=false",
                 "--spring.cloud.config.server.native.search-locations="
                         + Path.of(System.getProperty("test.config-repo")).toUri(),
@@ -46,8 +49,12 @@ class ServiceDiscoveryIntegrationTests {
     }
 
     @AfterAll
-    static void stopConfig() {
-        if (config != null) config.close();
+    static void stopConfig() throws Exception {
+        try {
+            if (config != null) config.close();
+        } finally {
+            if (database != null) database.close();
+        }
     }
 
     @Test
@@ -150,11 +157,13 @@ class ServiceDiscoveryIntegrationTests {
                 "--spring.profiles.active=local", "--server.port=" + servicePort,
                 "--spring.main.banner-mode=off", "--logging.level.root=WARN"));
         args.addAll(discoveryArguments(registryPort));
-        return new SpringApplicationBuilder(GroupPurchaseApplication.class).run(args.toArray(String[]::new));
+        return database.configure(new SpringApplicationBuilder(GroupPurchaseApplication.class), "local")
+                .run(args.toArray(String[]::new));
     }
 
     private static ConfigurableApplicationContext startObserver(int registryPort) {
         var args = new ArrayList<>(List.of(
+                "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
                 "--spring.config.name=observer-fixture", "--spring.application.name=discovery-observer",
                 "--spring.cloud.config.enabled=false", "--eureka.client.register-with-eureka=false",
                 "--spring.main.banner-mode=off", "--logging.level.root=WARN"));

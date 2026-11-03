@@ -8,3 +8,7 @@ eureka:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
     hostname: group-purchase-service
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/group_purchase?currentSchema=app&connectTimeout=3&socketTimeout=5

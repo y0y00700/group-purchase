@@ -19,10 +19,11 @@ def compose(*args, **kwargs):
                           check=True, timeout=180, **kwargs)
 
 
-def client(script):
+def client(script, capture_output=False):
     # Credentials stay inside the container, never in argv or captured output.
-    compose("run", "--rm", "--no-deps", "-T", "--entrypoint", "sh", "postgres", "-s",
-            input=("set -eu\nexport LC_ALL=C PGCONNECT_TIMEOUT=5\n" + script).encode("utf-8"))
+    return compose("run", "--rm", "--no-deps", "-T", "--entrypoint", "sh", "postgres", "-s",
+            input=("set -eu\nexport LC_ALL=C PGCONNECT_TIMEOUT=5\n" + script).encode("utf-8"),
+            capture_output=capture_output)
 
 
 def sql(db, query, admin=False):
@@ -33,10 +34,24 @@ def sql(db, query, admin=False):
             f"-c {shlex.quote(query)}")
 
 
-def permissions():
+def history():
+    query = """SELECT row_to_json(h) FROM app.flyway_schema_history h
+        WHERE version='1' AND success ORDER BY installed_rank"""
+    return client(sql("group_purchase", query), capture_output=True).stdout.strip()
+
+
+def permissions(stage):
     checks = []
     for db in DATABASES:
         checks.append(f'export PGPASSWORD="$(cat /run/secrets/{db}_password)"')
+        schema_condition = "NOT EXISTS (SELECT FROM pg_namespace WHERE nspname = 'app')"
+        if stage == "application" and db == "group_purchase":
+            schema_condition = """EXISTS (SELECT FROM pg_namespace WHERE nspname='app'
+                AND pg_get_userbyid(nspowner)=current_user)
+                AND NOT EXISTS (SELECT FROM pg_namespace n, LATERAL aclexplode(n.nspacl) a
+                    WHERE n.nspname='app' AND a.grantee=0)
+                AND (SELECT count(*)=1 AND bool_and(success AND checksum IS NOT NULL)
+                    FROM app.flyway_schema_history WHERE version='1')"""
         query = f"""SELECT current_user = '{db}_app' AND current_database() = '{db}'
             AND NOT (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls)
             AND has_database_privilege(current_user, current_database(), 'CREATE')
@@ -44,7 +59,7 @@ def permissions():
             AND EXISTS (SELECT FROM pg_database WHERE datname=current_database()
                 AND pg_get_userbyid(datdba)=current_user)
             AND NOT EXISTS (SELECT FROM pg_auth_members WHERE member = pg_roles.oid)
-            AND NOT EXISTS (SELECT FROM pg_namespace WHERE nspname = 'app')
+            AND ({schema_condition})
             AND NOT EXISTS (SELECT FROM pg_namespace n,
                 LATERAL aclexplode(n.nspacl) a WHERE n.nspname='public' AND a.grantee=0)
             FROM pg_roles WHERE rolname = current_user"""
@@ -104,12 +119,18 @@ def persistence():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--stage", choices=("database", "application"), default="database")
     parser.add_argument("--persistence", action="store_true")
     args = parser.parse_args()
-    permissions()
+    permissions(args.stage)
+    before = history() if args.stage == "application" else None
     if args.persistence:
         persistence()
-        permissions()
+        permissions(args.stage)
+        if before is not None:
+            if history() != before:
+                raise SystemExit("Flyway V1 history changed during DB recreation")
+            print("PASS: Flyway V1 checksum and installation history preserved", flush=True)
 
 
 if __name__ == "__main__":

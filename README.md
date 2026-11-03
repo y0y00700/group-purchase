@@ -2,7 +2,7 @@
 
 Java 21 · Spring Boot 4.0.9 · Spring Cloud 2025.1.4 · Gradle Wrapper 9.8.2
 
-Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱을 둔다. Gateway는 Eureka에서 공동구매 앱을 찾아 공개한 GET ping 요청을 전달한다. PostgreSQL·서비스별 DB/계정·접근 권한을 구성했다. 앱 JDBC·Flyway 연결과 업무 API·Kafka는 후속 단계다.
+Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱을 둔다. Gateway는 Eureka에서 공동구매 앱을 찾아 공개한 GET ping 요청을 전달한다. PostgreSQL·서비스별 DB/계정·접근 권한과 공동구매 JDBC·Flyway 연결을 구성했다. 업무 API·Kafka는 후속 단계다.
 
 ## 빠른 실행과 직접 확인
 
@@ -13,7 +13,7 @@ Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트�
 docker compose config --quiet
 docker compose up --build -d --wait --wait-timeout 180
 docker compose ps
-python scripts/check-postgres.py
+python scripts/check-postgres.py --stage application
 Invoke-RestMethod http://localhost:8888/actuator/health
 Invoke-RestMethod http://localhost:8761/actuator/health
 Invoke-RestMethod http://localhost:8080/actuator/health
@@ -44,9 +44,9 @@ JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Wr
 .\gradlew.bat :config-server:test :eureka-server:test :group-purchase-service:test
 ```
 
-테스트는 실제 임시 Config·Eureka·앱과 설정 파일을 직접 제어하며 미리 실행한 서비스나 Docker에 의존하지 않는다. 등록 테스트의 Eureka는 라이브러리 간섭을 피하도록 별도 Java 프로세스로 실행하고 종료한다. HTML 결과는 각 실행 모듈의 `build/reports/tests/test/index.html`에 생성된다.
+테스트는 실제 임시 Config·Eureka·앱과 설정 파일을 직접 제어한다. 공동구매 테스트에는 Docker Desktop Linux 엔진이 필요하며 격리 PostgreSQL·임시 secret을 직접 준비하고 정리한다. 일반 DB·secret과 사전 실행한 앱은 사용하지 않는다. 등록 테스트의 Eureka는 라이브러리 간섭을 피하도록 별도 Java 프로세스로 실행하고 종료한다. HTML 결과는 각 실행 모듈의 `build/reports/tests/test/index.html`에 생성된다.
 
-호스트 개발 실행은 세 터미널에서 순서대로 수행한다. Compose를 실행 중이면 먼저 `docker compose down`으로 같은 포트를 비운다.
+호스트 개발 실행은 세 터미널에서 순서대로 수행한다. Compose를 실행 중이면 먼저 `docker compose stop api-gateway group-purchase-service eureka-server config-server`로 앱 포트를 비우고 PostgreSQL은 유지한다. DB가 없다면 빠른 실행 절의 secret 준비 후 `docker compose up -d --no-deps --wait postgres`로 시작한다. 다음 bootRun 절차는 사용자용이며 이번 연결 스텝의 실측은 격리 테스트의 local 환경변수 주입과 Compose 실행이다.
 
 ```powershell
 # 터미널 1: 준비된 뒤 터미널 2를 실행한다.
@@ -56,7 +56,13 @@ JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Wr
 .\gradlew.bat :eureka-server:bootRun
 
 # 터미널 3: Eureka 준비 후 시작한다.
-.\gradlew.bat :group-purchase-service:bootRun
+$previousPassword = $env:SPRING_DATASOURCE_PASSWORD
+try {
+    $env:SPRING_DATASOURCE_PASSWORD = (Get-Content -Raw secrets/group_purchase_password).TrimEnd("`r", "`n")
+    .\gradlew.bat :group-purchase-service:bootRun
+} finally {
+    $env:SPRING_DATASOURCE_PASSWORD = $previousPassword
+}
 ```
 
 터미널 실행 종료는 각각 Ctrl+C다. macOS·Linux에서는 `bash ./gradlew build`와 `bash ./gradlew :config-server:bootRun`처럼 Wrapper를 호출하고 HTTP 확인에는 `curl`을 사용한다.
@@ -99,5 +105,5 @@ GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and 
 - [002 Config Server 계획](Docs/implementation/plan/002-config-server.md) · [구현 결과·직접 테스트](Docs/implementation/002-config-server.md)
 - [003 Eureka 계획](Docs/implementation/plan/003-eureka-server.md) · [구현 결과·직접 테스트](Docs/implementation/003-eureka-server.md)
 - [004 Gateway 계획](Docs/implementation/plan/004-api-gateway.md) · [구현 결과·직접 테스트](Docs/implementation/004-api-gateway.md)
-- [005 PostgreSQL 실행 기반 계획](Docs/implementation/plan/005-postgresql-foundation.md) · [DB/secret/권한 결과·직접 테스트](Docs/implementation/005-postgresql-foundation.md#manual-tests): 첫 스텝 완료, JDBC·Flyway 후속
+- [005 PostgreSQL 실행 기반 계획](Docs/implementation/plan/005-postgresql-foundation.md) · [JDBC·Flyway 결과·직접 테스트](Docs/implementation/005-postgresql-foundation.md#jdbc-flyway-results): 연결 스텝 완료, 005 전체 검증 후속
 - [001 Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)

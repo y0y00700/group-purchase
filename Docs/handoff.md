@@ -2,16 +2,16 @@
 
 갱신일: 2026-11-03 KST
 
-- 현재: **005 첫 DB·secret·서비스별 DB/계정·권한 스텝 완료, 해당 범위 PR 진행**. JDBC·Flyway 연결 상세 설계는 검토 대기이며 005 전체는 진행 중이다.
-- 다음 읽기: [005 실행 요약](implementation/plan/005-postgresql-foundation.md#execution-summary) → [이번 결과·직접 테스트](implementation/005-postgresql-foundation.md#manual-tests). 필요한 설계·코드만 추가 확인한다.
-- 다음 검토: [JDBC·Flyway 연결 상세 설계](implementation/plan/005-postgresql-foundation.md#jdbc-flyway-step)의 설정/secret·스키마/기동·실제 DB 테스트 세 묶음. 관련 테스트 fixture·기존 Config/Eureka 회귀·DB 검사 단계/Compose CI 정의 조정을 포함한다. 상세 구현은 미착수다.
-- 이후: 동일 앱 PID의 DB 중단/복구·Eureka 수렴, Windows JAR·전체 down/up·005 최종 검증·원격 CI. 현재 `app` 미생성 검사는 database/application 단계로 나눠 초기화 검사와 호환시키는 안이다.
-- 작업 브랜치: `feat/postgresql-foundation`, 착수 기준 `b94dcd4`. 기존 문서 변경과 첫 스텝 코드·결과·다음 연결 설계를 함께 보존해 이번 요청으로 커밋·push·PR을 진행한다. 로컬 전용 학습/협업 기록·secret·캐시는 제외한다.
-- PR 기준: Gateway PR #4가 OPEN이므로 base는 `feat/api-gateway`. #4를 먼저 병합한 뒤 최신 main과 대조해 base를 전환한다. 005 브랜치의 수동 CI로 최종 head를 확인하며 #4는 자동 병합하지 않는다.
-- 원격 착수 확인: PR #4 OPEN, head `b94dcd4` [CI 두 검사 성공](https://github.com/y0y00700/group-purchase/actions/runs/41437130117). main `a2a88dc` [CI 두 검사 성공](https://github.com/y0y00700/group-purchase/actions/runs/41402512856). 이번 변경의 원격 CI는 미실행이다.
-- 실제 검증: 자기 DB 4쌍·교차 거절 12쌍·시스템 DB 거절 8쌍·SET ROLE 거절 12쌍·오암호·SCRAM·컨테이너 재생성 영속성·격리 초기화 실패/특수문자 secret·기존 발견/Gateway 회귀 통과. 상세 근거는 결과 문서가 소유한다.
-- 실행 상태: 기존 네 앱과 PostgreSQL healthy. 일반 `group-purchase_postgres-data`와 로컬 secret을 유지한다. 격리 검사 프로젝트/볼륨/secret은 정리했다.
-- 경계: 앱은 아직 DB에 연결되지 않는다. init은 빈 볼륨 최초 DB/계정/권한, 후속 Flyway는 서비스 스키마/이력이다. 서버 healthy만으로 초기화 완료를 판단하지 않는다.
-- 복구: secret/init 수정은 기존 볼륨에 자동 반영되지 않는다. 부분 초기화 실패 후 자동 재실행을 기대하거나 정상 볼륨을 삭제하지 않는다. [직접 테스트·복구](implementation/005-postgresql-foundation.md#manual-tests)를 따른다.
-- 유지할 경계: 고정 Config 주소·환경별 등록 주소, 발견 캐시별 대기, 테스트 Eureka 별도 프로세스·출력 스레드 종료. 해당 코드 변경 시 [003 결과](implementation/003-eureka-server.md)·[004 결과](implementation/004-api-gateway.md)만 추가 확인한다.
-- 진행 규칙: [설계·구현 분리와 토큰 관리](implementation/README.md#context-workflow). 이후 작업도 요청 범위의 구현·검증·기록까지 완료한다.
+- 현재: **005 DB·secret·권한 및 JDBC·Flyway 연결 스텝 완료. 005 전체는 진행 중**.
+- 먼저 읽기: `AGENTS.md` → 이 문서 → [005 실행 요약](implementation/plan/005-postgresql-foundation.md#execution-summary) → [최신 설계 대조·보완 결과](implementation/005-postgresql-foundation.md#design-alignment-results)·[연결 직접 테스트](implementation/005-postgresql-foundation.md#jdbc-flyway-manual-tests). 상세 계약은 계획의 JDBC/Flyway 절에 있다.
+- 위치: `C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase`. 브랜치 `feat/postgresql-foundation`, 첫 DB 스텝 커밋 `c69cf8d16a56a6b6efca72641221e709f0acebf3`. 기존 연결 구현·설계·검증 변경을 보존한 채 사용자의 후속 커밋·push·PR 요청을 진행한다.
+- PR 기준 재확인: PR #4 MERGED/base main, #5 MERGED/base feat/api-gateway. main `26c04834345f1d6edfaffee37755be729fbc29f8`의 [CI 두 job 성공](https://github.com/y0y00700/group-purchase/actions/runs/41564604744). main에는 첫 DB 스텝이 아직 없어 현재 브랜치에서 main 대상 새 PR에 DB 기반·앱 연결을 함께 포함한다. 기존 HEAD의 별도 check-run/workflow는 없음. 새 head의 CI는 기존 main 성공과 구분한다. merge/rebase·브랜치 변경·PR 병합 없음.
+- 구현: 공동구매만 JDBC/Flyway/드라이버, Config의 환경별 URL·풀·Flyway 정책, docker 필수 configtree와 자기 secret 하나, V1의 app 설명/PUBLIC 권한 정리. Boot/Cloud/Java/Gradle 버전 유지.
+- 최신 보완: 테스트 Spring 환경의 외부 시스템 프로퍼티/환경변수 대체값 배제, V1 전체 행 단일성·성공·checksum 검사 강화, fixture 준비 실패 정리 범위 보완. 제품의 파일 출처 강제 코드는 보류 유지.
+- 검증: 보완 후 실제 격리 DB의 공동구매 22개 실패 0(Config 11·Eureka 2·연결 9), 2분 44초. 기존 전체 build 36개·Compose 결과는 영향 없어 재사용했다. local/docker·SQL/V1/재기동·구분된 기동 실패·비노출 검증 유지. 새 근거 `.tmp/005-design-alignment-tests.txt`.
+- Compose: 새 공동구매 이미지 적용 후 다섯 healthy. application 권한 검사·DB 재생성 후 probe/V1 이력 불변·앱 재시작 이력 불변·발견/Gateway 회귀 통과. 초기화 격리 검사는 database 단계로 통과했다.
+- 데이터 경계: 일반 `group-purchase_postgres-data` 보존, 기존 secret 다섯 파일 SHA-256 불변. 일반 DB에는 의도한 app/V1 적용, 검사 probe는 정리. 오류 migration/checksum은 별도 임시 DB에서만 검증. 자동 clean/repair·이력 변조·일반 볼륨 삭제 금지.
+- 재실행: Docker Desktop Linux 엔진·JDK 21/JAVA_HOME 필요. 제한 환경의 Gradle 캐시/Docker pipe 접근은 권한 있는 실행이 필요했다. 실제 암호를 argv·로그에 넣지 않는다. 근거는 Git 제외 `.tmp/005-*.txt`와 모듈별 HTML 결과.
+- 다음: 장시간 DB 중단 후 **동일 앱 PID**의 health 503→200·새 SQL 연결·Eureka 수렴, Windows local JAR 전체 연동, 전체 down/up 데이터 유지, 005 최종 검증. 이번 연결 스텝을 005 전체 완료로 표시하지 않는다.
+- 검사 선택: 앱 Flyway 적용 후 `python scripts/check-postgres.py --stage application`; 초기화 직후 임시 DB는 기본 database. 일반 DB에 database 검사를 실행하면 app 미생성 조건 때문에 실패한다.
+- 유지할 기존 경계: 고정 Config 주소·프로필별 등록 주소·클라이언트별 발견 캐시 대기·Eureka 별도 프로세스/출력 스레드 종료. 설계 충돌이면 근거·영향·추천 대안을 알린다.
