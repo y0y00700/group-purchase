@@ -31,16 +31,20 @@ class ConfigClientIntegrationTests {
 
     private static final Path REPOSITORY = Path.of(System.getProperty("test.config-repo"));
     private static ConfigServerFixture server;
+    private static PostgresFixture database;
 
     @BeforeAll
-    static void startServer() {
+    static void startServer() throws Exception {
+        database = new PostgresFixture();
         server = new ConfigServerFixture(REPOSITORY);
     }
 
     @AfterAll
-    static void stopServer() {
-        if (server != null) {
-            server.close();
+    static void stopServer() throws Exception {
+        try {
+            if (server != null) server.close();
+        } finally {
+            if (database != null) database.close();
         }
     }
 
@@ -169,7 +173,8 @@ class ConfigClientIntegrationTests {
             args.add("--spring.profiles.active=" + profile);
         }
         args.addAll(List.of(extra));
-        return new SpringApplicationBuilder(GroupPurchaseApplication.class).run(args.toArray(String[]::new));
+        return database.configure(new SpringApplicationBuilder(GroupPurchaseApplication.class), profile)
+                .run(args.toArray(String[]::new));
     }
 
     private static void copyRepository(Path target) throws Exception {
@@ -188,11 +193,12 @@ class ConfigClientIntegrationTests {
         }
     }
 
-    private static class ConfigServerFixture implements AutoCloseable {
+    static class ConfigServerFixture implements AutoCloseable {
         private final ConfigurableApplicationContext context;
 
         ConfigServerFixture(Path repository) {
             context = new SpringApplicationBuilder(ConfigServerApplication.class).run(
+                    "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
                     "--spring.config.name=config-fixture", "--spring.profiles.active=native", "--server.port=0",
                     "--spring.cloud.config.server.native.search-locations=" + repository.toUri(),
                     "--spring.cloud.config.server.native.add-label-locations=false",

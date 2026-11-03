@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001~004 구현·로컬 검증을 완료했다. 003의 PR #3 병합과 004의 PR #4 코드 커밋 CI 성공은 각각 [003 결과](../003-eureka-server.md)와 [004 결과](../004-api-gateway.md)를 따른다.
+상태: 001~004 구현·검증 완료, [005 PostgreSQL 계획](005-postgresql-foundation.md)은 추천안 채택 후 DB·secret·권한 스텝을 완료했고 JDBC·Flyway 연결은 후속이다. 003의 PR #3 병합과 004의 PR #4 최종 head CI 성공은 각각 [003 결과](../003-eureka-server.md)와 [004 결과](../004-api-gateway.md)를 따른다.
 
 ## 진행 방식
 
@@ -75,7 +75,7 @@
 
 ## 다음 검토 대상
 
-[004: API Gateway 기본 라우팅](004-api-gateway.md)의 구현·로컬 검증을 마치고 PR #4를 생성했다. 코드 커밋의 원격 CI 근거와 최종 head 확인 상태는 [004 결과](../004-api-gateway.md)를 따른다. 다음 검토 대상은 PostgreSQL 실행 기반의 상세 계획이다.
+[004: API Gateway 기본 라우팅](004-api-gateway.md)의 구현·검증과 PR #4 최종 head CI 성공을 확인했다. [005: PostgreSQL 실행 기반](005-postgresql-foundation.md)은 첫 DB·secret·계정·권한 스텝의 구현·로컬 검증을 완료했고 해당 범위의 PR을 진행한다. 다음 설계는 공동구매 JDBC/Flyway 연결이며 005 전체는 진행 중이다. 005 이후 순서는 API·로그·헬스 기준이다.
 
 ## 근거
 

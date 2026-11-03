@@ -39,11 +39,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Prepare job-local database secrets
+        run: python3 scripts/prepare-ci-secrets.py
+
       - name: Validate Compose definition
         run: docker compose config --quiet
 
-      - name: Build and start all four services
+      - name: Build and start all five services
         run: docker compose up --build --wait --wait-timeout 180
+
+      - name: Check database boundaries and persistence
+        run: python3 scripts/check-postgres.py --stage application --persistence
 
       - name: Check applied configuration
         run: |
@@ -66,4 +72,6 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose down
+        run: |
+          docker compose down -v
+          python3 -c 'import shutil; shutil.rmtree("secrets", ignore_errors=True)'
