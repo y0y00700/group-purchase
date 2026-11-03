@@ -46,6 +46,13 @@ class ConfigServerApplicationTests {
         assertThat(get("/actuator/env").body()).doesNotContain("server-only-fixture");
     }
 
+    @Test
+    void servesGatewayProfileAndExplicitRoute() throws Exception {
+        var response = get("/api-gateway/docker");
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("004-v1", "lb://group-purchase", "api-gateway");
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             return client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))

@@ -42,16 +42,20 @@ jobs:
       - name: Validate Compose definition
         run: docker compose config --quiet
 
-      - name: Build and start all three services
+      - name: Build and start all four services
         run: docker compose up --build --wait --wait-timeout 180
 
       - name: Check applied configuration
         run: |
           curl --fail --silent http://localhost:8080/actuator/info | python3 -c 'import json, sys; config = json.load(sys.stdin)["configuration"]; assert config == {"service": "group-purchase", "environment": "docker", "revision": "002-v1"}, config'
           curl --fail --silent http://localhost:8761/actuator/info | python3 -c 'import json, sys; config = json.load(sys.stdin)["configuration"]; assert config == {"service": "eureka-server", "environment": "docker", "revision": "003-v1"}, config'
+          docker compose exec -T api-gateway curl --fail --silent http://localhost:9000/actuator/info | python3 -c 'import json, sys; config = json.load(sys.stdin)["configuration"]; assert config == {"service": "api-gateway", "environment": "docker", "revision": "004-v1"}, config'
 
       - name: Check registration and reachability of the registered address
         run: python3 scripts/check-discovery.py
+
+      - name: Check Gateway routing and private paths
+        run: python3 scripts/check-gateway.py
 
       - name: Collect service diagnostics
         if: failure()

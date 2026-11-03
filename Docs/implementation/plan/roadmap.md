@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001·002 완료와 PR #2 병합을 확인했다. 003 Eureka Server·첫 등록/발견·이미지·Compose·장애/복구·Windows JAR의 로컬 검증을 완료하고 PR #3을 생성했다. 최신 원격 결과는 [PR #3 Checks](https://github.com/y0y00700/group-purchase/pull/3/checks)를 따른다. 다음은 API Gateway 상세 계획이다.
+상태: 001~004 구현·로컬 검증을 완료했다. 003의 PR #3 병합과 004의 PR #4 코드 커밋 CI 성공은 각각 [003 결과](../003-eureka-server.md)와 [004 결과](../004-api-gateway.md)를 따른다.
 
 ## 진행 방식
 
@@ -75,7 +75,7 @@
 
 ## 다음 검토 대상
 
-001~[003: Eureka Server와 첫 서비스 등록·발견](003-eureka-server.md)의 구현·로컬 검증을 마쳤다. 실제 근거와 잔여 한계는 [003 결과](../003-eureka-server.md)를 따른다. 다음 검토 대상은 API Gateway 기본 라우팅 상세 계획이며 아직 작성·구현하지 않았다. Eureka 서비스 이름으로 요청 전달, 공개·내부 경로 구분, 대상 장애와 라우팅 실패, 이미지·Compose·직접 테스트 범위를 먼저 검토한다.
+[004: API Gateway 기본 라우팅](004-api-gateway.md)의 구현·로컬 검증을 마치고 PR #4를 생성했다. 코드 커밋의 원격 CI 근거와 최종 head 확인 상태는 [004 결과](../004-api-gateway.md)를 따른다. 다음 검토 대상은 PostgreSQL 실행 기반의 상세 계획이다.
 
 ## 근거
 

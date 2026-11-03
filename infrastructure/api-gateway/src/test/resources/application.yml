@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    default: local
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      client:
+        simple:
+          instances:
+            missing-service: []
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          httpclient:
+            response-timeout: 3s
+          routes:
+            - id: ping
+              uri: lb://group-purchase
+              predicates:
+                - Path=/api/group-purchases/ping
+                - Method=GET
+            - id: missing
+              uri: lb://missing-service
+              predicates:
+                - Path=/_fixture/missing
+            - id: refused
+              uri: lb://refused-service
+              predicates:
+                - Path=/_fixture/refused
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  configuration:
+    service: api-gateway
+    environment: local
+    revision: test
+
+management:
+  server:
+    port: 0
