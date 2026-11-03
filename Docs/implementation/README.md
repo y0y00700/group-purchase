@@ -6,7 +6,7 @@
 |---|---|---|
 | 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~004 구현·검증 완료·005 DB/연결 스텝 완료·최종 검증 후속 |
 | 진행 계획 | [005: PostgreSQL 실행 기반](plan/005-postgresql-foundation.md) | DB·JDBC/Flyway 연결 스텝 완료·005 전체 진행 중 |
-| 부분 결과 | [005: DB·JDBC/Flyway·직접 테스트](005-postgresql-foundation.md#design-alignment-results) | 설계 대조 보완 후 공동구매 22개 통과·기존 전체 build 36개/Compose/영속성/회귀 근거 재사용. [PR #5](https://github.com/y0y00700/group-purchase/pull/5)는 feat/api-gateway에 병합됐으며 main 대상 DB 기반·연결 후속 PR 준비 중 |
+| 부분 결과 | [005: DB·JDBC/Flyway·직접 테스트](005-postgresql-foundation.md#design-alignment-results) | 설계 대조 보완 후 공동구매 22개 통과·기존 전체 build 36개/Compose/영속성/회귀 근거 재사용. [PR #6](https://github.com/y0y00700/group-purchase/pull/6) OPEN/main 대상 DB 기반·연결, 최종 head 원격 CI는 PR Checks에서 확인 |
 | 완료 계획 | [004: API Gateway 기본 라우팅](plan/004-api-gateway.md) | 구현·로컬 검증 완료 |
 | 완료 기록 | [004: Gateway 구현·직접 테스트](004-api-gateway.md) | 28개 자동 테스트·네 이미지/Compose·Windows JAR·대상/Eureka 복구 검증 완료, PR #4 병합·최신 main CI 성공 확인 |
 | 완료 계획 | [003: Eureka Server와 첫 서비스 등록·발견](plan/003-eureka-server.md) | 구현·로컬 검증 완료 |

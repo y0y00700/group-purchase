@@ -273,3 +273,5 @@ Set-Location 'C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchas
 테스트 완료 후 사용자가 PR 진행을 요청했다. PR #4는 `main`, #5는 `feat/api-gateway`에 병합된 상태이며, fetch한 `origin/main`은 `26c04834345f1d6edfaffee37755be729fbc29f8`이다. 이 main에는 `c69cf8d`의 첫 DB 기반 변경이 아직 없다. 따라서 브랜치 `feat/postgresql-foundation`을 유지하고 main 대상 새 PR에 첫 DB 스텝과 후속 JDBC/Flyway 연결을 함께 제안한다. merge/rebase·기존 PR 수정·PR 병합은 하지 않는다.
 
 로컬 공동구매 XML 보고서의 22개 테스트·실패/오류/건너뛰기 0과 `.tmp/005-design-alignment-tests.txt`의 성공을 확인했다. 앞선 전체 build·Compose·영속성·회귀 검증은 기록된 유효한 근거를 재사용하고, PR 준비를 위해 서비스를 기동하거나 테스트를 반복하지 않았다. 변경 형식·포함 파일과 secret 제외를 확인한 뒤 커밋·push하고 PR의 최종 head CI를 별도로 확인한다. 기존 main의 성공은 이번 변경의 성공을 뜻하지 않는다. 005 전체 완료 여부는 후속 검증 범위와 구분한다.
+
+연결 구현·설계·테스트·문서를 `c30909f`로 커밋·push하고 [PR #6](https://github.com/y0y00700/group-purchase/pull/6)을 `main` 대상으로 생성했다. 제목은 ‘feat: PostgreSQL 기반과 공동구매 JDBC·Flyway 연결’이다. GitHub 연결 도구의 저장소 조회가 404여서 인증된 로컬 `gh`로 원격 조회·PR 생성을 진행했다. PR 링크·인계 갱신도 후속 문서 커밋에 포함하며, 정확한 최종 head SHA·원격 CI 결과는 [PR #6 Checks](https://github.com/y0y00700/group-purchase/pull/6/checks)와 완료 보고에서 확인한다. PR 병합은 하지 않았다.

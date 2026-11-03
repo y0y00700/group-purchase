@@ -4,8 +4,8 @@
 
 - 현재: **005 DB·secret·권한 및 JDBC·Flyway 연결 스텝 완료. 005 전체는 진행 중**.
 - 먼저 읽기: `AGENTS.md` → 이 문서 → [005 실행 요약](implementation/plan/005-postgresql-foundation.md#execution-summary) → [최신 설계 대조·보완 결과](implementation/005-postgresql-foundation.md#design-alignment-results)·[연결 직접 테스트](implementation/005-postgresql-foundation.md#jdbc-flyway-manual-tests). 상세 계약은 계획의 JDBC/Flyway 절에 있다.
-- 위치: `C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase`. 브랜치 `feat/postgresql-foundation`, 첫 DB 스텝 커밋 `c69cf8d16a56a6b6efca72641221e709f0acebf3`. 기존 연결 구현·설계·검증 변경을 보존한 채 사용자의 후속 커밋·push·PR 요청을 진행한다.
-- PR 기준 재확인: PR #4 MERGED/base main, #5 MERGED/base feat/api-gateway. main `26c04834345f1d6edfaffee37755be729fbc29f8`의 [CI 두 job 성공](https://github.com/y0y00700/group-purchase/actions/runs/41564604744). main에는 첫 DB 스텝이 아직 없어 현재 브랜치에서 main 대상 새 PR에 DB 기반·앱 연결을 함께 포함한다. 기존 HEAD의 별도 check-run/workflow는 없음. 새 head의 CI는 기존 main 성공과 구분한다. merge/rebase·브랜치 변경·PR 병합 없음.
+- 위치: `C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase`. 브랜치 `feat/postgresql-foundation`의 연결 구현 커밋 `c30909f`를 push하고 [PR #6](https://github.com/y0y00700/group-purchase/pull/6)을 main 대상으로 생성했다. 첫 DB 스텝 커밋은 `c69cf8d`이며 기존 연결 구현·설계·검증 변경을 보존했다.
+- PR 기준 재확인: PR #4 MERGED/base main, #5 MERGED/base feat/api-gateway. main `26c04834345f1d6edfaffee37755be729fbc29f8`의 [CI 두 job 성공](https://github.com/y0y00700/group-purchase/actions/runs/41564604744). main에는 첫 DB 스텝이 아직 없어 PR #6에 DB 기반·앱 연결을 함께 포함했다. 최종 head의 상태는 [PR #6 Checks](https://github.com/y0y00700/group-purchase/pull/6/checks)에서 확인한다. 기존 main 성공과 구분하며 merge/rebase·브랜치 변경·PR 병합 없음.
 - 구현: 공동구매만 JDBC/Flyway/드라이버, Config의 환경별 URL·풀·Flyway 정책, docker 필수 configtree와 자기 secret 하나, V1의 app 설명/PUBLIC 권한 정리. Boot/Cloud/Java/Gradle 버전 유지.
 - 최신 보완: 테스트 Spring 환경의 외부 시스템 프로퍼티/환경변수 대체값 배제, V1 전체 행 단일성·성공·checksum 검사 강화, fixture 준비 실패 정리 범위 보완. 제품의 파일 출처 강제 코드는 보류 유지.
 - 검증: 보완 후 실제 격리 DB의 공동구매 22개 실패 0(Config 11·Eureka 2·연결 9), 2분 44초. 기존 전체 build 36개·Compose 결과는 영향 없어 재사용했다. local/docker·SQL/V1/재기동·구분된 기동 실패·비노출 검증 유지. 새 근거 `.tmp/005-design-alignment-tests.txt`.

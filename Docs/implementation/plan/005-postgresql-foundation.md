@@ -32,7 +32,7 @@
 - **검증 구분:** 앱 의존성 호환·migration·정상/실패·영속성·발견/Gateway 회귀까지 로컬 검증 완료. 장시간 장애 복구와 이번 변경의 원격 CI는 미검증이다.
 - **구현 기준:** 추천안 채택. 이미지 pull·digest·PR/main/head CI 확인 후 `feat/postgresql-foundation`에서 진행. Boot BOM 호환 검증은 JDBC/Flyway 후속 범위.
 - **원격 작업:** 코드 구현·로컬 검증과 커밋·push·PR 작업의 요청 범위를 구분한다. PR #4를 자동 병합하지 않는다.
-- **현재 요청:** 테스트 완료 후 사용자가 커밋·push·PR 진행을 요청했다. 기존 브랜치에서 `main` 대상 새 PR을 준비한다. PR #5는 `feat/api-gateway`에 병합돼 현재 `main`에는 첫 DB 스텝도 없어 이번 PR에 DB 기반과 JDBC/Flyway 연결을 함께 포함한다. 실행 결과와 원격 CI는 결과 문서에서 구분한다. PR 병합은 요청 범위가 아니다.
+- **현재 요청:** 테스트 완료 후 사용자의 요청으로 연결 구현 커밋 `c30909f`를 push하고 [PR #6](https://github.com/y0y00700/group-purchase/pull/6)을 `main` 대상으로 생성했다. PR #5는 `feat/api-gateway`에 병합돼 현재 `main`에는 첫 DB 스텝도 없어 PR #6에 DB 기반과 JDBC/Flyway 연결을 함께 포함한다. 실행 결과와 최종 head 원격 CI는 결과 문서·PR Checks에서 구분한다. PR 병합은 요청 범위가 아니다.
 - **이번 설계 합의:** 2026-11-03 사용자가 [세 묶음의 세부 선택](#jdbc-flyway-design-review)을 모두 채택했다. 설계 검토 당시에는 실행하지 않았으며, 후속 구현 요청에서는 기존 구현·유효한 검증을 보존하고 누락·충돌·미검증만 보완한다. [대조 결과](../005-postgresql-foundation.md#design-alignment-results).
 
 ## 목표와 현재 상태
