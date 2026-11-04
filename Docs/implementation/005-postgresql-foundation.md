@@ -12,7 +12,7 @@
 
 이번 변경은 opt-in 관찰 JAR·Windows 장애/복구 및 전체 down/up 검사, 최종 결과·직접 테스트 문서, 구현 완료 후 학습 문서 자동 갱신 규칙이다. 로컬 최종 보고서 `passed=true`·정리 오류 없음, 공동구매 22개/Gateway 4개 XML의 실패·오류·skip 0과 제품 JAR의 관찰 코드 미포함을 확인했다. 아래 실제 실행 근거를 재사용하며 PR 준비를 위해 DB 중단이나 전체 검증을 반복하지 않았다. Python 문법·변경 형식·secret 제외를 별도 확인한다.
 
-main 대상 후속 PR을 생성하고 최종 head의 `Build and test`·`Images and Compose smoke test`를 확인한다. 기존 main CI와 이번 변경의 CI를 구분한다. Windows 전용 전체 장애 검사는 로컬 실측 근거이며 현재 Linux CI 두 job에서 실행하는 검사가 아니다. PR 링크와 최종 Checks 위치는 생성 후 이 절과 짧은 인계에 기록한다. Git 제외 학습 노트·secret·원시 로그·생성 JAR은 PR에 포함하지 않는다.
+구현·문서·규칙 변경 11개 파일을 `9ed94ed`로 커밋·push하고 main 대상 [PR #7](https://github.com/y0y00700/group-purchase/pull/7)을 생성했다. 제목은 ‘test: PostgreSQL 실행 중 복구와 전체 재기동 검증’이다. PR 링크를 반영하는 후속 문서 커밋도 같은 브랜치에 push하며, 정확한 최종 head와 `Build and test`·`Images and Compose smoke test` 결과는 [PR #7 Checks](https://github.com/y0y00700/group-purchase/pull/7/checks)를 기준으로 한다. 기존 main CI와 이번 변경의 CI를 구분한다. Windows 전용 전체 장애 검사는 로컬 실측 근거이며 현재 Linux CI 두 job에서 실행하는 검사가 아니다. Python 문법·문서 파일 링크·변경 형식·실제 secret 값 미포함 검사를 통과했다. Git 제외 학습 노트·secret·원시 로그·생성 JAR은 PR에 포함하지 않았으며 PR 병합은 하지 않았다.
 
 <a id="runtime-final-results"></a>
 
