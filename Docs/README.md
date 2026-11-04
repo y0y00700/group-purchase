@@ -12,7 +12,7 @@
 
 - 현재 구현: Java 21·Spring Boot 4.0.9·Cloud 2025.1.4·Gradle Wrapper 9.8.2의 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 웹 앱을 둔다. 중앙 설정 수신·서비스 등록/발견·Gateway GET 전달과 네 서비스의 Compose 기동을 구현했다.
 - 최근 완료: [003: Eureka Server 구현·직접 테스트](implementation/003-eureka-server.md). 자동 테스트 총 23개, 이미지·Compose·등록/발견·장애/복구·Windows JAR local 연동을 검증했다. 2026-11-02 [PR #3](https://github.com/y0y00700/group-purchase/pull/3) 병합과 최종 head·병합 main의 CI 두 검사 성공을 확인했다. 최신 인계는 [handoff.md](handoff.md)를 따른다.
-- 최근 구현: [004 API Gateway 기본 라우팅](implementation/plan/004-api-gateway.md)의 로컬 검증과 [PR #4](https://github.com/y0y00700/group-purchase/pull/4) 최종 head `b94dcd4`의 CI 두 검사 성공을 확인했다. [결과와 직접 테스트](implementation/004-api-gateway.md)에 28개 테스트·Compose·Windows JAR 근거를 기록했다. PR은 미병합이며 [005 PostgreSQL 실행 기반 계획](implementation/plan/005-postgresql-foundation.md)은 추천안 채택 후 첫 DB·secret·권한 스텝을 완료했다. [005 결과·직접 테스트](implementation/005-postgresql-foundation.md)를 따르며 JDBC·Flyway 연결은 후속이다.
+- 최근 구현: [005 PostgreSQL 실행 기반](implementation/plan/005-postgresql-foundation.md)의 로컬 구현·최종 검증을 완료했다. [최종 결과](implementation/005-postgresql-foundation.md#runtime-final-results)와 [직접 테스트·복구](implementation/005-postgresql-foundation.md#runtime-manual-tests)에 동일 앱 DB 장애 복구·각 발견 캐시 수렴·Windows JAR·전체 down/up 근거를 기록했다. PR #6 병합 이후 추가한 검증의 [후속 PR·최종 head CI](implementation/005-postgresql-foundation.md#runtime-pr)는 결과 문서에서 관리한다. 006은 미착수다.
 - 설계 합의는 목표 구조이며 전체 MSA 실행·업무 기능·성능 측정의 완료를 뜻하지 않는다. ERD·SA·인프라 도식은 작성 대기다.
 
 <a id="design"></a>

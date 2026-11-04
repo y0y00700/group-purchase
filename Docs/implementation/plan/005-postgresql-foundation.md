@@ -1,8 +1,8 @@
 # 005. PostgreSQL 실행 기반
 
-작성일: 2026-11-02 · 설계 보완: 2026-11-03
+작성일: 2026-11-02 · 실행 범위 보완·완료: 2026-11-04
 
-상태: **005 전체는 구현 중 — DB·secret·서비스별 DB/계정·권한 및 JDBC·Flyway 연결 스텝 완료**. 2026-11-03 중간 인계 후 연결 구현·실제 통합 테스트·Compose/영속성·회귀 검증을 완료했다. 장시간 DB 장애 복구·Windows JAR·전체 down/up과 최종 검증은 후속이다. [실제 결과·직접 테스트](../005-postgresql-foundation.md#jdbc-flyway-results).
+상태: **005 로컬 구현·최종 검증 완료**. 기존 DB·secret·권한/JDBC·Flyway 검증에 동일 앱 프로세스의 장시간 DB 장애 복구·Eureka/클라이언트별 수렴·Windows 제품 JAR·전체 Compose down/up 검증을 추가했다. [최종 근거](../005-postgresql-foundation.md#runtime-final-results)·[직접 테스트](../005-postgresql-foundation.md#runtime-manual-tests). 후속 사용자 요청으로 [커밋·PR 및 최종 head CI 확인](../005-postgresql-foundation.md#runtime-pr)을 진행한다.
 
 [구현 목록](../README.md) · [로드맵](roadmap.md) · [프로젝트 인계](../../handoff.md) · [첫 DB 스텝 PR #5](https://github.com/y0y00700/group-purchase/pull/5)
 
@@ -23,23 +23,35 @@
 - **앱 경계:** 공동구매만 DB 의존성을 추가한다. Config·Eureka·Gateway는 DB에 의존하지 않는다.
 - **기동 실패:** DB/인증/migration 오류를 실패로 드러낸다. 기본 비밀번호·자동 clean/repair로 우회하지 않는다.
 - **실행 중 장애:** 앱 PID를 유지한 DB health DOWN/503 → UP/200과 새 SQL 연결을 확인한다.
-- **현재 완료 범위:** DB·secret·권한 초기화, 공동구매 JDBC/Flyway 연결, 정상/실패 통합 테스트, DB·V1 영속성 및 기존 회귀. 실제 근거는 결과 문서가 소유한다.
-- **후속 순서:** 장시간 DB 장애 후 동일 PID 복구·Eureka 수렴 → Windows local JAR·전체 down/up → 005 최종 검증. 원격 작업은 별도 요청.
+- **현재 완료 범위:** DB·secret·권한/JDBC·Flyway·정상/실패·영속성·회귀, 동일 PID/context 장애 복구·앱 DataSource 새 SQL, Eureka·각 발견 캐시·Gateway 수렴, Windows 제품 JAR·전체 down/up·정리. 실제 근거는 결과 문서가 소유한다.
+- **다음:** 후속 사용자 요청으로 완료 변경의 커밋·push·main 대상 PR과 최종 head CI를 확인한다. PR 병합·006 구현은 제외한다.
 - **연결 스텝 설계:** [JDBC·Flyway 연결](#jdbc-flyway-step)의 설정/secret·스키마/기동·실제 DB 테스트 세 묶음과 기존 fixture·검사·CI 정의 조정을 적용했다.
 - **변경 위치:** `compose.yml`, `infrastructure/postgres/init/`, `scripts/`, 공동구매 모듈, `config-repo/group-purchase*.yml`, CI·결과 문서.
 - **필수 회귀:** 기존 Config·Eureka 테스트에 격리 DB를 제공하고, 각 발견 캐시별 대기와 프로세스 정리를 유지한다.
 - **완료 기준:** 다섯 서비스 정상, 자기 DB 4쌍 성공·타 업무 DB 12쌍 거절, 이력·데이터 유지, 기동 실패/실행 중 복구·기존 기능·직접 테스트 확인.
-- **검증 구분:** 앱 의존성 호환·migration·정상/실패·영속성·발견/Gateway 회귀까지 로컬 검증 완료. 장시간 장애 복구와 이번 변경의 원격 CI는 미검증이다.
-- **구현 기준:** 추천안 채택. 이미지 pull·digest·PR/main/head CI 확인 후 `feat/postgresql-foundation`에서 진행. Boot BOM 호환 검증은 JDBC/Flyway 후속 범위.
+- **검증 구분:** 요청된 로컬 완료 기준 통과. 기존 정상/실패·격리 오류 migration 검증 재사용, 새 실제 실행 465.084초 통과. 이번 변경의 원격 CI는 후속 PR의 최종 head를 기준으로 별도 확인한다.
+- **구현 기준:** 추천안 채택. 기존 이미지 digest·버전/Boot BOM 연결 호환 검증을 재사용하고 `feat/postgresql-foundation`을 유지했다.
 - **원격 작업:** 코드 구현·로컬 검증과 커밋·push·PR 작업의 요청 범위를 구분한다. PR #4를 자동 병합하지 않는다.
-- **현재 요청:** 테스트 완료 후 사용자의 요청으로 연결 구현 커밋 `c30909f`를 push하고 [PR #6](https://github.com/y0y00700/group-purchase/pull/6)을 `main` 대상으로 생성했다. PR #5는 `feat/api-gateway`에 병합돼 현재 `main`에는 첫 DB 스텝도 없어 PR #6에 DB 기반과 JDBC/Flyway 연결을 함께 포함한다. 실행 결과와 최종 head 원격 CI는 결과 문서·PR Checks에서 구분한다. PR 병합은 요청 범위가 아니다.
+- **원격 기준(2026-11-04):** PR #6 MERGED, 기존 head `3d5cb0d`와 최신 main `3d601bd` CI 성공. 파일 내용이 같은 최신 main에서 `test/postgresql-runtime-recovery`를 생성하고 새 변경만 후속 PR로 제안한다. 정확한 PR·최종 head CI는 결과 문서가 소유한다.
 - **이번 설계 합의:** 2026-11-03 사용자가 [세 묶음의 세부 선택](#jdbc-flyway-design-review)을 모두 채택했다. 설계 검토 당시에는 실행하지 않았으며, 후속 구현 요청에서는 기존 구현·유효한 검증을 보존하고 누락·충돌·미검증만 보완한다. [대조 결과](../005-postgresql-foundation.md#design-alignment-results).
 
 ## 목표와 현재 상태
 
+### 2026-11-04 남은 실행 검증 합의
+
+기존 DB·secret·권한·JDBC/Flyway 구현과 유효한 검증을 보존한다. 제품의 ping은 DB를 조회하지 않는다. 장애 중 Gateway의 특정 HTTP 코드 계약을 추가하지 않는다.
+
+- DB stop 완료부터 최소 120초 유지한다. health DOWN/503은 60초, Eureka 응답 상태는 180초, 공동구매·Gateway의 각 DiscoveryClient 및 Gateway LoadBalancer supplier는 각각 180초 상한으로 독립 관찰한다. 순차 관찰은 직전 완료 후 시간을 재며 실제 경과와 stop/start 기준 누적 시간을 결과에 기록한다. 수렴 관찰이 길어지면 장애 유지 시간도 늘어난다.
+- 복구는 DB healthy 120초, 앱 health UP/200 60초, 앱 DataSource의 새 getConnection/실제 SQL 60초, Eureka·각 클라이언트 캐시·Gateway 전달 각각 180초 안에서 확인한다. timeout은 실패이며 통과로 바꾸지 않는다.
+- 테스트 전용 실행 JAR에 loopback 관찰 서버를 넣어 실제 앱 context·DataSource·DiscoveryClient와 Gateway supplier를 조회한다. 제품 JAR/API·설정은 바꾸지 않는다. SQL backend PID, OS PID/시작 시각, context 식별자·시작 시각·refresh/close 횟수를 전후 비교한다. 별도 psql 성공으로 앱 복구를 대체하지 않는다.
+- Windows local JAR 두 앱과 Compose DB/Config/Eureka의 local secret 환경변수·SQL/Flyway·등록/발견·라우팅을 확인한다. 일반 제품 JAR의 local 기동/라우팅도 별도로 확인한다.
+- 전체 Compose down/up에서는 일반 볼륨과 기존 secret을 보존하고, 난수 probe·전체 Flyway 이력·네 계정 접근 경계를 전후 비교한다. 종료 시 검사 process/env/probe를 정리하고 다섯 Compose 서비스 구성으로 복구한다.
+- 실행 검증 당시 커밋·push·PR 변경·병합·원격 CI 실행 및 006은 제외했다. 이후 사용자가 PR 진행을 요청해 커밋·push·새 PR과 최종 head CI 확인을 추가했다. 기존 AGENTS.md/구현 안내 변경을 보존하고 PR 병합·006은 제외한다.
+
+
 단일 PostgreSQL 서버 안에서 업무 서비스별 DB·계정을 분리하고, 현재 구현된 공동구매 앱을 자신의 DB에 연결한다. 최초 초기화와 이후 스키마 변경의 책임을 나누고 데이터 유지·접근 거절·장애 복구를 재현한다.
 
-현재 초기 네 앱과 PostgreSQL의 다섯 서비스가 구현돼 있고, 공동구매 앱은 아직 DB에 연결되지 않았다. 첫 스텝 결과에 따르면 2026-11-03 DB 접근 경계·영속성·초기화 실패와 기존 발견/Gateway 회귀를 검증했다. 현재 로컬 브랜치는 `feat/postgresql-foundation`, HEAD는 `b94dcd4`이며 기존·신규 문서와 첫 스텝 코드가 미커밋 상태다. 첫 스텝 착수 시 원격 `main`은 `a2a88dc`, [PR #4](https://github.com/y0y00700/group-purchase/pull/4)는 OPEN, 해당 head의 [CI 두 검사](https://github.com/y0y00700/group-purchase/actions/runs/41437130117)는 성공이었다. 이번 설계에서는 로컬 파일·메타데이터만 읽고 원격 상태·컨테이너를 재조회하거나 실행 검증을 하지 않았다.
+현재 다섯 서비스와 공동구매 JDBC/Flyway 연결을 구현했고, 위 실행 요약의 로컬 완료 기준을 충족했다. 초기 설계 당시 DB 연결 전 상태와 이후 연결 스텝·PR·최종 실행 검증의 시점별 근거는 [결과 문서](../005-postgresql-foundation.md)에 보존한다. 현재 상태 판단에는 이 문서 앞 실행 요약과 최신 결과를 사용한다.
 
 설계 기준: [실행 환경과 DB 소유권](../../design/operations.md#local-runtime), [서비스 경계](../../design/architecture.md#service-boundaries), [R-07·R-15](../../decisions/design-review.md), [단계별 진행 기준](../README.md#workflow).
 
@@ -101,7 +113,9 @@
 
 <a id="jdbc-flyway-step"></a>
 
-### 다음 스텝 상세 설계: 공동구매 JDBC·Flyway 연결
+### 연결 스텝 상세 설계·당시 범위(2026-11-03 기록)
+
+이 절의 ‘후속 범위’·‘검토에서는 실행하지 않음’은 연결 설계/구현 당시의 시점을 뜻한다. 2026-11-04 요청에서 장애 복구·Windows JAR·전체 down/up을 승인받아 완료했으며 현재 범위·상태는 앞 실행 요약과 남은 실행 검증 합의를 우선한다.
 
 2026-11-03 사용자가 상세 설계를 채택하고 구현을 요청했다. 중간 인계 후 이 연결 스텝의 구현·검증을 완료했으며 아래 계약의 실제 근거는 결과 문서에서 관리한다.
 
@@ -174,9 +188,9 @@
 | `scripts/check-postgres.py`, `.github/workflows/ci.yml` | 실제 계정 접근 범위·스키마 이력·데이터 유지 검사와 CI 연결 |
 | `README.md`, `Docs/implementation/005-postgresql-foundation.md`, 인계·목록 | 준비·정상·장애·복구·정리 명령과 실제 근거 |
 
-파일명은 제안이며 구현 중 같은 책임 안에서 조정 가능하다. 현재 계획 문서에서 미래 결과 파일로의 링크는 만들지 않는다.
+위 표는 초기 구현 범위다. 마지막 실행 검증은 `build.gradle`의 opt-in task, `scripts/runtime-probe/`, `scripts/check-runtime-recovery.py`와 두 모듈의 opt-in 관찰 JAR 작업을 추가했다. 실제 변경과 검증은 결과 문서를 따른다.
 
-## 구현·검증 순서
+## 초기 구현·검증 순서(시점별 기록)
 
 1. 현재 변경을 보존하고 PR #4·최신 main·head CI를 확인한다. PR이 병합됐다면 그 main에서 `feat/postgresql-foundation`을 만든다. 아직 열려 있으면 검증된 Gateway head에서 후속 브랜치를 만들고, 후속 PR 요청 시 base를 `feat/api-gateway`로 삼는 방식을 추천한다. #4 병합 뒤에는 최신 main과 변경 범위를 대조해 base를 전환한다. 계획 검토만으로 PR #4를 병합하지 않는다.
 2. secret 준비·DB 초기화·DB별 TCP 접근 검사를 구현한다. 같은 이미지와 초기화 스크립트를 Testcontainers fixture에도 사용하고 테스트마다 격리된 DB/컨테이너를 정리한다.
@@ -200,13 +214,13 @@
 
 ## 사용자 직접 테스트와 완료 기준
 
-아래 명령은 **구현 후 제공할 절차의 제안**이다. 아직 해당 스크립트·DB 서비스는 없으며 이 계획 작성 중 DB 검증은 수행하지 않았다. 작업 위치는 프로젝트 루트, 준비 도구는 Docker Desktop Linux 엔진·JDK 21/JAVA_HOME·Python 3·PowerShell이고 추가 포트는 5432다. 결과 문서에는 실제 사용한 버전·명령·상태·검증 시간 상한을 기록한다.
+아래는 구현된 구성의 기본 회귀 명령이다. 장애 복구·Windows 제품 JAR·전체 down/up의 복사 가능한 실행과 기대 결과·종료/복구는 [최신 직접 테스트](../005-postgresql-foundation.md#runtime-manual-tests)를 따른다. 작업 위치는 프로젝트 루트, 준비 도구는 Docker Desktop Linux 엔진·JDK 21/JAVA_HOME·Python 3·PowerShell이다. 실제 검증과 재사용한 기존 근거는 결과 문서에서 구분한다.
 
 ```powershell
 .\scripts\prepare-local-secrets.ps1
 docker compose config --quiet
 docker compose up --build -d --wait --wait-timeout 180
-python scripts/check-postgres.py
+python scripts/check-postgres.py --stage application
 python scripts/check-discovery.py
 python scripts/check-gateway.py
 .\gradlew.bat build

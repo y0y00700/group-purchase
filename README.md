@@ -105,5 +105,5 @@ GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and 
 - [002 Config Server 계획](Docs/implementation/plan/002-config-server.md) · [구현 결과·직접 테스트](Docs/implementation/002-config-server.md)
 - [003 Eureka 계획](Docs/implementation/plan/003-eureka-server.md) · [구현 결과·직접 테스트](Docs/implementation/003-eureka-server.md)
 - [004 Gateway 계획](Docs/implementation/plan/004-api-gateway.md) · [구현 결과·직접 테스트](Docs/implementation/004-api-gateway.md)
-- [005 PostgreSQL 실행 기반 계획](Docs/implementation/plan/005-postgresql-foundation.md) · [JDBC·Flyway 결과·직접 테스트](Docs/implementation/005-postgresql-foundation.md#jdbc-flyway-results): 연결 스텝 완료, 005 전체 검증 후속
+- [005 PostgreSQL 실행 기반 계획](Docs/implementation/plan/005-postgresql-foundation.md) · [최종 결과](Docs/implementation/005-postgresql-foundation.md#runtime-final-results) · [장애 복구·Windows JAR·전체 down/up 직접 테스트](Docs/implementation/005-postgresql-foundation.md#runtime-manual-tests): 로컬 구현·최종 검증 완료
 - [001 Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)
