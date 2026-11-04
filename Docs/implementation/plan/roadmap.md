@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001~004 구현·검증 완료, [005 PostgreSQL 계획](005-postgresql-foundation.md)은 추천안 채택 후 DB·secret·권한 스텝을 완료했고 JDBC·Flyway 연결은 후속이다. 003의 PR #3 병합과 004의 PR #4 최종 head CI 성공은 각각 [003 결과](../003-eureka-server.md)와 [004 결과](../004-api-gateway.md)를 따른다.
+상태: 001~005 로컬 구현·검증 완료. [005 PostgreSQL 계획](005-postgresql-foundation.md)의 DB·secret·권한/JDBC·Flyway에 장시간 장애 복구·Windows JAR·전체 down/up까지 완료했다. [최종 결과](../005-postgresql-foundation.md#runtime-final-results)와 [후속 PR·최종 head CI](../005-postgresql-foundation.md#runtime-pr)를 따른다. 006은 미착수다.
 
 ## 진행 방식
 

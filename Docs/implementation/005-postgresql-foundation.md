@@ -1,8 +1,171 @@
-# 005. PostgreSQL 기반 — DB·secret·권한 결과
+# 005. PostgreSQL 실행 기반 — 구현·최종 검증 결과
 
-검증일: 2026-11-03 KST · 상태: **DB·secret·권한 및 JDBC·Flyway 연결 스텝 완료, 005 전체는 진행 중**
+검증일: 2026-11-04 KST · 상태: **005 로컬 구현·최종 검증 완료**. 후속 사용자 요청에 따른 커밋·PR과 원격 CI는 [후속 PR 기록](#runtime-pr)에서 구분한다.
 
 [계획·채택한 추천안](plan/005-postgresql-foundation.md) · [인계](../handoff.md)
+
+<a id="runtime-pr"></a>
+
+## 장애 복구·최종 검증 후속 PR — 2026-11-04
+
+로컬 구현 완료 후 사용자가 PR 진행을 요청했다. GitHub 연결 도구는 저장소/PR 조회에 404를 반환해 인증된 `gh`로 확인했다. PR #6 MERGED, 최신 main `3d601bd50a1c2d6bd829940b3f26202ea125d9c3`와 기존 head의 CI 두 검사 성공, 열린 PR 없음을 확인했다. fetch한 main과 기존 로컬 HEAD `3d5cb0d`의 파일 내용은 같으므로 최신 main에서 `test/postgresql-runtime-recovery`를 만들고 기존 미커밋 구현·문서·사용자 규칙을 보존했다. merge/rebase·기존 PR 변경·PR 병합은 하지 않는다.
+
+이번 변경은 opt-in 관찰 JAR·Windows 장애/복구 및 전체 down/up 검사, 최종 결과·직접 테스트 문서, 구현 완료 후 학습 문서 자동 갱신 규칙이다. 로컬 최종 보고서 `passed=true`·정리 오류 없음, 공동구매 22개/Gateway 4개 XML의 실패·오류·skip 0과 제품 JAR의 관찰 코드 미포함을 확인했다. 아래 실제 실행 근거를 재사용하며 PR 준비를 위해 DB 중단이나 전체 검증을 반복하지 않았다. Python 문법·변경 형식·secret 제외를 별도 확인한다.
+
+구현·문서·규칙 변경 11개 파일을 `9ed94ed`로 커밋·push하고 main 대상 [PR #7](https://github.com/y0y00700/group-purchase/pull/7)을 생성했다. 제목은 ‘test: PostgreSQL 실행 중 복구와 전체 재기동 검증’이다. PR 링크를 반영하는 후속 문서 커밋도 같은 브랜치에 push하며, 정확한 최종 head와 `Build and test`·`Images and Compose smoke test` 결과는 [PR #7 Checks](https://github.com/y0y00700/group-purchase/pull/7/checks)를 기준으로 한다. 기존 main CI와 이번 변경의 CI를 구분한다. Windows 전용 전체 장애 검사는 로컬 실측 근거이며 현재 Linux CI 두 job에서 실행하는 검사가 아니다. Python 문법·문서 파일 링크·변경 형식·실제 secret 값 미포함 검사를 통과했다. Git 제외 학습 노트·secret·원시 로그·생성 JAR은 PR에 포함하지 않았으며 PR 병합은 하지 않았다.
+
+<a id="runtime-final-results"></a>
+
+## 장애 복구·전체 연동 최종 검증 — 2026-11-04
+
+착수 시 로컬 `feat/postgresql-foundation` / `3d5cb0d93f06e57f32b557c38e733cc46afe6e3b`와 사용자 미커밋 `AGENTS.md`·구현 안내 변경을 보존했다. GitHub 연결 도구의 404 이후 인증된 `gh`로 읽기 전용 조회했다. [PR #6](https://github.com/y0y00700/group-purchase/pull/6)은 MERGED/base main, 기존 head의 [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/41572899963), 최신 main `3d601bd50a1c2d6bd829940b3f26202ea125d9c3`의 [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/41585524931)을 확인했다. 이번 미커밋 변경의 원격 CI 성공으로 해석하지 않는다. 브랜치 이동·merge/rebase·커밋·push·PR 변경·원격 CI 실행은 하지 않았다.
+
+### 추가 구현과 재사용
+
+- [실행 검사](../../scripts/check-runtime-recovery.py)는 local 실행→DB 장애/복구→일반 제품 JAR→전체 Compose down/up→복구/정리를 수행한다. 단계별 상한·monotonic 실측·전체/단계 누적 시간을 JSON으로 남긴다.
+- [관찰 launcher](../../scripts/runtime-probe/com/example/runtimeprobe/RuntimeProbe.java)는 실제 공동구매/Gateway 앱을 기동하고 **같은 context**의 DataSource·DiscoveryClient와 Gateway의 실제 서비스별 LoadBalancer supplier를 읽는다. 별도 DriverManager/psql로 앱 SQL 복구를 대체하지 않는다. 테스트 관찰 포트는 `127.0.0.1`에만 바인딩한다.
+- 두 모듈의 opt-in `runtimeProbeJar`만 관찰 코드를 포함한다. 실제 일반 bootJar ZIP을 검사해 두 제품 JAR 모두 `runtimeprobe` 항목이 없음을 확인했다. 제품 API·ping·Compose·DB/secret·권한·JDBC/Flyway 설정·V1을 변경하지 않았다.
+- 기존 22개 공동구매 통합 테스트, 전체 build/초기화 격리·기동 거절·checksum·secret 비노출 검증은 관련 제품 변경이 없어 재사용했다. 이번 `gradlew.bat build`도 **13초 성공, 29 task 중 28 UP-TO-DATE**였다. 기존 테스트 결과는 실제 재실행과 구분한다. XML의 공동구매 22·Gateway 4 실패/오류/skip 0을 확인했다.
+- 관찰 JAR 빌드는 두 모듈 모두 성공했다. Python 문법 검사·`git diff --check`도 통과했다. 최초 Gradle 스크립트의 BootJar 클래스 접근/Java target 설정 오류를 수정했다. 첫 실행에서는 Gateway 하위 context 이벤트까지 세어서 주 context 횟수 검사에 실패했으며, 주 context 객체와 일치하는 이벤트만 세도록 수정한 뒤 재실행했다. 실패 실행도 소유 PID 종료·다섯 healthy/secret/env 유지 정리가 통과했다.
+- 최종 포장 검토에서 Docker build context에 복사하지 않는 별도 Gradle 스크립트 참조를 발견해, opt-in 작업 정의를 기존 루트 `build.gradle` 안으로 옮겼다. 모듈/Dockerfile에 새 파일 복사 의존을 만들지 않았다. 이후 `build`와 두 `runtimeProbeJar`는 **4초 성공·33 task 전부 UP-TO-DATE**로 제품·관찰 JAR/기존 테스트가 불변임을 확인했다. 근거 `.tmp/005-final-build-packaging.txt`.
+- 이어 `docker compose build group-purchase-service api-gateway`가 성공했다(각 내부 Gradle 1분 36초·1분 40초). Docker build에는 관찰 Java 소스를 복사하지 않아도 일반 bootJar가 정상 생성된다. 최종 `compose up --no-deps --wait`는 두 기존 컨테이너를 Running/Healthy로 유지했고 재생성하지 않았다. DB application 권한·Flyway 검사, Config에서 등록 주소 도달성, Gateway ping 200·비공개 경로/메서드 404가 다시 통과했다. 근거 `.tmp/005-final-image-build.txt`·`005-final-image-runtime.txt`. 이 마지막 이미지 포장 점검과 앞선 동일 프로세스 장애 복구의 관찰 시점을 구분한다.
+
+### DB 장애·복구 실측
+
+DB stop **완료 후** 120.033초 중단했다. 아래 대기 시간은 직전 단계 완료 뒤 독립 관찰을 시작한 시간이며, 각 캐시 자체의 전파 지연을 역산한 값은 아니다. 누적 열은 중단 단계에서는 stop 완료부터, 복구 단계에서는 start 명령 직전부터 잰 초다. 운영 heartbeat/캐시 주기는 가속하지 않았다.
+
+| 단계 | 관찰 대기(초) | 단계 누적(초) | 관찰 상한(초) |
+|---|---:|---:|---:|
+| 중단: 앱 health DOWN/503 | 3.046 | 3.046 | 60 |
+| 같은 앱 DataSource SQL 실패 | 3.044 | 6.090 | 60 |
+| Eureka 응답 DOWN | 54.098 | 60.206 | 180 |
+| 공동구매 DiscoveryClient 대상 제외 | 27.527 | 87.734 | 180 |
+| Gateway DiscoveryClient 대상 제외 | 0.005 | 87.739 | 180 |
+| Gateway LoadBalancer supplier count=0 | 0.006 | 87.745 | 180 |
+| 복구: DB healthy | 5.998 | 5.998 | 120 |
+| 같은 앱 health UP/200 | 0.015 | 6.013 | 60 |
+| 같은 앱 DataSource 새 SQL 성공 | 0.007 | 6.019 | 60 |
+| Eureka 응답 UP | 23.480 | 29.509 | 180 |
+| 공동구매 DiscoveryClient 대상 발견 | 28.360 | 57.870 | 180 |
+| Gateway DiscoveryClient 대상 발견 | 0.003 | 57.873 | 180 |
+| Gateway supplier count=1 | 0.029 | 57.902 | 180 |
+| Gateway 전달/비공개 경로·메서드 회귀 | 0.428 | 58.330 | 180 |
+
+중단 중 직접 ping은 200이었다. Gateway는 캐시 제외 뒤 503을 **관찰**했으며 장애 중 특정 코드 보장 계약을 추가하지 않았다. 상태 전파 중 ping 전달이 성공할 가능성도 유지한다.
+
+앱 DataSource에서 매 요청 `getConnection()` 후 실제 SQL로 `current_user=group_purchase_app`, DB `group_purchase`, schema `app`를 확인했다. 장애 전 backend PID 691 / postmaster 시작 `2026-11-04 09:50:59.157523+09`, 복구 후 backend PID 36 / 시작 `2026-11-04 10:01:01.217393+09`다. DB 서버 epoch가 바뀌었으므로 장애 전 물리 세션이 살아 있었던 결과가 아니다. backend PID 숫자는 재사용 가능하므로 숫자 차이만으로 새 연결을 판정하지 않았다.
+
+전후 identity 응답 문자열 전체를 비교해 아래 값이 동일함을 확인했다. 장애 유지 중에도 반복 비교했고 `refresh=1;close=0;active=true`가 변하지 않았다.
+
+| 관찰 | 공동구매 | Gateway |
+|---|---|---|
+| Windows PID | 7340 | 20260 |
+| OS 프로세스 시작(UTC) | 2026-11-04T00:57:42.138Z | 2026-11-04T00:57:42.152Z |
+| 주 context UUID | dedf28fe-7a96-44df-8a2d-2451d5cdf5a2 | 2f87dbe6-0cd0-4bba-ad57-5da9c5317a81 |
+| 주 context identityHash | 1219637204 | 1442342557 |
+| context startup epoch ms | 1793753866604 | 1793753866413 |
+
+### Windows 제품 JAR·전체 down/up·최종 정리
+
+같은 검사에서 관찰 JAR을 종료한 뒤 **일반 제품 bootJar**를 Windows에서 별도로 실행했다. 공동구매 PID 27060·Gateway PID 13244이며 DB·Config·Eureka는 Compose로 유지했다. 공동구매 자식 환경에만 기존 파일의 비밀번호를 넣고 Gateway에는 제공하지 않았다. 두 `/actuator/info`의 environment=local, JDBC/Flyway 정상 검증·V1 재적용 없음·전체 이력 동일, Eureka localhost 등록과 Gateway ping/비공개 경로·메서드 회귀를 확인했다. 제품 공동구매 health는 기동 관찰 15.535초, 이어 Gateway health 2.505초·Eureka UP 2.037초에 확인했다. 실제 SQL·물리 연결 복구는 위 관찰 JAR의 같은 앱 context에서 검증한 근거와 구분한다.
+
+전체 Compose `down`은 1.722초, 직전부터 잰 down/up 누적 **41.493초**에 다섯 healthy가 됐다(up 상한 180초). 이후 **46.667초**에 난수 probe 값·Flyway 전체 행(스키마 생성 이력 포함)·volume inspect 전체 동일성과 계정 접근 재검사가 통과했다. 일반 `group-purchase_postgres-data`를 제거하지 않았다. Flyway 이력 SHA-256은 최초 기준 `dc917bc0e5dca6ac071aa1d22e456c6551bf9aff2fe2ec69ba0b32c0bc379faf`와 일치하며 이력 비교는 checksum만이 아닌 전체 행 문자열 비교다.
+
+down/up 전후 각각 자기 DB 4쌍 성공·교차 DB 12쌍/시스템 DB 8쌍/SET ROLE 12쌍 거절·오암호 4쌍 거절·SCRAM verifier 5개 검사를 통과했다. Config 컨테이너에서 docker 등록 주소 health 도달성과 Gateway 자체 발견 캐시/실제 전달은 추가 대기 후 down/up 누적 **123.304초**에 통과했다. 건강 상태 확인만으로 발견 수렴을 판정하지 않았다.
+
+전체 검사는 **465.084초, 종료 코드 0**, 최종 JSON `passed=true`, `cleanupErrors=[]`다. 검사 schema `probe_runtime_e3acfb718b9d3edf`를 삭제하고 pg_namespace 0행을 확인했다. 네 local Java PID를 모두 종료하고 자식 secret 환경을 해제했다. Python 부모 환경 전체와 secret 다섯 파일의 SHA-256 전후 동일, local probe/product 로그에 실제 secret 값 미노출을 확인했다. 마지막 finally에서 다섯 Compose healthy·docker 단일 등록/도달성·Gateway 전달을 다시 확인했다. 종료 후 구성은 기존 다섯 Compose 서비스이며 검사용 loopback 서버는 남지 않는다.
+
+별도 최종 감사에서도 보고서 hash와 실제 secret 파일·Flyway 전체 이력을 재대조하고 소유 schema 부재를 확인했다. 두 실행 시도의 소유 local Java PID 잔여 0, 18081/18082 listener 잔여 0이었다. JSON은 최종 PASS 출력 직전 465.082초에 기록됐다. 초기에 schema를 기록하는 비상 정리용 manifest와 부분 CREATE 실패 시 정리 범위도 보완했으며, 강제 OS 종료를 주입한 검사는 아니다.
+
+제품/설정/migration이 변하지 않아 기존 격리 오류 SQL·checksum·기동 실패 검증을 다시 훼손하거나 반복하지 않았다. 일반 DB 이력 변조·자동 clean/repair·일반 볼륨 삭제·기존 secret 변경은 없다. 요청된 로컬 완료 기준의 미검증 항목은 없다. 이번 미커밋 변경의 원격 CI, HA·백업 복구·강제 OS 종료 장애 주입은 이번 완료 기준 밖이며 실행하지 않았다. 마지막 강제 종료용 절차는 비상 사용자 안내로, 실제 통과 근거인 정상/실패 finally 정리와 구분한다. 006은 구현하지 않았다.
+
+원시 근거는 Git 제외 `.tmp/005-final-runtime.txt`·`005-final-runtime.json`, 두 local probe/product 로그, `005-final-jars-explicit.txt`·`005-final-build.txt`다. 이전 실패 시도는 `005-final-runtime-attempt1.*`에 분리했다. 기술 개요·프로젝트 적용 예시는 [PostgreSQL·Flyway 학습 문서](../explanations/postgresql-flyway.md)에 있다(기존 정책대로 Git 제외).
+
+<a id="runtime-manual-tests"></a>
+
+## 사용자 직접 테스트 — 장애 복구·Windows JAR·전체 down/up
+
+준비: Windows PowerShell·Python 3·JDK 21/JAVA_HOME·Docker Desktop Linux 엔진. 일반 `group-purchase_postgres-data`와 기존 secret 다섯 파일을 사용한다. 검사 중 다른 업무를 실행하지 않고, 다른 local JAR은 종료한다. 5432·8888·8761·8080·8000·9000과 검사 전용 loopback 18081·18082를 사용한다. 시작 시 Docker 공동구매·Gateway를 멈추고 종료 시 다섯 Compose 서비스로 복구하므로 서비스 중단 시간이 있다. 최소 DB 장애는 120초이며 캐시별 대기로 전체 검사는 수 분 걸린다.
+
+프로젝트 루트에서 아래 명령을 복사한다. `JAVA_HOME`은 실제 설치된 JDK 21 경로로 지정한다. 원래 환경변수는 finally에서 복원한다. 비밀번호는 스크립트가 파일에서 읽어 공동구매 자식 프로세스 환경에만 전달하며 인자/화면에 출력하지 않는다. Gateway에는 전달하지 않는다.
+
+```powershell
+Set-Location 'C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase'
+$previousJavaHome = $env:JAVA_HOME
+try {
+    $env:JAVA_HOME = 'C:\Users\권민혁\.jdks\ms-21.0.12.1'
+    docker compose config --quiet
+    if ($LASTEXITCODE -ne 0) { throw 'Compose configuration failed' }
+    .\gradlew.bat :group-purchase-service:bootJar :api-gateway:bootJar :group-purchase-service:runtimeProbeJar :api-gateway:runtimeProbeJar --console=plain
+    if ($LASTEXITCODE -ne 0) { throw 'JAR build failed' }
+    # 앱 이미지가 없다면 먼저 docker compose build를 실행한다.
+    New-Item -ItemType Directory -Force .tmp | Out-Null
+    python scripts/check-runtime-recovery.py 2>&1 | Tee-Object .tmp/005-final-runtime.txt
+    if ($LASTEXITCODE -ne 0) { throw 'Runtime verification failed; inspect report and cleanupErrors' }
+    Get-Content -Raw .tmp/005-final-runtime.json | ConvertFrom-Json | Select-Object passed,totalSeconds,cleanupErrors
+    docker compose ps
+} finally {
+    $env:JAVA_HOME = $previousJavaHome
+}
+```
+
+정상 기대: 마지막 `PASS all requested runtime checks`, 종료 코드 0, JSON `passed=true`, `cleanupErrors=[]`, 다섯 서비스 healthy. 같은 보고서의 `events`에 각 관찰의 실제 대기·상한·전체/단계 누적 초가 남는다. 검사 전용 JAR은 실제 앱을 기동하지만 loopback 관찰 코드는 일반 제품 JAR·이미지에 포함되지 않는다. 이후 일반 제품 JAR 두 개도 별도로 local 기동·Flyway 검증·등록/전달을 확인한다.
+
+중요 판정:
+
+- DB stop 뒤 health 503/DOWN·앱 DataSource SQL 실패, 120초 이상 중단 유지. 직접 ping 200은 정상이다.
+- Eureka DOWN, 공동구매·Gateway 각 DiscoveryClient의 빈 목록, Gateway supplier count=0을 각각 기다린다. 장애 중 Gateway 응답은 관찰값이며 특정 코드를 보장하지 않는다.
+- start 후 health 200/UP, 같은 앱 DataSource에서 새 연결을 얻은 SQL이 `group_purchase_app|group_purchase|app|...` 반환. DB postmaster 시작 시각이 바뀌어 이전 서버의 물리 세션을 재사용한 결과가 아님을 확인한다.
+- 앱/Gateway PID·OS 시작 시각·주 context UUID/hash/시작 시각·refresh=1/close=0/active=true 문자열 전체가 전후 동일해야 한다. 그 뒤 Eureka UP·두 DiscoveryClient·Gateway supplier count=1과 실제 전달을 각각 확인한다.
+- 전체 Compose down/up 전후 난수 probe·Flyway **전체 행**·볼륨 inspect가 동일하고, 네 계정의 자기 DB 접근과 타 DB/역할 접근 거절이 다시 통과해야 한다.
+
+도구/포트/secret 누락, 관찰 timeout, SQL 실패, 이력 변경은 실패다. timeout만으로 복구를 통과시키지 않으며 일반 DB에 오류 migration을 적용하거나 이력을 repair하지 않는다. 정상/실패 종료의 finally는 자신이 시작한 local PID를 종료하고, postgres를 포함한 다섯 Compose 서비스를 복구하며 검사 probe만 제거한다. 원래 Python/PowerShell 환경변수·secret 파일은 보존한다. 정상 종료 때 로그·JSON은 `.tmp`에 남는 검증 근거이며 DB 검사 데이터는 남지 않는다.
+
+검사 도중 다른 PowerShell에서 현재 단계만 관찰할 수 있다(이때 보이는 값은 단계에 따라 바뀐다).
+
+```powershell
+Get-Content .tmp/005-final-runtime.txt -Tail 15 -Wait
+# local 관찰 JAR이 살아 있는 단계에서만:
+curl.exe -i http://localhost:8080/actuator/health
+curl.exe -s http://127.0.0.1:18081/identity
+curl.exe -s http://127.0.0.1:18081/sql
+curl.exe -s http://127.0.0.1:18081/discovery
+curl.exe -s http://127.0.0.1:18082/discovery
+curl.exe -s http://127.0.0.1:18082/supplier
+curl.exe -i http://localhost:8000/api/group-purchases/ping
+```
+
+정상 종료 후 운영 확인·종료·재시작:
+
+```powershell
+python scripts/check-postgres.py --stage application
+python scripts/check-discovery.py
+python scripts/check-gateway.py
+# 종료가 필요할 때만: 볼륨·secret을 보존한다.
+docker compose down
+# 같은 데이터로 복구
+docker compose up -d --wait --wait-timeout 180
+python scripts/check-postgres.py --stage application
+python scripts/check-discovery.py
+python scripts/check-gateway.py
+```
+
+Ctrl+C라면 finally의 복구가 끝날 때까지 기다린다. 터미널/프로세스 강제 종료는 finally 실행을 보장하지 않는다. 그 경우 출력 로그의 `started local JAR` PID와 현재 `Get-CimInstance Win32_Process -Filter "ProcessId = <기록된 PID>"`의 CommandLine을 대조해 이 프로젝트 JAR인 프로세스만 `Stop-Process -Id <확인한 PID>`로 종료한다. 전체 Java 프로세스를 종료하지 않는다. 그 뒤 위 Compose up 명령과 `docker compose restart eureka-server`, 발견/Gateway 검사를 실행해 local 등록 잔상을 제거하고 docker 주소 수렴을 기다린다. 보고서의 `probeSchema`가 남았다면 같은 schema만 삭제한다(아래는 강제 종료 시 사용자 복구용이며 이번 정상 경로의 자동 finally와 별개다).
+
+```powershell
+$report = Get-Content -Raw .tmp/005-final-runtime.json | ConvertFrom-Json
+$schema = $report.probeSchema
+if ($schema -notmatch '^probe_runtime_[0-9a-f]{16}$') { throw 'Unexpected probe schema' }
+@"
+import importlib.util
+s = importlib.util.spec_from_file_location('pg', 'scripts/check-postgres.py')
+p = importlib.util.module_from_spec(s)
+s.loader.exec_module(p)
+p.client(p.sql('group_purchase', 'DROP SCHEMA IF EXISTS $schema CASCADE'))
+"@ | python -
+```
+
+검사는 자원 변경 전에 JSON에 소유 schema를 먼저 기록한다. 자식 PID는 출력 로그에 남긴다. 일반 app 스키마나 볼륨을 제거하지 않는다. 오류 SQL·checksum의 직접 테스트는 기존 [격리 연결 테스트](#jdbc-flyway-manual-tests)를 사용한다.
 
 ## 구현 범위
 

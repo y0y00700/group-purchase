@@ -1,17 +1,17 @@
 # 공동구매 프로젝트 인계
 
-갱신일: 2026-11-03 KST
+갱신일: 2026-11-04 KST
 
-- 현재: **005 DB·secret·권한 및 JDBC·Flyway 연결 스텝 완료. 005 전체는 진행 중**.
-- 먼저 읽기: `AGENTS.md` → 이 문서 → [005 실행 요약](implementation/plan/005-postgresql-foundation.md#execution-summary) → [최신 설계 대조·보완 결과](implementation/005-postgresql-foundation.md#design-alignment-results)·[연결 직접 테스트](implementation/005-postgresql-foundation.md#jdbc-flyway-manual-tests). 상세 계약은 계획의 JDBC/Flyway 절에 있다.
-- 위치: `C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase`. 브랜치 `feat/postgresql-foundation`의 연결 구현 커밋 `c30909f`를 push하고 [PR #6](https://github.com/y0y00700/group-purchase/pull/6)을 main 대상으로 생성했다. 첫 DB 스텝 커밋은 `c69cf8d`이며 기존 연결 구현·설계·검증 변경을 보존했다.
-- PR 기준 재확인: PR #4 MERGED/base main, #5 MERGED/base feat/api-gateway. main `26c04834345f1d6edfaffee37755be729fbc29f8`의 [CI 두 job 성공](https://github.com/y0y00700/group-purchase/actions/runs/41564604744). main에는 첫 DB 스텝이 아직 없어 PR #6에 DB 기반·앱 연결을 함께 포함했다. 최종 head의 상태는 [PR #6 Checks](https://github.com/y0y00700/group-purchase/pull/6/checks)에서 확인한다. 기존 main 성공과 구분하며 merge/rebase·브랜치 변경·PR 병합 없음.
-- 구현: 공동구매만 JDBC/Flyway/드라이버, Config의 환경별 URL·풀·Flyway 정책, docker 필수 configtree와 자기 secret 하나, V1의 app 설명/PUBLIC 권한 정리. Boot/Cloud/Java/Gradle 버전 유지.
-- 최신 보완: 테스트 Spring 환경의 외부 시스템 프로퍼티/환경변수 대체값 배제, V1 전체 행 단일성·성공·checksum 검사 강화, fixture 준비 실패 정리 범위 보완. 제품의 파일 출처 강제 코드는 보류 유지.
-- 검증: 보완 후 실제 격리 DB의 공동구매 22개 실패 0(Config 11·Eureka 2·연결 9), 2분 44초. 기존 전체 build 36개·Compose 결과는 영향 없어 재사용했다. local/docker·SQL/V1/재기동·구분된 기동 실패·비노출 검증 유지. 새 근거 `.tmp/005-design-alignment-tests.txt`.
-- Compose: 새 공동구매 이미지 적용 후 다섯 healthy. application 권한 검사·DB 재생성 후 probe/V1 이력 불변·앱 재시작 이력 불변·발견/Gateway 회귀 통과. 초기화 격리 검사는 database 단계로 통과했다.
-- 데이터 경계: 일반 `group-purchase_postgres-data` 보존, 기존 secret 다섯 파일 SHA-256 불변. 일반 DB에는 의도한 app/V1 적용, 검사 probe는 정리. 오류 migration/checksum은 별도 임시 DB에서만 검증. 자동 clean/repair·이력 변조·일반 볼륨 삭제 금지.
-- 재실행: Docker Desktop Linux 엔진·JDK 21/JAVA_HOME 필요. 제한 환경의 Gradle 캐시/Docker pipe 접근은 권한 있는 실행이 필요했다. 실제 암호를 argv·로그에 넣지 않는다. 근거는 Git 제외 `.tmp/005-*.txt`와 모듈별 HTML 결과.
-- 다음: 장시간 DB 중단 후 **동일 앱 PID**의 health 503→200·새 SQL 연결·Eureka 수렴, Windows local JAR 전체 연동, 전체 down/up 데이터 유지, 005 최종 검증. 이번 연결 스텝을 005 전체 완료로 표시하지 않는다.
-- 검사 선택: 앱 Flyway 적용 후 `python scripts/check-postgres.py --stage application`; 초기화 직후 임시 DB는 기본 database. 일반 DB에 database 검사를 실행하면 app 미생성 조건 때문에 실패한다.
-- 유지할 기존 경계: 고정 Config 주소·프로필별 등록 주소·클라이언트별 발견 캐시 대기·Eureka 별도 프로세스/출력 스레드 종료. 설계 충돌이면 근거·영향·추천 대안을 알린다.
+- 현재: **005 로컬 구현·최종 검증 완료, [후속 PR #7](https://github.com/y0y00700/group-purchase/pull/7) OPEN/main 대상**. 006은 시작하지 않았다.
+- 먼저 읽기: `AGENTS.md` → 이 문서 → [005 실행 요약](implementation/plan/005-postgresql-foundation.md#execution-summary) → [최종 결과](implementation/005-postgresql-foundation.md#runtime-final-results)·[직접 테스트/복구](implementation/005-postgresql-foundation.md#runtime-manual-tests).
+- 위치: `C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase`, 브랜치 `test/postgresql-runtime-recovery`를 최신 `origin/main` `3d601bd50a1c2d6bd829940b3f26202ea125d9c3`에서 생성했다. 기존 브랜치와 main의 파일 내용이 같음을 확인하고 모든 미커밋 구현·사용자 규칙 변경을 보존했다. merge/rebase 없음.
+- 원격 최신 확인: [PR #6](https://github.com/y0y00700/group-purchase/pull/6) MERGED/base main, [기존 head CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/41572899963), main `3d601bd50a1c2d6bd829940b3f26202ea125d9c3`의 [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/41585524931). 새 변경은 `9ed94ed`로 커밋·push했다. 정확한 최종 head와 새 변경의 CI는 [PR #7 Checks](https://github.com/y0y00700/group-purchase/pull/7/checks)를 기준으로 한다.
+- 새 구현: 제품과 분리된 opt-in `runtimeProbeJar` 두 개와 `scripts/check-runtime-recovery.py`. 앱 DataSource/context·각 DiscoveryClient·Gateway supplier를 관찰하며 일반 제품 JAR에는 관찰 코드가 없다.
+- 실제 검증: DB 중단 120.033초, 같은 앱 PID/context health 503→200·새 물리 SQL 연결·Eureka DOWN→UP·각 캐시/전달 수렴. 일반 Windows 제품 JAR 두 개도 local 환경변수·Flyway·등록/전달 통과.
+- 전체 down/up: probe·Flyway 전체 행·볼륨 inspect 불변, 전후 계정 접근 검사 통과. 전체 실행 465.084초/종료 0. 근거 `.tmp/005-final-runtime.{txt,json}` 및 final probe/product 로그.
+- 회귀: 기존 공동구매 22개·전체 build/격리 오류 migration·초기화·비노출 근거 재사용. 최종 루트 Gradle 포장 보완 후 build/관찰 JAR 4초·33 task UP-TO-DATE, 두 Docker 이미지 빌드·실행/DB·발견·Gateway 재확인 통과. 제품 JAR 관찰 코드 미포함·Python 문법/형식 검사 통과.
+- 종료 상태: local 검사 PID·probe 제거, 부모 환경/secret 다섯 파일 hash 동일. 일반 `group-purchase_postgres-data` 유지, 다섯 Compose 서비스 healthy·docker 발견/전달 정상으로 복구.
+- 경계: 자동 clean/repair·이력 변조·일반 `down -v` 금지. 오류 SQL/checksum은 기존 격리 테스트에서만 검증한다. ping은 DB를 사용하지 않으며 장애 중 Gateway 특정 코드 보장 없음.
+- 실행: Docker Desktop Linux 엔진·JDK 21 JAVA_HOME·Python 3 필요. 이 환경에서는 Docker/네트워크/Gradle 실행에 권한 있는 명령이 필요했다. 재실행은 위 직접 테스트 문서를 따른다.
+- 학습: [PostgreSQL·Flyway 역할과 복구](explanations/postgresql-flyway.md) 생성(기존 정책대로 Git 제외).
+- 다음: [후속 PR 기록](implementation/005-postgresql-foundation.md#runtime-pr)과 PR #7의 최종 head Checks를 기준으로 검토한다. 사용자 요청으로 커밋·push·PR을 진행했으며 PR 병합·006 구현은 요청 범위 밖이다.

@@ -24,4 +24,23 @@ subprojects {
       useJUnitPlatform()
     }
   }
+
+  if (name in ['group-purchase-service', 'api-gateway']) {
+    pluginManager.withPlugin('org.springframework.boot') {
+      // Opt-in local verification artifact; product bootJar and Docker need no probe sources.
+      def probe = sourceSets.create('runtimeProbe')
+      probe.java.srcDir rootProject.file('scripts/runtime-probe')
+      probe.compileClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+      probe.runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+      def bootJarType = plugins.getPlugin('org.springframework.boot').class.classLoader
+          .loadClass('org.springframework.boot.gradle.tasks.bundling.BootJar')
+      tasks.register('runtimeProbeJar', bootJarType) {
+        dependsOn tasks.named('runtimeProbeClasses'), tasks.named('classes')
+        archiveClassifier = 'runtime-probe'
+        mainClass = 'com.example.runtimeprobe.RuntimeProbe'
+        targetJavaVersion = JavaVersion.VERSION_21
+        classpath = probe.runtimeClasspath
+      }
+    }
+  }
 }
