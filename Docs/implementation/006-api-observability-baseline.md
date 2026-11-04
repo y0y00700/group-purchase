@@ -52,6 +52,8 @@
 
 2026-11-04 사용자가 PR 생성을 요청했다. 준비 시점의 최신 main은 `e5c87d80ed5b1411c9f18766ef082320b33460c5`로 브랜치 기준과 같고, [기존 main CI 두 검사](https://github.com/y0y00700/group-purchase/actions/runs/41754743919)는 성공이며 열린 PR은 없었다. GitHub 커넥터는 저장소 접근 오류여서 Git/gh로 진행한다. 006 브랜치의 원격 CI는 PR 생성 후 상태와 구분하며, 생성·push 후 완료를 기다리거나 반복 조회하지 않는다. PR 병합은 요청 범위에 포함하지 않는다.
 
+구현·테스트·문서 45개 파일을 `3965777cc51b6327dc342f6ae8fe32ec66803de4`로 커밋·push하고 main 대상 [PR #8](https://github.com/y0y00700/group-purchase/pull/8)을 생성했다. PR 링크를 반영하는 문서 커밋을 같은 브랜치에 추가하며, 정확한 최종 head와 원격 검사 상태는 [PR #8 Checks](https://github.com/y0y00700/group-purchase/pull/8/checks)를 기준으로 한다. 기존 main 성공·로컬 50개 결과를 이번 PR CI 성공으로 간주하지 않는다. 커밋 전 문서 링크 132개·Python 문법·변경 형식·실제 secret 값 제외를 확인했고, Git 제외 학습 노트·원시 로그·생성 산출물은 포함하지 않았다. PR은 병합하지 않았다.
+
 ## 기준 구현 검증
 
 이 절은 **직접 작성 주석 전환 전의 활성 구현** 근거다. 최종 활성 기준 소스의 전체 46개 테스트가 실패/오류/skip 없이 통과했다. 주석 전환 전 XML 요약과 제품 JAR SHA-256은 `.tmp/006-baseline-tests.json`에 보관했다.
