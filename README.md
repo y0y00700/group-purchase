@@ -89,7 +89,7 @@ group-purchase/
 - 중앙 설정 폴더는 Config 컨테이너에 읽기 전용으로 마운트한다. 비밀값은 이 폴더나 이미지에 넣지 않고 필요한 서비스에 별도로 주입한다.
 - 설정 누락·환경 불일치·Config 접속 실패는 기동 실패로 처리한다. 설정 변경은 클라이언트 재시작으로 반영한다.
 - 기동 후 Config 장애는 이미 받은 설정을 없애지 않는다. 클라이언트의 헬스는 Config의 지속적인 가용성에 종속시키지 않으며 새 기동에는 Config가 필요하다.
-- 호스트 포트는 `127.0.0.1`에만 바인딩한다. 클라이언트는 `health`와 허용한 설정 식별 정보 `info`만 Actuator로 노출한다.
+- 호스트 포트는 `127.0.0.1`에만 바인딩한다. 클라이언트는 `health,info,metrics`를 Actuator로 노출하며 Config는 `health,metrics`를 노출한다. Gateway 관리는 9000으로 분리하고 공개 8000은 ping만 허용한다.
 - Eureka 장애는 앱 실행을 유지하며 등록·조회 재시도로 복구한다. local에서는 `localhost:8080`, docker에서는 내부 DNS 이름 `group-purchase-service:8080`을 등록한다. 앱 헬스와 Eureka 등록 성공은 별도 검사한다.
 
 ## CI
@@ -107,3 +107,5 @@ GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and 
 - [004 Gateway 계획](Docs/implementation/plan/004-api-gateway.md) · [구현 결과·직접 테스트](Docs/implementation/004-api-gateway.md)
 - [005 PostgreSQL 실행 기반 계획](Docs/implementation/plan/005-postgresql-foundation.md) · [최종 결과](Docs/implementation/005-postgresql-foundation.md#runtime-final-results) · [장애 복구·Windows JAR·전체 down/up 직접 테스트](Docs/implementation/005-postgresql-foundation.md#runtime-manual-tests): 로컬 구현·최종 검증 완료
 - [001 Gradle·YAML·CI 전환 결과](Docs/implementation/001-multi-module-build.md)
+
+006의 오류 계약·요청 ID·JSON 로그·probes/metrics와 여섯 학습 구간의 작성·로컬 최종 검증을 완료했다. [최종 결과·사용자 직접 테스트](Docs/implementation/006-api-observability-baseline.md#final-results)에 현재 소스의 50개 테스트 결과·네 이미지/다섯 서비스·실제 관측/DB 복구·Windows 제품 JAR 근거를 기록했다. 원격 PR/CI 상태는 최신 인계에서 구분한다.

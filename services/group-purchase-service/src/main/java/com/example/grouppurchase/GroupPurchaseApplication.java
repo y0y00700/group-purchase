@@ -9,7 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 public class GroupPurchaseApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GroupPurchaseApplication.class, args);
+		var application = new SpringApplication(GroupPurchaseApplication.class);
+        application.addListeners(new EarlyFailureLogging("group-purchase"));
+        application.run(args);
 	}
 
 }

@@ -1,4 +1,6 @@
 spring:
+  main:
+    banner-mode: off
   application:
     name: api-gateway
   profiles:
@@ -47,3 +49,12 @@ app:
 management:
   server:
     port: 0
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+        environment: local

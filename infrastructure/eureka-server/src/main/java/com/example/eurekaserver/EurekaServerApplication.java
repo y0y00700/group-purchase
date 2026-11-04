@@ -11,6 +11,8 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
 public class EurekaServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(EurekaServerApplication.class, args);
+        var application = new SpringApplication(EurekaServerApplication.class);
+        application.addListeners(new EarlyFailureLogging("eureka-server"));
+        application.run(args);
     }
 }

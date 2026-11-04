@@ -9,6 +9,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 public class ApiGatewayApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ApiGatewayApplication.class, args);
+        var application = new SpringApplication(ApiGatewayApplication.class);
+        application.addListeners(new EarlyFailureLogging("api-gateway"));
+        application.run(args);
     }
 }

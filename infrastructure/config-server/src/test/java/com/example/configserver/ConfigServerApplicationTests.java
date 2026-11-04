@@ -42,8 +42,12 @@ class ConfigServerApplicationTests {
         var health = get("/actuator/health");
         assertThat(health.statusCode()).isEqualTo(200);
         assertThat(JsonPath.<String>read(health.body(), "$.status")).isEqualTo("UP");
-        // Config Server also maps /{application}/{profile}; it must never expose Actuator env data.
-        assertThat(get("/actuator/env").body()).doesNotContain("server-only-fixture");
+        // The reserved namespace must not fall through to /{application}/{profile}.
+        for (String name : new String[]{"env", "configprops", "beans", "loggers", "heapdump", "threaddump", "info"}) {
+            var denied = get("/actuator/" + name);
+            assertThat(denied.statusCode()).as(name).isEqualTo(404);
+            assertThat(denied.body()).doesNotContain("server-only-fixture", "propertySources");
+        }
     }
 
     @Test

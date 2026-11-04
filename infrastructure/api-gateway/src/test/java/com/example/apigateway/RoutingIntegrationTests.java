@@ -18,6 +18,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -27,7 +31,20 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ExtendWith(OutputCaptureExtension.class)
+@org.springframework.context.annotation.Import(RoutingIntegrationTests.Failures.class)
 class RoutingIntegrationTests {
+
+    @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods = false)
+    static class Failures {
+        @org.springframework.context.annotation.Bean
+        @org.springframework.core.annotation.Order(-100)
+        org.springframework.web.server.WebFilter failureFixture() {
+            return (exchange, chain) -> exchange.getRequest().getPath().value().equals("/_fixture/crash")
+                    ? reactor.core.publisher.Mono.error(new IllegalStateException("SENTINEL_GW_006_EXCEPTION"))
+                    : chain.filter(exchange);
+        }
+    }
 
     private static final AtomicInteger RECEIVED = new AtomicInteger();
     private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
@@ -88,6 +105,84 @@ class RoutingIntegrationTests {
         assertThat(exchange.getResponse().getStatusCode().value()).isEqualTo(504);
     }
 
+    @Test
+    void problemsAndForwardedIdsAreSafeAndLogsAreIsolated(CapturedOutput output) throws Exception {
+        var json = JsonMapper.builder().build();
+        var ids = new java.util.HashSet<String>();
+        try (var client = HttpClient.newHttpClient()) {
+            var futures = java.util.stream.IntStream.range(0, 12).mapToObj(i -> client.sendAsync(
+                    HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/group-purchases/ping"))
+                            .header("X-Request-Id", "a".repeat(32)).header("Authorization", "SENTINEL_GW_006").build(),
+                    HttpResponse.BodyHandlers.ofString())).toList();
+            for (var future : futures) {
+                var response = future.join();
+                String id = response.headers().firstValue("X-Request-Id").orElseThrow();
+                assertThat(id).matches("[0-9a-f]{32}").isNotEqualTo("a".repeat(32));
+                assertThat(ids.add(id)).isTrue();
+                assertThat(json.readTree(response.body()).get("requestId").asText()).isEqualTo(id);
+            }
+        }
+        for (String path : new String[] {"/not-found?secret=SENTINEL_GW_006", "/_fixture/refused", "/_fixture/missing"}) {
+            var response = request(path, "GET", null);
+            var body = json.readTree(response.body());
+            assertThat(response.statusCode()).isIn(404, 502, 503);
+            assertThat(body.get("status").asInt()).isEqualTo(response.statusCode());
+            assertThat(body.get("requestId").asText()).isEqualTo(response.headers().firstValue("X-Request-Id").orElseThrow());
+            assertThat(body.get("type").asText()).isEqualTo("about:blank");
+            assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/problem+json");
+        }
+        var downstream = request("/api/group-purchases/ping?status=503", "GET", null);
+        assertThat(downstream.statusCode()).isEqualTo(503);
+        assertThat(json.readTree(downstream.body()).has("code")).isFalse();
+        var crash = request("/_fixture/crash?secret=SENTINEL_GW_006_QUERY", "GET", null);
+        assertThat(crash.statusCode()).isEqualTo(500);
+        assertThat(json.readTree(crash.body()).get("code").asText()).isEqualTo("INTERNAL_ERROR");
+        assertThat(json.readTree(crash.body()).get("requestId").asText())
+                .isEqualTo(crash.headers().firstValue("X-Request-Id").orElseThrow());
+        assertThat(output.getAll()).doesNotContain("SENTINEL_GW_006");
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(3);
+        while (System.nanoTime() < deadline && ids.stream().anyMatch(id -> !output.getAll().contains(id))) Thread.sleep(10);
+        var events = output.getAll().lines().filter(line -> line.startsWith("{"))
+                .map(json::readTree).filter(node -> node.has("event")).toList();
+        for (String id : ids) assertThat(events.stream().filter(node -> node.path("requestId").asText().equals(id)).count()).isEqualTo(1);
+    }
+
+    @Test
+    void unexpectedAndCommittedFailureBoundaries() {
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/absent"));
+        new RoutingFailureHandler().handle(exchange, new IllegalStateException("SENTINEL_GW_006")).block();
+        assertThat(exchange.getResponse().getStatusCode().value()).isEqualTo(500);
+        assertThat(exchange.getResponse().getBodyAsString().block()).contains("INTERNAL_ERROR").doesNotContain("SENTINEL_GW_006");
+        var committed = MockServerWebExchange.from(MockServerHttpRequest.get("/committed"));
+        committed.getResponse().setComplete().block();
+        var failure = new IllegalStateException("safe");
+        assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> new RoutingFailureHandler().handle(committed, failure).block()))
+                .isSameAs(failure);
+    }
+
+    @Test
+    void schedulerSwitchAndCancellationKeepContextWithoutMdc(CapturedOutput output) {
+        var filter = new RequestIdWebFilter();
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/scheduled")
+                .header("X-Request-Id", "forged"));
+        filter.filter(exchange, forwarded -> reactor.core.publisher.Mono.deferContextual(context -> {
+            assertThat(context.<String>get("requestId")).isEqualTo(RequestIdWebFilter.requestId(exchange));
+            assertThat(forwarded.getRequest().getHeaders().get("X-Request-Id"))
+                    .containsExactly(RequestIdWebFilter.requestId(exchange));
+            assertThat(org.slf4j.MDC.get("requestId")).isNull();
+            return reactor.core.publisher.Mono.<Void>empty();
+        }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())).block();
+        var cancelled = MockServerWebExchange.from(MockServerHttpRequest.get("/cancelled"));
+        var subscription = filter.filter(cancelled, forwarded -> reactor.core.publisher.Mono.never()).subscribe();
+        subscription.dispose();
+        var json = JsonMapper.builder().build();
+        var events = output.getAll().lines().filter(line -> line.startsWith("{"))
+                .map(json::readTree).filter(node -> node.path("requestId").asText().equals(RequestIdWebFilter.requestId(cancelled))).toList();
+        assertThat(events).hasSize(1);
+        assertThat(events.getFirst().get("termination").asText()).isEqualTo("cancelled");
+        assertThat(events.getFirst().get("status").isNull()).isTrue();
+    }
+
     private HttpResponse<String> request(String path, String method, String trace) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
                 .timeout(Duration.ofSeconds(10))
@@ -112,7 +207,8 @@ class RoutingIntegrationTests {
                         && exchange.getRequestURI().getQuery().contains("status=503") ? 503 : 200;
                 String body = "{\"path\":\"" + exchange.getRequestURI().getPath()
                         + "\",\"query\":\"" + exchange.getRequestURI().getQuery()
-                        + "\",\"trace\":\"" + exchange.getRequestHeaders().getFirst("X-Test-Trace") + "\"}";
+                        + "\",\"trace\":\"" + exchange.getRequestHeaders().getFirst("X-Test-Trace")
+                        + "\",\"requestId\":\"" + exchange.getRequestHeaders().getFirst("X-Request-Id") + "\"}";
                 byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
                 try {
                     exchange.getResponseHeaders().set("Content-Type", "application/json");

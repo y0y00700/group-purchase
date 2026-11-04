@@ -63,6 +63,9 @@ jobs:
       - name: Check Gateway routing and private paths
         run: python3 scripts/check-gateway.py
 
+      - name: Check API observability and probe recovery
+        run: python3 scripts/check-api-observability.py --db-recovery
+
       - name: Collect service diagnostics
         if: failure()
         run: |

@@ -1,4 +1,6 @@
 spring:
+  main:
+    banner-mode: off
   application:
     name: group-purchase
   profiles:
@@ -9,3 +11,12 @@ spring:
     config:
       request-connect-timeout: 1000
       request-read-timeout: 5000
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+        environment: ${app.configuration.environment:${SPRING_PROFILES_ACTIVE:local}}

@@ -1,0 +1,13 @@
+spring:
+  main:
+    banner-mode: off
+  application:
+    name: group-purchase
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: group-purchase
+        environment: local
