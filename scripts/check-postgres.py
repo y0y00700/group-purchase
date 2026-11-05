@@ -45,7 +45,7 @@ def permissions(stage):
     for db in DATABASES:
         checks.append(f'export PGPASSWORD="$(cat /run/secrets/{db}_password)"')
         schema_condition = "NOT EXISTS (SELECT FROM pg_namespace WHERE nspname = 'app')"
-        if stage == "application" and db == "group_purchase":
+        if stage == "application" and db in ("group_purchase", "member"):
             schema_condition = """EXISTS (SELECT FROM pg_namespace WHERE nspname='app'
                 AND pg_get_userbyid(nspowner)=current_user)
                 AND NOT EXISTS (SELECT FROM pg_namespace n, LATERAL aclexplode(n.nspacl) a

@@ -1,0 +1,62 @@
+server:
+  port: 8081
+
+app:
+  configuration:
+    service: member
+    revision: "007-v1"
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    should-enforce-registration-at-init: false
+    healthcheck:
+      enabled: true
+    timeout:
+      connect-timeout: 1000
+      connect-request-timeout: 1000
+      socket-timeout: 5000
+  instance:
+    instance-id: "${spring.application.name}:${app.configuration.environment}:${spring.cloud.client.hostname}:${server.port}"
+    prefer-ip-address: false
+    health-check-url-path: /actuator/health
+    status-page-url-path: /actuator/info
+
+spring:
+  datasource:
+    username: member_app
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 3000
+  flyway:
+    schemas: app
+    default-schema: app
+    create-schemas: true
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: false
+    connect-retries: 0
+  session:
+    timeout: 30m
+    jdbc:
+      initialize-schema: never
+      cleanup-cron: '0 * * * * *'
+  sql:
+    init:
+      mode: never
+  cloud:
+    discovery:
+      client:
+        health-indicator:
+          enabled: false
+        composite-indicator:
+          enabled: false
+
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,db

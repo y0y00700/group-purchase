@@ -24,3 +24,6 @@ project(':eureka-server').projectDir = file('infrastructure/eureka-server')
 
 include 'api-gateway'
 project(':api-gateway').projectDir = file('infrastructure/api-gateway')
+
+include 'member-service'
+project(':member-service').projectDir = file('services/member-service')

@@ -2,7 +2,7 @@
 
 # 아키텍처와 API·인증
 
-정리 기준: 2026-10-30. 목표 서비스 경계와 계약을 설명한다. 현재 구현은 Config Server와 중앙 설정을 받는 공동구매 초기 웹 앱이며, 업무 기능은 후속 단계다.
+정리 기준: 2026-11-05 (DDD 패키지·의존 방향 합의 추가). 목표 서비스 경계와 계약을 설명한다. 현재 구현 단계와 검증 상태는 [최신 인계](../handoff.md)를 따른다.
 
 <a id="technology"></a>
 
@@ -40,6 +40,34 @@
 - **상품 정보는 공동구매 서비스가 공동구매별로 관리한다.** MVP에서는 별도 상품 서비스를 두지 않는다.
 
 공동구매 서비스 내부에서는 상품 정보·공동구매·참여의 책임을 구분한다. 각 영역의 데이터는 공동구매 서비스가 소유하고 변경한다. 클래스·테이블·애그리거트 구성과 구체적인 트랜잭션 범위는 후속 설계에서 정한다.
+
+<a id="package-structure"></a>
+
+## DDD 패키지와 의존 방향
+
+2026-11-05 사용자 합의. 업무 서비스별 경계를 유지하고 내부를 `domain`, `application`, `interfaces`, `infrastructure`, `config`로 나눈다. 회원 서비스는 서비스 루트 아래에 이 계층을 배치한다. 공동구매처럼 여러 업무 영역을 가진 서비스는 `purchase`, `participation` 등 업무별 패키지 안에 같은 계층을 배치하고, 서비스 전체의 조립 설정은 루트 `config`에 둔다. 패키지 추가 자체로 별도 서비스나 애그리거트 경계를 확정하지 않는다.
+
+| 패키지 | 책임 | 허용하는 의존 |
+|---|---|---|
+| `domain` | 회원·공동구매 등 업무 모델, 값 객체, 상태/역할 규칙, 애그리거트 저장소 인터페이스 | Java 기본 타입과 같은 서비스의 도메인 모델. HTTP·Security·JDBC·다른 계층 의존 금지 |
+| `application` | 사용 사례 실행·트랜잭션 조율·입출력 모델, 외부 기능에 필요한 포트 | domain 및 자신이 정의한 포트. HTTP 요청/응답·Security Authentication·JDBC 구현에 직접 의존하지 않음 |
+| `interfaces` | HTTP/내부 API/명령행 입력의 검증과 애플리케이션 입출력 변환 | application. HTTP/CSRF 같은 외부 프로토콜 지원은 infrastructure에서 재사용할 수 있으나 저장소 구현을 직접 호출하거나 업무 규칙을 소유하지 않음 |
+| `infrastructure` | JDBC 저장소, Security 연동, 세션/CSRF·Servlet 필터 등 기술 구현 | domain/application의 인터페이스·모델 및 필요한 기술 라이브러리 |
+| `config` | Bean·필터 체인·구현체 조립과 설정 | 조립에 필요한 각 계층. 업무 규칙을 넣지 않음 |
+
+```text
+interfaces ──→ application ──→ domain
+infrastructure ──→ domain / application의 포트
+config ──→ 구현체 조립
+```
+
+이는 코드 의존 방향이다. 실행 시에는 application이 인터페이스를 통해 infrastructure 구현을 호출할 수 있다. 트랜잭션 선언을 위한 Spring 의존은 application에서 허용한다. domain은 프레임워크 없이 업무 규칙을 표현한다.
+
+저장소 인터페이스는 해당 domain에, JDBC 구현은 infrastructure에 둔다. 비밀번호 검증 같은 기술 기능의 포트는 application에 두고 Spring 구현은 infrastructure에서 제공한다. HTTP DTO, 애플리케이션 결과, 도메인 모델, 세션 principal을 각 용도에 맞게 구분하며 프레임워크 객체를 안쪽 계층으로 넘기지 않는다. 오류의 HTTP 상태·ProblemDetail 매핑은 외부 계층에서 수행한다.
+
+Config/Eureka/Gateway 같은 인프라 앱은 기술 책임에 맞춰 패키지를 구분하며 업무 도메인·애그리거트를 억지로 만들지 않는다. 공통 엔티티/업무 로직 모듈이나 새 아키텍처 라이브러리는 이 합의로 도입하지 않는다. 애그리거트·값 객체·도메인 이벤트의 상세 경계는 실제 업무 규칙을 구현하는 단계에서 정한다.
+
+적용 시작점은 [007 회원 서비스 패키지 재구성 계획](../implementation/plan/007-member-session-authentication.md#ddd-packages)이다. 기존 소스의 이동·책임 분리·학습 구간 보존·회귀 검증은 해당 구현 범위로 진행하며, 이 설계 합의만으로 소스 적용 완료로 표시하지 않는다.
 
 <a id="purchase-responsibility"></a>
 

@@ -7,8 +7,8 @@ import secrets
 def main():
     directory = Path(__file__).resolve().parents[1] / "secrets"
     directory.mkdir(exist_ok=True)
-    for name in ("postgres", "member", "group_purchase", "payment", "notification"):
-        path = directory / f"{name}_password"
+    for filename in ("postgres_password", "member_password", "group_purchase_password", "payment_password", "notification_password", "member_internal_credential"):
+        path = directory / filename
         try:
             with path.open("x", encoding="ascii", newline="\n") as stream:
                 stream.write(secrets.token_hex(32))

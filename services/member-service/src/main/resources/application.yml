@@ -1,0 +1,22 @@
+spring:
+  main:
+    banner-mode: off
+  application:
+    name: member
+  profiles:
+    default: local
+  config:
+    import: "configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  cloud:
+    config:
+      request-connect-timeout: 1000
+      request-read-timeout: 5000
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+        environment: ${app.configuration.environment:${SPRING_PROFILES_ACTIVE:local}}
