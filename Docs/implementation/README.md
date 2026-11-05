@@ -6,7 +6,7 @@
 |---|---|---|
 | 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~007 로컬 구현·검증 완료 |
 | 완료 계획 | [007: 회원·세션 인증](plan/007-member-session-authentication.md#execution-summary) | DDD 구조·여섯 Step 사용자 작성·묶음 리뷰·현재 소스/제품 재검증 완료. Gateway 인증 연결은008 |
-| 완료 결과 | [007: 최종 결과·직접 테스트](007-member-session-authentication.md#final-results) | 현재 사용자 소스64개 테스트 결과 유효·실패/오류/skip 0, 회원 이미지 갱신/여섯 Compose·이전 세션 호환·두 회원 인스턴스·Windows 제품 JAR 검증. 여섯 작성 구간 리뷰·임시 표식 정리 완료 |
+| 완료 결과 | [007: 최종 결과·직접 테스트](007-member-session-authentication.md#final-results) | 현재 사용자 소스64개 테스트 결과 유효·실패/오류/skip 0, 회원 이미지 갱신/여섯 Compose·이전 세션 호환·두 회원 인스턴스·Windows 제품 JAR 검증. [PR #9](https://github.com/y0y00700/group-purchase/pull/9) 생성·Build/Smoke 대기 없음 |
 | 완료 계획 | [006: API·로그·헬스 기준](plan/006-api-observability-baseline.md#execution-summary) | 세 묶음·여섯 Step 작성·최종 통합 검증 완료 |
 | 완료 결과 | [006: 최종 결과·직접 테스트](006-api-observability-baseline.md#final-results) | 현재 소스 50개 테스트 결과 유효·실패/오류/skip 0, 네 이미지/다섯 Compose·실제 관측·동일 프로세스 DB 복구·Windows JAR 통과. 원격 상태는 결과·인계 참조 |
 | 완료 계획 | [005: PostgreSQL 실행 기반](plan/005-postgresql-foundation.md) | DB·JDBC/Flyway·동일 앱 장애 복구·Windows JAR·전체 down/up 완료 |

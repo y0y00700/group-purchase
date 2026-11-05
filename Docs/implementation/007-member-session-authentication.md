@@ -4,18 +4,20 @@
 
 ## 현재 상태
 
-**007 로컬 구현·사용자 6개 Step 작성·묶음 리뷰·재검증 완료.** 현재 실제 소스에 작성 대기 예외나 중복 참고 주석이 없다. Gateway 인증 연결은008로 남겼으며 커밋·push·PR·병합은 별도 요청을 따른다.
+**007 로컬 구현·사용자 6개 Step 작성·묶음 리뷰·재검증 완료 / [PR #9](https://github.com/y0y00700/group-purchase/pull/9) 생성.** 현재 실제 소스에 작성 대기 예외나 중복 참고 주석이 없다. Gateway 인증 연결은008로 남겼으며 병합은 수행하지 않았다.
 
 <a id="pull-request"></a>
 
-## PR 준비
+## PR 기록
 
-2026-11-05 사용자의 PR 생성 요청으로 커밋·push·main 대상 PR을 준비한다. 병합은 요청 범위에 포함하지 않는다.
+2026-11-05 사용자 요청으로 커밋·push 후 main 대상 [PR #9](https://github.com/y0y00700/group-purchase/pull/9)를 생성했다. 병합은 요청 범위에 포함하지 않는다.
 
+- 브랜치 `feat/member-session-authentication` → `main`. 구현 커밋 `49a376edb3eac9b655a2d5e0d23f83f1f25b66f7`에 71개 파일의 변경을 포함했다. PR 링크·인계 반영용 후속 문서 커밋도 같은 브랜치에 push하며 최종 head는 PR을 기준으로 확인한다.
 - 최신 원격 확인: 열린 PR 없음, main `d5d0396474797ac734caa95b1f1805aaa4f6132b`, [main CI 두 검사 성공](https://github.com/y0y00700/group-purchase/actions/runs/41989123469). fetch 후 기존 기준 HEAD와 main의 파일 트리 차이 0개 확인.
 - 회원 현재 main 소스·리소스의 경로/내용 SHA-256 및 제품 JAR SHA-256이 위 최종 검증 기록과 일치했다. 기존 테스트 XML 64개·실패/오류/skip 0도 확인했다. 관련 소스 변경이 없어 전체 빌드·Compose를 반복하지 않았다.
 - 로컬 학습/explanations·임시 증거·secret은 기존 Git 제외 정책을 유지한다. PR에는 서비스·설정·검사·CI·계획/결과/인계 문서를 포함한다.
 - PR/push 후 Build/Smoke 완료 대기·반복 조회는 하지 않는다. PR·최종 head·Checks 링크와 확인 당시 상태를 안내한다.
+- 원격 검사의 현재 결과는 [PR Checks](https://github.com/y0y00700/group-purchase/pull/9/checks)를 따른다. 위 main CI와 로컬 성공을 새 PR의 CI 성공으로 표시하지 않는다.
 
 <a id="final-results"></a>
 
