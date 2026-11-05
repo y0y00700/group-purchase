@@ -2,10 +2,22 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  metrics:
+    tags:
+      service: ${spring.application.name}
+      environment: ${app.configuration.environment:local}
   health:
     config:
       enabled: false

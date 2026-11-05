@@ -2,7 +2,7 @@
 
 작성일: 2026-11-02 · 실행 범위 보완·완료: 2026-11-04
 
-상태: **005 로컬 구현·최종 검증 완료**. 기존 DB·secret·권한/JDBC·Flyway 검증에 동일 앱 프로세스의 장시간 DB 장애 복구·Eureka/클라이언트별 수렴·Windows 제품 JAR·전체 Compose down/up 검증을 추가했다. [최종 근거](../005-postgresql-foundation.md#runtime-final-results)·[직접 테스트](../005-postgresql-foundation.md#runtime-manual-tests). 후속 사용자 요청으로 [커밋·PR 및 최종 head CI 확인](../005-postgresql-foundation.md#runtime-pr)을 진행한다.
+상태: **005 구현·로컬 최종 검증·후속 PR 생성 완료**. 기존 DB·secret·권한/JDBC·Flyway 검증에 동일 앱 프로세스의 장시간 DB 장애 복구·Eureka/클라이언트별 수렴·Windows 제품 JAR·전체 Compose down/up 검증을 추가했다. [최종 근거](../005-postgresql-foundation.md#runtime-final-results)·[직접 테스트](../005-postgresql-foundation.md#runtime-manual-tests)·[후속 PR과 확인한 최종 head CI](../005-postgresql-foundation.md#runtime-pr)를 따른다. PR 병합은 하지 않았다.
 
 [구현 목록](../README.md) · [로드맵](roadmap.md) · [프로젝트 인계](../../handoff.md) · [첫 DB 스텝 PR #5](https://github.com/y0y00700/group-purchase/pull/5)
 
@@ -24,12 +24,12 @@
 - **기동 실패:** DB/인증/migration 오류를 실패로 드러낸다. 기본 비밀번호·자동 clean/repair로 우회하지 않는다.
 - **실행 중 장애:** 앱 PID를 유지한 DB health DOWN/503 → UP/200과 새 SQL 연결을 확인한다.
 - **현재 완료 범위:** DB·secret·권한/JDBC·Flyway·정상/실패·영속성·회귀, 동일 PID/context 장애 복구·앱 DataSource 새 SQL, Eureka·각 발견 캐시·Gateway 수렴, Windows 제품 JAR·전체 down/up·정리. 실제 근거는 결과 문서가 소유한다.
-- **다음:** 후속 사용자 요청으로 완료 변경의 커밋·push·main 대상 PR과 최종 head CI를 확인한다. PR 병합·006 구현은 제외한다.
+- **다음:** 006 API·로그·헬스 기준 설계 검토. 005 후속 PR 생성·push와 당시 최종 head CI 확인을 마쳤으며, 이후 CI는 사용자 확인을 기본으로 한다. PR 병합·006 구현은 별도 요청을 따른다.
 - **연결 스텝 설계:** [JDBC·Flyway 연결](#jdbc-flyway-step)의 설정/secret·스키마/기동·실제 DB 테스트 세 묶음과 기존 fixture·검사·CI 정의 조정을 적용했다.
 - **변경 위치:** `compose.yml`, `infrastructure/postgres/init/`, `scripts/`, 공동구매 모듈, `config-repo/group-purchase*.yml`, CI·결과 문서.
 - **필수 회귀:** 기존 Config·Eureka 테스트에 격리 DB를 제공하고, 각 발견 캐시별 대기와 프로세스 정리를 유지한다.
 - **완료 기준:** 다섯 서비스 정상, 자기 DB 4쌍 성공·타 업무 DB 12쌍 거절, 이력·데이터 유지, 기동 실패/실행 중 복구·기존 기능·직접 테스트 확인.
-- **검증 구분:** 요청된 로컬 완료 기준 통과. 기존 정상/실패·격리 오류 migration 검증 재사용, 새 실제 실행 465.084초 통과. 이번 변경의 원격 CI는 후속 PR의 최종 head를 기준으로 별도 확인한다.
+- **검증 구분:** 요청된 로컬 완료 기준 통과. 기존 정상/실패·격리 오류 migration 검증 재사용, 새 실제 실행 465.084초 통과. 후속 PR의 마지막 확인한 최종 head CI 근거는 결과 문서에 기록했다. 이번 인계에서 실행 검증·원격 조회는 반복하지 않았다.
 - **구현 기준:** 추천안 채택. 기존 이미지 digest·버전/Boot BOM 연결 호환 검증을 재사용하고 `feat/postgresql-foundation`을 유지했다.
 - **원격 작업:** 코드 구현·로컬 검증과 커밋·push·PR 작업의 요청 범위를 구분한다. PR #4를 자동 병합하지 않는다.
 - **원격 기준(2026-11-04):** PR #6 MERGED, 기존 head `3d5cb0d`와 최신 main `3d601bd` CI 성공. 파일 내용이 같은 최신 main에서 `test/postgresql-runtime-recovery`를 생성하고 새 변경만 후속 PR로 제안한다. 정확한 PR·최종 head CI는 결과 문서가 소유한다.

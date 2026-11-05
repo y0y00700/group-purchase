@@ -26,11 +26,17 @@ services:
       start_period: 15s
 
   config-server:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     build:
       context: .
       dockerfile: infrastructure/config-server/Dockerfile
     environment:
       CONFIG_REPO_LOCATION: file:/config-repo/
+      APP_ENVIRONMENT: docker
     volumes:
       - type: bind
         source: ./config-repo
@@ -46,6 +52,11 @@ services:
       start_period: 30s
 
   eureka-server:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     build:
       context: .
       dockerfile: infrastructure/eureka-server/Dockerfile
@@ -66,6 +77,11 @@ services:
     stop_grace_period: 30s
 
   group-purchase-service:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     build:
       context: .
       dockerfile: services/group-purchase-service/Dockerfile
@@ -93,6 +109,11 @@ services:
     stop_grace_period: 30s
 
   api-gateway:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     build:
       context: .
       dockerfile: infrastructure/api-gateway/Dockerfile

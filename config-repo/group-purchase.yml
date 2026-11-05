@@ -48,3 +48,10 @@ spring:
           enabled: false
         composite-indicator:
           enabled: false
+
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,db

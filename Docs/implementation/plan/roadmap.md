@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001~005 로컬 구현·검증 완료. [005 PostgreSQL 계획](005-postgresql-foundation.md)의 DB·secret·권한/JDBC·Flyway에 장시간 장애 복구·Windows JAR·전체 down/up까지 완료했다. [최종 결과](../005-postgresql-foundation.md#runtime-final-results)와 [후속 PR·최종 head CI](../005-postgresql-foundation.md#runtime-pr)를 따른다. 006은 미착수다.
+상태: 001~006 로컬 구현·검증 완료. [005 PostgreSQL 계획](005-postgresql-foundation.md)의 DB·secret·권한/JDBC·Flyway에 장시간 장애 복구·Windows JAR·전체 down/up까지 완료했다. [006 API·로그·헬스 계획](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성·현재 활성 소스 최종 통합 검증도 완료했다. 실제 근거와 원격 상태는 각 단계의 결과·인계를 따른다.
 
 ## 진행 방식
 
@@ -75,7 +75,7 @@
 
 ## 다음 검토 대상
 
-[004: API Gateway 기본 라우팅](004-api-gateway.md)의 구현·검증과 PR #4 최종 head CI 성공을 확인했다. [005: PostgreSQL 실행 기반](005-postgresql-foundation.md)은 첫 DB·secret·계정·권한 스텝의 구현·로컬 검증을 완료했고 해당 범위의 PR을 진행한다. 다음 설계는 공동구매 JDBC/Flyway 연결이며 005 전체는 진행 중이다. 005 이후 순서는 API·로그·헬스 기준이다.
+[006 API·로그·헬스 기준](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성과 로컬 최종 통합 검증을 마쳤다. [006 최종 결과](../006-api-observability-baseline.md#final-results)와 최신 인계에서 PR/CI 상태를 확인한다. 다음 상세 계획 검토 대상은 **007 회원·세션 인증**이며 아직 착수하지 않았다.
 
 ## 근거
 

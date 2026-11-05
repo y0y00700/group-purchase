@@ -1,4 +1,6 @@
 spring:
+  main:
+    banner-mode: off
   application:
     name: config-server
   profiles:
@@ -32,7 +34,29 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,metrics
   endpoint:
     health:
       show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,configurationRepository
+
+  metrics:
+    tags:
+      service: ${spring.application.name}
+      environment: ${APP_ENVIRONMENT:local}
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+        environment: ${APP_ENVIRONMENT:local}
