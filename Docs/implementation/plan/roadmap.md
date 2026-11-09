@@ -75,7 +75,7 @@
 
 ## 다음 검토 대상
 
-[006 API·로그·헬스 기준](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성과 로컬 최종 통합 검증을 마쳤다. [006 최종 결과](../006-api-observability-baseline.md#final-results)와 최신 인계에서 PR/CI 상태를 확인한다. 다음 상세 계획 검토 대상은 **007 회원·세션 인증**이며 아직 착수하지 않았다.
+[006 API·로그·헬스 기준](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성과 로컬 최종 통합 검증을 마쳤다. [006 최종 결과](../006-api-observability-baseline.md#final-results)와 최신 인계에서 PR/CI 상태를 확인한다. 현재 [007 회원·세션 인증](007-member-session-authentication.md#execution-summary)은 DDD 패키지 재구성·핵심6개 Step 사용자 작성·묶음 리뷰·현재 소스 재검증 완료다. [실제 결과·직접 테스트](../007-member-session-authentication.md)를 따르며, 007은 로컬 완료이며 최종 근거는 결과 문서를 따른다. Gateway 인증 연결은 008이다.
 
 ## 근거
 

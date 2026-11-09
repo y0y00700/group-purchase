@@ -39,13 +39,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Set up Java 21 for product JAR checks
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build member product JAR
+        run: bash ./gradlew :member-service:bootJar --no-daemon
+
       - name: Prepare job-local database secrets
         run: python3 scripts/prepare-ci-secrets.py
 
       - name: Validate Compose definition
         run: docker compose config --quiet
 
-      - name: Build and start all five services
+      - name: Build and start all six services
         run: docker compose up --build --wait --wait-timeout 180
 
       - name: Check database boundaries and persistence
@@ -62,6 +72,9 @@ jobs:
 
       - name: Check Gateway routing and private paths
         run: python3 scripts/check-gateway.py
+
+      - name: Check member authentication on Compose and two product JARs
+        run: python3 scripts/check-member-auth.py
 
       - name: Check API observability and probe recovery
         run: python3 scripts/check-api-observability.py --db-recovery

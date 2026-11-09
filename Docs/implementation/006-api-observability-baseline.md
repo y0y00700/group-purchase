@@ -164,3 +164,5 @@ docker compose ps
 ## 학습 연결
 
 [API 오류·요청 ID·JSON 로그](../explanations/api-observability.md) · [Actuator health와 metrics](../explanations/actuator-health-metrics.md). Git 제외 정책을 유지한다. 실제 역할·적용 예시와 사용자 작성 후 최종 검증 상태를 반영했다.
+
+2026-11-05 추가: [ID 메서드·STEP-01~06 코드 해설](../learning/006-api-observability.md). 실제 소스를 읽으며 실행 순서·문법·실패 경계를 설명한다. 이번 해설 작성에서 실행 검증을 추가 수행한 것은 아니며 기존 최종 검증 기록은 그대로 유지한다.

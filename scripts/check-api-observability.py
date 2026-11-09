@@ -1,6 +1,6 @@
 """006 real Compose contracts. Optional --db-recovery stops/starts PostgreSQL, never deletes data.
 
-No third-party Python dependencies. Existing five healthy services and secrets required.
+No third-party Python dependencies. Existing six healthy services and secrets required.
 """
 import argparse
 import concurrent.futures
@@ -15,7 +15,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVICES = {"config-server": 8888, "eureka-server": 8761,
-            "group-purchase-service": 8080, "api-gateway": 9000}
+            "group-purchase-service": 8080, "api-gateway": 9000, "member-service": 8081}
 PING = "/api/group-purchases/ping"
 SENTINEL = "SENTINEL_PRIVATE_OBSERVABILITY_006"
 

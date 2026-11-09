@@ -44,4 +44,10 @@
 
 협업·학습 원칙과 최신 세션 인계는 로컬 전용 `Docs/process/collaboration.md`에서 관리하고, 설명 요청이 생기면 `Docs/explanations/`에 주제별 노트를 만든다. 두 경로는 기존처럼 Git에서 제외한다. 문서 통합·이동 기록은 로컬 `Docs/process/document-migration.json`에 남긴다.
 
-- 006: 세 추천안 채택·구현 중. [결과와 직접 테스트](implementation/006-api-observability-baseline.md)에서 기준 구현 검증과 사용자 작성 대기를 구분한다.
+## 메서드 코드 해설
+
+[2026-11-04 작성한 006 코드 해설](learning/006-api-observability.md)은 ID 메서드와 STEP-01~06의 실행 순서·코드 선택 이유·실패 예시·테스트를 한 파일에 모았다. `Docs/learning/`은 기존 Git 제외 정책을 유지하는 로컬 학습 디렉터리다.
+
+[006→007 Spring Security·세션 흐름](learning/007-spring-security-session-flow.md)은 요청 추적/오류 처리에서 세션 인증으로 이어지는 학습 문서다. 쿠키·CSRF·컨텍스트·필터 기본 개념, 로그인/조회/내부 확인/로그아웃 흐름, 두 단계의 직접 작성 구간과 현재 007 여섯 메서드를 설명한다. 2026-11-05 현재 DDD 소스 기준이며 이번 문서 작성에서 실행 검증은 추가하지 않았다.
+
+- 현재 구현: [007 회원·세션 인증 결과·직접 작성/테스트](implementation/007-member-session-authentication.md). DDD 구조·여섯 Step 사용자 작성·리뷰·현재 소스 재검증 완료다.

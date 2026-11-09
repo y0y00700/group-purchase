@@ -1,0 +1,20 @@
+app:
+  configuration:
+    environment: docker
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    hostname: member-service
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/member?currentSchema=app&connectTimeout=3&socketTimeout=5
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
