@@ -44,9 +44,14 @@ public class ApiExceptionResolver implements HandlerExceptionResolver, Ordered {
 
     static void write(HttpServletRequest request, HttpServletResponse response, int status, String id)
             throws IOException {
+        write(request, response, status, id, ApiProblems.code(status));
+    }
+
+    static void write(HttpServletRequest request, HttpServletResponse response, int status, String id, String code)
+            throws IOException {
         response.setStatus(status);
         response.setHeader(RequestIdFilter.HEADER, id);
         response.setContentType("application/problem+json");
-        if (!"HEAD".equals(request.getMethod())) response.getOutputStream().write(ApiProblems.bytes(status, id));
+        if (!"HEAD".equals(request.getMethod())) response.getOutputStream().write(ApiProblems.bytes(status, id, code));
     }
 }

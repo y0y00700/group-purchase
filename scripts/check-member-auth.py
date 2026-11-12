@@ -118,7 +118,8 @@ def main():
                 processes.append(subprocess.Popen(args, cwd=ROOT, env=tool.environment(), stdout=stream, stderr=stream))
                 wait(port)
             exercise(18081, 18082)
-            assert request(8000, '/api/members/me')[0] == 404
+            assert request(8000, '/api/members/me')[0] == 401
+            exercise(8000, 8081)
             assert request(8000, '/internal/auth/check', 'POST', body={'method': 'GET'})[0] == 404
             raw = subprocess.run(['docker', 'compose', 'logs', '--no-color', 'member-service'], cwd=ROOT,
                                  capture_output=True, check=True, timeout=20).stdout.decode()

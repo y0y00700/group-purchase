@@ -14,6 +14,9 @@ public class WebFilterConfiguration {
         return bean;
     }
     @Bean FilterRegistrationBean<BoundaryFilter> boundary(@Value("${app.auth.internal-credential}") String secret) {
+        if (!secret.matches("[A-Za-z0-9._~-]{32,}")) {
+            throw new IllegalArgumentException("Internal credential must contain at least 32 ASCII token characters");
+        }
         var bean=new FilterRegistrationBean<>(new BoundaryFilter(secret));
         bean.setOrder(SessionRepositoryFilter.DEFAULT_ORDER-1); bean.setDispatcherTypes(DispatcherType.REQUEST);
         return bean;

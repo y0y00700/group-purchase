@@ -91,6 +91,8 @@ services:
     secrets:
       - source: group_purchase_password
         target: spring.datasource.password
+      - source: group_purchase_internal_credential
+        target: app.auth.internal-credential
     depends_on:
       postgres:
         condition: service_healthy
@@ -154,6 +156,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       CONFIG_SERVER_URL: http://config-server:8888
+    secrets:
+      - source: member_internal_credential
+        target: app.auth.member-internal-credential
+      - source: group_purchase_internal_credential
+        target: app.auth.group-purchase-internal-credential
     depends_on:
       config-server:
         condition: service_healthy
@@ -181,6 +188,8 @@ secrets:
     file: ./secrets/payment_password
   member_internal_credential:
     file: ./secrets/member_internal_credential
+  group_purchase_internal_credential:
+    file: ./secrets/group_purchase_internal_credential
   notification_password:
     file: ./secrets/notification_password
 

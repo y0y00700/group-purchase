@@ -33,6 +33,7 @@ class ApiObservabilityTests {
                 "--eureka.client.enabled=false", "--spring.autoconfigure.exclude="
                         + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
                         + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
+                "--app.auth.internal-credential=" + PostgresFixture.INTERNAL_CREDENTIAL,
                 "--app.configuration.service=group-purchase", "--app.configuration.environment=local",
                 "--app.configuration.revision=test", "--logging.level.org.springframework.web=ERROR");
         port = ((WebServerApplicationContext) app).getWebServer().getPort();

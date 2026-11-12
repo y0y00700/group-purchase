@@ -49,7 +49,7 @@ jobs:
       - name: Build member product JAR
         run: bash ./gradlew :member-service:bootJar --no-daemon
 
-      - name: Prepare job-local database secrets
+      - name: Prepare job-local secrets
         run: python3 scripts/prepare-ci-secrets.py
 
       - name: Validate Compose definition
@@ -75,6 +75,9 @@ jobs:
 
       - name: Check member authentication on Compose and two product JARs
         run: python3 scripts/check-member-auth.py
+
+      - name: Check Gateway authentication and caller trust on Compose
+        run: python3 scripts/check-gateway-auth.py
 
       - name: Check API observability and probe recovery
         run: python3 scripts/check-api-observability.py --db-recovery

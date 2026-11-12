@@ -28,7 +28,10 @@ public class RequestIdWebFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String id = requestId(exchange);
         long started = System.nanoTime();
-        var request = exchange.getRequest().mutate().headers(headers -> headers.set(HEADER, id)).build();
+        var request = exchange.getRequest().mutate().headers(headers -> {
+            ExternalHeaders.sanitize(headers);
+            headers.set(HEADER, id);
+        }).build();
         var forwarded = exchange.mutate().request(request).build();
         exchange.getResponse().beforeCommit(() -> {
             exchange.getResponse().getHeaders().set(HEADER, id);

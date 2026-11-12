@@ -2,7 +2,7 @@
 
 Java 21 · Spring Boot 4.0.9 · Spring Cloud 2025.1.4 · Gradle Wrapper 9.8.2
 
-Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱·회원 서비스를 둔다. Gateway는 Eureka에서 공동구매 앱을 찾아 공개한 GET ping 요청을 전달한다. PostgreSQL·서비스별 DB/계정·접근 권한과 공동구매/회원 JDBC·Flyway 연결, 회원의 로그인·로그아웃·공유 세션·CSRF·내부 인증 확인을 구성했다. Gateway 인증 연결·공동구매 업무 API·Kafka는 후속 단계다.
+Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱·회원 서비스를 둔다. PostgreSQL에 서비스별 DB와 계정을 두고 공동구매·회원의 JDBC와 Flyway를 연결한다. Gateway는 공개 ping과 회원 API를 라우팅하고, 공동구매 보호 경로에서는 회원 세션과 CSRF를 확인한 뒤 검증된 신원을 전달한다.
 
 ## 빠른 실행과 직접 확인
 
@@ -26,7 +26,7 @@ Invoke-RestMethod http://localhost:8000/api/group-purchases/ping | ConvertTo-Jso
 
 여섯 서비스가 `healthy`이고 헬스 응답의 `status`가 `UP`이어야 한다. 공동구매 `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. 등록 검사는 UP 인스턴스와 주소 도달성을 확인하고 Gateway 검사는 실제 ping 200과 비공개 경로 404를 확인한다. Eureka 대시보드는 `http://localhost:8761/`, Config 조회는 `http://localhost:8888/group-purchase/docker`다. 공동구매 `/`에 사용자 화면은 없다.
 
-회원 API는 현재 `http://localhost:8081`로 직접 호출한다. 회원 준비·CSRF 발급·로그인·두 인스턴스 세션 공유·장애 복구는 [007 직접 테스트](Docs/implementation/007-member-session-authentication.md#사용자-직접-테스트-방법)를 따른다. 제품 JAR 검사에는 Java 21과 `JAVA_HOME`이 필요하다. Gateway의 회원 라우팅/인증 연결은 008에서 진행한다.
+회원과 보호 API는 Gateway `http://localhost:8000`을 통해 호출한다. 로그인부터 보호 요청과 거절 확인까지는 [008 직접 테스트](Docs/implementation/008-gateway-authentication.md#manual-tests)를 따른다. 회원 직접 호출과 두 인스턴스 세션 공유는 [007 직접 테스트](Docs/implementation/007-member-session-authentication.md#사용자-직접-테스트-방법)에 있다. 제품 JAR 검사에는 Java 21과 `JAVA_HOME`이 필요하다.
 
 ```powershell
 # 실행 로그
@@ -60,11 +60,14 @@ JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Wr
 
 # 터미널 3: Eureka 준비 후 시작한다.
 $previousPassword = $env:SPRING_DATASOURCE_PASSWORD
+$previousCredential = $env:APP_AUTH_INTERNAL_CREDENTIAL
 try {
     $env:SPRING_DATASOURCE_PASSWORD = (Get-Content -Raw secrets/group_purchase_password).TrimEnd("`r", "`n")
+    $env:APP_AUTH_INTERNAL_CREDENTIAL = (Get-Content -Raw secrets/group_purchase_internal_credential).TrimEnd("`r", "`n")
     .\gradlew.bat :group-purchase-service:bootRun
 } finally {
     $env:SPRING_DATASOURCE_PASSWORD = $previousPassword
+    $env:APP_AUTH_INTERNAL_CREDENTIAL = $previousCredential
 }
 ```
 
@@ -92,12 +95,12 @@ group-purchase/
 - 중앙 설정 폴더는 Config 컨테이너에 읽기 전용으로 마운트한다. 비밀값은 이 폴더나 이미지에 넣지 않고 필요한 서비스에 별도로 주입한다.
 - 설정 누락·환경 불일치·Config 접속 실패는 기동 실패로 처리한다. 설정 변경은 클라이언트 재시작으로 반영한다.
 - 기동 후 Config 장애는 이미 받은 설정을 없애지 않는다. 클라이언트의 헬스는 Config의 지속적인 가용성에 종속시키지 않으며 새 기동에는 Config가 필요하다.
-- 호스트 포트는 `127.0.0.1`에만 바인딩한다. 클라이언트는 `health,info,metrics`를 Actuator로 노출하며 Config는 `health,metrics`를 노출한다. Gateway 관리는 9000으로 분리하고 공개 8000은 ping만 허용한다.
+- 호스트 포트는 `127.0.0.1`에만 바인딩한다. 클라이언트는 `health,info,metrics`를 Actuator로 노출하며 Config는 `health,metrics`를 노출한다. Gateway의 관리 포트는 9000이다. 공개 8000의 라우트는 [008 공개 경로 목록](Docs/implementation/plan/008-gateway-authentication.md#공개-라우트와-보호-확인-경로)을 따른다.
 - Eureka 장애는 앱 실행을 유지하며 등록·조회 재시도로 복구한다. local에서는 `localhost:8080`, docker에서는 내부 DNS 이름 `group-purchase-service:8080`을 등록한다. 앱 헬스와 Eureka 등록 성공은 별도 검사한다.
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 네 앱 이미지 빌드·PostgreSQL 기동·임시 secret 준비·DB 권한/영속성·실제 설정값·등록 주소와 Gateway 전달 검사·정리를 정의한다. Gateway 기반의 후속 PR에서는 같은 head 브랜치의 수동 CI를 실행한다. DB 변경의 검증 범위·원격 확인 위치는 [005 결과](Docs/implementation/005-postgresql-foundation.md)를 따른다. 기존 Gateway 검증 근거는 [004 결과](Docs/implementation/004-api-gateway.md)에 있다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 다섯 앱 이미지 빌드·PostgreSQL 기동·임시 secret 준비·DB 권한/영속성·실제 설정값·등록 주소·Gateway 라우팅과 인증 검사·정리를 정의한다. DB 변경의 검증 범위와 원격 확인 위치는 [005 결과](Docs/implementation/005-postgresql-foundation.md)에 있다.
 
 ## 문서
 

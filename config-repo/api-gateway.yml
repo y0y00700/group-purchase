@@ -16,12 +16,18 @@ management:
       enabled: false
 
 app:
+  auth:
+    connect-timeout: 1s
+    check-timeout: 2s
   configuration:
     service: api-gateway
     revision: "004-v1"
 
 spring:
   cloud:
+    loadbalancer:
+      retry:
+        enabled: false
     discovery:
       client:
         health-indicator:
@@ -38,8 +44,43 @@ spring:
             - id: group-purchase-ping
               uri: lb://group-purchase
               predicates:
-                - Path=/api/group-purchases/ping
+                - ExactPath=/api/group-purchases/ping
                 - Method=GET
+            - id: member-csrf
+              uri: lb://member
+              metadata:
+                auth-policy: member
+              predicates:
+                - ExactPath=/api/auth/csrf
+                - Method=GET,HEAD
+            - id: member-login
+              uri: lb://member
+              metadata:
+                auth-policy: member
+              predicates:
+                - ExactPath=/api/auth/login
+                - Method=POST
+            - id: member-logout
+              uri: lb://member
+              metadata:
+                auth-policy: member
+              predicates:
+                - ExactPath=/api/auth/logout
+                - Method=POST
+            - id: member-me
+              uri: lb://member
+              metadata:
+                auth-policy: member
+              predicates:
+                - ExactPath=/api/members/me
+                - Method=GET,HEAD
+            - id: group-purchase-auth-probe
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - ExactPath=/api/group-purchases/auth-probe
+                - Method=GET,HEAD,POST
           httpclient:
             connect-timeout: 1000
             response-timeout: 5s

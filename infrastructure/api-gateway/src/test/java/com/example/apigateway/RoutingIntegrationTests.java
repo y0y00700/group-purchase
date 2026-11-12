@@ -1,6 +1,9 @@
 package com.example.apigateway;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.HttpServer;
 import io.netty.channel.ConnectTimeoutException;
@@ -25,10 +28,15 @@ import tools.jackson.databind.json.JsonMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.cloud.client.DefaultServiceInstance;
+import org.springframework.cloud.client.loadbalancer.DefaultResponse;
+import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(OutputCaptureExtension.class)
@@ -95,6 +103,35 @@ class RoutingIntegrationTests {
         assertThat(request("/_fixture/refused", "GET", null).statusCode()).isEqualTo(502);
         assertThat(request("/api/group-purchases/ping?slow=true", "GET", null).statusCode())
                 .isEqualTo(504);
+    }
+
+    @Test
+    void rejectsAnEmptyMemberDiscoveryList() throws Exception {
+        int before = RECEIVED.get();
+        var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/_fixture/auth-missing"))
+                .header("Cookie", "GP_SESSION=valid").build();
+        try (var client = HttpClient.newHttpClient()) {
+            var result = client.send(request, HttpResponse.BodyHandlers.ofString());
+            assertThat(result.statusCode()).isEqualTo(503);
+            assertThat(result.body()).contains("AUTHENTICATION_UNAVAILABLE");
+            assertThat(result.headers().firstValue("Cache-Control")).contains("no-store");
+        }
+        assertThat(RECEIVED.get()).isEqualTo(before);
+    }
+
+    @Test
+    void classifiesARefusedConnectionToADiscoveredMember() {
+        var discovery = mock(LoadBalancerClientFactory.class);
+        var balancer = mock(ReactorServiceInstanceLoadBalancer.class);
+        when(discovery.getInstance("member", ReactorServiceInstanceLoadBalancer.class)).thenReturn(balancer);
+        var stale = new DefaultServiceInstance("stale-member", "member", "127.0.0.1", REFUSED_PORT, false);
+        when(balancer.choose()).thenReturn(Mono.just(new DefaultResponse(stale)));
+        var client = new MemberAuthClient(discovery, "isolated-member-auth-test-credential",
+                Duration.ofSeconds(1), Duration.ofSeconds(2));
+        var request = MockServerHttpRequest.get("/api/group-purchases/auth-probe")
+                .header("Cookie", "GP_SESSION=valid").build();
+        assertThatThrownBy(() -> client.check(request, "test-request").block())
+                .isInstanceOf(AuthCheckFailure.Rejected.class).hasMessage("BAD_GATEWAY");
     }
 
     @Test
@@ -197,6 +234,11 @@ class RoutingIntegrationTests {
         try {
             var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.setExecutor(EXECUTOR);
+            server.createContext("/_fixture/auth-missing", exchange -> {
+                RECEIVED.incrementAndGet();
+                exchange.sendResponseHeaders(200, -1);
+                exchange.close();
+            });
             server.createContext("/api/group-purchases/ping", exchange -> {
                 RECEIVED.incrementAndGet();
                 if (exchange.getRequestURI().getQuery() != null

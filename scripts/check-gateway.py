@@ -7,9 +7,10 @@ import urllib.error
 import urllib.request
 
 
-BASE = "http://localhost:8000"
+BASE = "http://127.0.0.1:8000"
 PING = "/api/group-purchases/ping"
 PRIVATE = (
+    "/internal/auth/check",
     "/internal/probe",
     "/api/group-purchases/internal/probe",
     "/actuator/health",
@@ -17,6 +18,8 @@ PRIVATE = (
     "/eureka/apps",
     "/config-server/application/default",
     "/group-purchase/api/group-purchases/ping",
+    "/member/api/members/me",
+    "/api/group-purchases/ping/",
     "/api/group-purchases/ping/extra",
 )
 
@@ -57,6 +60,9 @@ def main():
                 private_status, _ = request(PING, method)
                 if private_status != 404:
                     raise ValueError(f"{method} ping returned {private_status}")
+            auth_status, auth_body = request("/api/group-purchases/auth-probe")
+            if auth_status != 401 or json.loads(auth_body)["code"] != "UNAUTHENTICATED":
+                raise ValueError(f"Anonymous auth probe returned {auth_status}")
             print(f"PASS: Gateway ping {expected}; private paths and methods 404")
             return
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:
