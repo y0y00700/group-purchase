@@ -25,12 +25,16 @@ public final class ApiProblems {
         };
     }
     public static byte[] bytes(int status, String id) {
+        return bytes(status, id, code(status));
+    }
 
+    static byte[] bytes(int status, String id, String code) {
         var problem = ProblemDetail.forStatus(status);
         problem.setType(URI.create("about:blank"));
         problem.setTitle(HttpStatus.valueOf(status).getReasonPhrase());
         problem.setDetail(switch (status){
             case 400 -> "요청 형식이 올바르지 않습니다.";
+            case 403 -> "내부 호출자를 확인할 수 없습니다.";
             case 404 -> "요청한 API를 찾을 수 없습니다.";
             case 405 -> "허용하지 않는 요청 메서드입니다.";
             case 406 -> "지원하지 않는 응답 형식입니다.";
@@ -41,12 +45,12 @@ public final class ApiProblems {
             default -> "서버에서 요청을 처리하지 못했습니다.";
         });
         problem.setInstance(URI.create("urn:request:" + id));
-        problem.setProperty("code", code(status));
+        problem.setProperty("code", code);
         problem.setProperty("requestId", id);
         return JSON.writeValueAsBytes(java.util.Map.of(
             "type", problem.getType().toString(), "title", problem.getTitle(),
             "status", status, "detail", problem.getDetail(), "instance", problem.getInstance().toString(),
-            "code", code(status), "requestId", id));
+            "code", code, "requestId", id));
 
     }
     public static void unexpected(Throwable failure, String id) {

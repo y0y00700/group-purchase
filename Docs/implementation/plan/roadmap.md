@@ -2,7 +2,7 @@
 
 작성일: 2026-10-29
 
-상태: 001~006 로컬 구현·검증 완료. [005 PostgreSQL 계획](005-postgresql-foundation.md)의 DB·secret·권한/JDBC·Flyway에 장시간 장애 복구·Windows JAR·전체 down/up까지 완료했다. [006 API·로그·헬스 계획](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성·현재 활성 소스 최종 통합 검증도 완료했다. 실제 근거와 원격 상태는 각 단계의 결과·인계를 따른다.
+001~008의 로컬 구현과 검증을 완료했다. 단계별 근거와 원격 상태는 [구현 목록](../README.md)과 [프로젝트 인계](../../handoff.md)를 따른다.
 
 ## 진행 방식
 
@@ -34,7 +34,7 @@
 | 순서 | 작업 단위 | 구현 범위와 완료 기준 |
 |---|---|---|
 | 7 | 회원·세션 인증 | 회원·역할·계정 상태, 로그인·로그아웃, Spring Session JDBC, CSRF와 내부 인증 확인 API. 세션 공유·만료·CSRF 검증 |
-| 8 | Gateway 인증·내부 호출 신뢰 | 회원 서비스 인증 확인 연결, 외부 신원 헤더 제거, 내부 호출자 확인. 위조·직접 접근·인증 확인 장애 시 거절 검증 |
+| 8 | [Gateway 인증·내부 호출 신뢰](008-gateway-authentication.md#execution-summary) | 회원 서비스 인증 확인 연결, 외부 신원 헤더 제거, 내부 호출자 확인. 위조·직접 접근·인증 확인 장애 시 거절 검증 |
 | 9 | 공동구매·상품 정보 | 임시 저장·수정·게시·조회, 가격·수량·기한 규칙과 판매자 소유권. 게시 후 수정 금지와 수정·게시 경합 검증 |
 | 10 | 참여 | 참여 신청·조회·결제 전 취소, 모집 수량·구매자별 10% 한도와 요청 멱등성. 동시 참여·중복 요청·타인 접근 검증 |
 
@@ -73,9 +73,9 @@
 
 2026-10-29 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 2026-10-30에는 [002 결과](../002-config-server.md)의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 2026-11-02 PR #2 병합과 최종 head의 CI 성공을 확인하고 [003 Eureka 계획](003-eureka-server.md)을 작성했다.
 
-## 다음 검토 대상
+## 다음 구현 대상
 
-[006 API·로그·헬스 기준](006-api-observability-baseline.md#execution-summary)의 여섯 Step 작성과 로컬 최종 통합 검증을 마쳤다. [006 최종 결과](../006-api-observability-baseline.md#final-results)와 최신 인계에서 PR/CI 상태를 확인한다. 현재 [007 회원·세션 인증](007-member-session-authentication.md#execution-summary)은 DDD 패키지 재구성·핵심6개 Step 사용자 작성·묶음 리뷰·현재 소스 재검증 완료다. [실제 결과·직접 테스트](../007-member-session-authentication.md)를 따르며, 007은 로컬 완료이며 최종 근거는 결과 문서를 따른다. Gateway 인증 연결은 008이다.
+[008 결과](../008-gateway-authentication.md)를 바탕으로 009의 상세 계획을 작성한다.
 
 ## 근거
 

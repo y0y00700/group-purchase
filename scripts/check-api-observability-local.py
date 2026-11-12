@@ -19,6 +19,7 @@ SPEC.loader.exec_module(CHECK)
 JAVA = str(Path(os.environ["JAVA_HOME"]) / "bin/java.exe")
 JARS = {"group-purchase": ROOT / "services/group-purchase-service/build/libs/group-purchase-service-0.0.1-SNAPSHOT.jar",
         "api-gateway": ROOT / "infrastructure/api-gateway/build/libs/api-gateway-0.0.1-SNAPSHOT.jar"}
+FIXTURE_CREDENTIAL = "isolated-group-purchase-observability-credential"
 
 
 def validate(raw):
@@ -45,8 +46,11 @@ def main():
                 environment["CONFIG_SERVER_URL"] = "http://127.0.0.1:8888"
                 if service == "group-purchase":
                     environment["SPRING_DATASOURCE_PASSWORD"] = (ROOT / "secrets/group_purchase_password").read_text().rstrip("\r\n")
+                    environment["APP_AUTH_INTERNAL_CREDENTIAL"] = FIXTURE_CREDENTIAL
                 else:
                     environment.pop("SPRING_DATASOURCE_PASSWORD", None)
+                    environment["APP_AUTH_MEMBER_INTERNAL_CREDENTIAL"] = "isolated-member-observability-credential"
+                    environment["APP_AUTH_GROUP_PURCHASE_INTERNAL_CREDENTIAL"] = FIXTURE_CREDENTIAL
                 output = open(Path(directory) / (service + ".jsonl"), "w", encoding="utf-8")
                 logs.append(output)
                 args = [JAVA, "-jar", str(JARS[service]), f"--server.port={port}", "--eureka.client.enabled=false"]
@@ -89,6 +93,7 @@ def main():
             validate(result.stdout.decode("utf-8"))
         environment = os.environ.copy()
         environment.update(CONFIG_SERVER_URL="http://127.0.0.1:8888", SPRING_PROFILES_ACTIVE="local",
+                           APP_AUTH_INTERNAL_CREDENTIAL=FIXTURE_CREDENTIAL,
                            SPRING_DATASOURCE_PASSWORD=CHECK.SENTINEL + "_BAD_DB_PASSWORD")
         result = subprocess.run([JAVA, "-jar", str(JARS["group-purchase"]),
                                  "--server.port=0", "--eureka.client.enabled=false"],

@@ -39,7 +39,8 @@ public class RoutingFailureHandler implements WebExceptionHandler {
             complete(exchange,"error");
             return Mono.error(failure);
         }
-        int status = classify(exchange, failure);
+        AuthCheckFailure auth = failure instanceof AuthCheckFailure.Rejected denied ? denied.reason : null;
+        int status = auth == null ? classify(exchange, failure) : auth.status;
         if(HttpStatus.resolve(status) == null) status = 500;
         String id = RequestIdWebFilter.requestId(exchange);
         if(status == 500) ApiProblems.unexpected(failure, id);
@@ -50,7 +51,8 @@ public class RoutingFailureHandler implements WebExceptionHandler {
 
         Mono<Void> write = exchange.getRequest().getMethod() == org.springframework.http.HttpMethod.HEAD
             ? response.setComplete()
-            : response.writeWith(Mono.just(response.bufferFactory().wrap(ApiProblems.bytes(status, id))));
+            : response.writeWith(Mono.just(response.bufferFactory().wrap(
+                    ApiProblems.bytes(status, id, auth == null ? ApiProblems.code(status) : auth.name()))));
             return write.doOnSuccess(ignored -> complete(exchange, "completed")).doFinally(signal -> {
                 if (signal == reactor.core.publisher.SignalType.CANCEL) complete(exchange, "cancelled");
                 if (signal == reactor.core.publisher.SignalType.ON_ERROR) complete(exchange,"error");

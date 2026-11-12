@@ -18,6 +18,7 @@ import org.testcontainers.images.builder.Transferable;
 
 /** Per-class disposable DB. Never reads local secrets or the Compose volume. */
 final class PostgresFixture implements AutoCloseable {
+    static final String INTERNAL_CREDENTIAL = UUID.randomUUID().toString();
     private final String password = UUID.randomUUID().toString();
     private PostgreSQLContainer container;
     final Path secretDirectory;
@@ -66,6 +67,7 @@ final class PostgresFixture implements AutoCloseable {
 
     SpringApplicationBuilder configure(SpringApplicationBuilder builder, String profile) {
         var properties = new HashMap<String, Object>();
+        properties.put("app.auth.internal-credential", INTERNAL_CREDENTIAL);
         properties.put("spring.datasource.url", url());
         if ("docker".equals(profile)) {
             properties.put("DB_SECRET_DIR", secretDirectory.toString().replace('\\', '/') + "/");

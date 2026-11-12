@@ -114,6 +114,10 @@ def start_jar(role, probe):
     env.update(SPRING_PROFILES_ACTIVE="local", CONFIG_SERVER_URL="http://localhost:8888")
     if role == "service":
         env["SPRING_DATASOURCE_PASSWORD"] = (ROOT / "secrets/group_purchase_password").read_text().strip()
+        env["APP_AUTH_INTERNAL_CREDENTIAL"] = (ROOT / "secrets/group_purchase_internal_credential").read_text().strip()
+    else:
+        env["APP_AUTH_MEMBER_INTERNAL_CREDENTIAL"] = (ROOT / "secrets/member_internal_credential").read_text().strip()
+        env["APP_AUTH_GROUP_PURCHASE_INTERNAL_CREDENTIAL"] = (ROOT / "secrets/group_purchase_internal_credential").read_text().strip()
     log = open(ROOT / f".tmp/005-final-{role}-{'probe' if probe else 'product'}.log", "wb")
     LOGS.append(log)
     args = [str(java), "-Xmx256m"]

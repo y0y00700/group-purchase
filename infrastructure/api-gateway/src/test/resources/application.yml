@@ -31,6 +31,13 @@ spring:
               uri: lb://missing-service
               predicates:
                 - Path=/_fixture/missing
+            - id: auth-missing
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - ExactPath=/_fixture/auth-missing
+                - Method=GET
             - id: refused
               uri: lb://refused-service
               predicates:
@@ -41,6 +48,9 @@ eureka:
     enabled: false
 
 app:
+  auth:
+    member-internal-credential: isolated-member-auth-test-credential
+    group-purchase-internal-credential: isolated-group-purchase-test-credential
   configuration:
     service: api-gateway
     environment: local

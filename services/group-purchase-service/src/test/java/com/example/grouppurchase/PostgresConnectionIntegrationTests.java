@@ -48,6 +48,7 @@ class PostgresConnectionIntegrationTests {
     private static ConfigurableApplicationContext app(PostgresFixture db, String profile,
             Map<String, Object> overrides) {
         var properties = new HashMap<String, Object>();
+        properties.put("app.auth.internal-credential", PostgresFixture.INTERNAL_CREDENTIAL);
         properties.put("spring.datasource.url", db.url());
         if (profile.equals("docker")) {
             properties.put("DB_SECRET_DIR", db.secretDirectory.toString().replace('\\', '/') + "/");
