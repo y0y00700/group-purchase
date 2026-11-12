@@ -1,6 +1,6 @@
 # 008. Gateway 인증·내부 호출 신뢰
 
-상태 **로컬 구현·검증 완료**
+상태 **로컬 구현·검증 완료, [PR #10](https://github.com/y0y00700/group-purchase/pull/10) 생성**
 
 [008 계획](plan/008-gateway-authentication.md#execution-summary) · [인계](../handoff.md)
 
@@ -28,7 +28,7 @@
 | Windows 제품 JAR | `check-gateway-auth.py --jars` 통과. Java 21 제품 JAR 세 개를 별도 루프백 포트에 띄우고 Compose Config·PostgreSQL에 연결했다. Windows JAR 경로에서는 단순 발견을 사용했고 Compose 경로에서는 Eureka를 사용했다. |
 | 설정과 정리 | Gateway 제품 JAR이 누락·형식 오류·동일 자격 증명으로 기동을 거절했다. 앱별 secret 마운트 경로를 확인하고 임시 회원·세션, 테스트 JAR 프로세스와 격리 Compose를 정리했다. 일반 DB와 검증 DB 볼륨 및 기존 secret 파일을 보존했다. |
 
-위 결과는 실행 본문을 참고 주석으로 옮기기 전 기준 소스의 검증이다. 작성 위치를 연 뒤 Gateway와 공동구매 모듈의 `compileJava`를 확인했다. 이 브랜치의 원격 CI 결과는 아직 없다.
+위 결과는 실행 본문을 참고 주석으로 옮기기 전 기준 소스의 검증이다. 작성 위치를 연 뒤 Gateway와 공동구매 모듈의 `compileJava`를 확인했다.
 
 <a id="guided-coding"></a>
 
@@ -60,6 +60,14 @@
 - 격리 Compose에서 다섯 앱 이미지를 빌드하고 여섯 서비스의 헬스를 확인했다. 공개 ping, 007 회원 API, 쿠키 회전·만료, CSRF와 내부 호출자 검증을 통과했다.
 - 회원과 PostgreSQL을 각각 중단했을 때 보호 요청은 공동구매에 전달되지 않았다. 두 서비스가 복구된 뒤 같은 Gateway에서 보호 요청이 다시 성공했다.
 - Windows 제품 JAR에서도 로그인과 보호 요청을 검증했다. 로컬 JAR은 단순 발견을 사용하고 Compose는 Eureka를 사용했다.
+
+<a id="pull-request"></a>
+
+## PR 기록
+
+- 2026-11-12 KST에 구현 커밋 `cc36c05f15ae4e724cf8f06411a80515ea8842e7`을 `feat/gateway-authentication`에 push하고 `main` 대상 [PR #10](https://github.com/y0y00700/group-purchase/pull/10)을 열었다.
+- PR 준비 시 원격 `main`의 `d017594`와 분기 기준이 같음을 확인했다. 해당 커밋의 Build는 성공했고 Compose smoke는 Gradle 배포 파일 다운로드 HTTP 504로 실패했다. [기준 main CI](https://github.com/y0y00700/group-purchase/actions/runs/42581485872)
+- PR 최종 head의 CI는 미확인이다. [PR #10 Checks](https://github.com/y0y00700/group-purchase/pull/10/checks)
 
 <a id="manual-tests"></a>
 
