@@ -16,6 +16,7 @@ import org.springframework.boot.test.system.*;
 import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.*;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.mock.web.*;
 import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.json.JsonMapper;
@@ -121,6 +122,10 @@ class ApiObservabilityTests {
     }
     @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="test.api-fixture", havingValue="true")
     @Configuration(proxyBeanMethods = false) @Import(FixtureController.class) static class Fixtures {
+        @Bean JdbcClient unusedPurchaseStorage() {
+            return org.mockito.Mockito.mock(JdbcClient.class);
+        }
+
         @Bean org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter> errorDispatchFixture() {
             var filter = new org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter>(
                     (request, response, chain) -> ((jakarta.servlet.http.HttpServletResponse) response).sendError(500));

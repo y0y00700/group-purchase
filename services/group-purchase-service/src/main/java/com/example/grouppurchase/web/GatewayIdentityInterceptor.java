@@ -21,8 +21,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.handler.MappedInterceptor;
 
-final class GatewayIdentityInterceptor implements HandlerInterceptor {
-    static final String IDENTITY = "gatewayMemberIdentity";
+public final class GatewayIdentityInterceptor implements HandlerInterceptor {
+    public static final String IDENTITY = "gatewayMemberIdentity";
     private static final Set<String> ROLES = Set.of("BUYER", "SELLER", "OPERATOR");
     private final byte[] credential;
 
@@ -36,7 +36,7 @@ final class GatewayIdentityInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
-        if (!(handler instanceof HandlerMethod method) || !method.hasMethodAnnotation(RequiresGateway.class)) {
+        if (!(handler instanceof HandlerMethod method) || !method.hasMethodAnnotation(RequiresSeller.class)) {
             return true;
         }
         response.setHeader("Cache-Control", "no-store");
@@ -45,13 +45,19 @@ final class GatewayIdentityInterceptor implements HandlerInterceptor {
             ApiExceptionResolver.write(request, response, 403, requestId, "INTERNAL_CALLER_DENIED");
             return false;
         }
+        Identity identity;
         try {
-            request.setAttribute(IDENTITY, readIdentity(request));
-            return true;
+            identity = readIdentity(request);
         } catch (IllegalArgumentException invalid) {
             ApiExceptionResolver.write(request, response, 400, requestId);
             return false;
         }
+        if (!identity.roles().contains("SELLER")) {
+            ApiExceptionResolver.write(request, response, 403, requestId, "SELLER_ROLE_REQUIRED");
+            return false;
+        }
+        request.setAttribute(IDENTITY, identity);
+        return true;
     }
 
     private boolean validCaller(HttpServletRequest request) {
@@ -81,11 +87,11 @@ final class GatewayIdentityInterceptor implements HandlerInterceptor {
         return values.size() == 1 ? values.getFirst() : null;
     }
 
-    record Identity(UUID memberId, List<String> roles) { }
+    public record Identity(UUID memberId, List<String> roles) { }
 
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
-    @interface RequiresGateway { }
+    public @interface RequiresSeller { }
 
     @Configuration(proxyBeanMethods = false)
     static class Registration {

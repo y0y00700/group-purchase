@@ -201,10 +201,10 @@ class PostgresConnectionIntegrationTests {
     @Test
     void rejectsInvalidSqlAndChecksumWithoutRepair(@TempDir Path directory, CapturedOutput output) throws Exception {
         try (var isolated = new PostgresFixture()) {
-            Files.writeString(directory.resolve("V2__broken.sql"), "THIS IS INVALID SQL;");
+            Files.writeString(directory.resolve("V999__broken.sql"), "THIS IS INVALID SQL;");
             fails(isolated, "local", Map.of("spring.flyway.locations", "classpath:db/migration,filesystem:"
                     + directory.toString().replace('\\', '/')), "syntax error", output);
-            Files.delete(directory.resolve("V2__broken.sql"));
+            Files.delete(directory.resolve("V999__broken.sql"));
             try (var context = app(isolated, "local", Map.of())) { history(isolated); }
             String before = history(isolated);
             try (var stream = PostgresConnectionIntegrationTests.class.getResourceAsStream(
@@ -214,6 +214,11 @@ class PostgresConnectionIntegrationTests {
             }
             Files.writeString(directory.resolve("V1__initialize_service_schema.sql"), "\n-- changed checksum\n",
                     java.nio.file.StandardOpenOption.APPEND);
+            try (var stream = PostgresConnectionIntegrationTests.class.getResourceAsStream(
+                    "/db/migration/V2__group_purchase_product.sql")) {
+                assertThat(stream).isNotNull();
+                Files.copy(stream, directory.resolve("V2__group_purchase_product.sql"));
+            }
             fails(isolated, "local", Map.of("spring.flyway.locations", "filesystem:"
                     + directory.toString().replace('\\', '/')), "checksum mismatch", output);
             assertThat(history(isolated)).isEqualTo(before);

@@ -30,7 +30,8 @@ import tools.jackson.databind.json.JsonMapper;
         "management.server.port=0"
 })
 class GatewayAuthIntegrationTests {
-    private static final String PROBE = "/api/group-purchases/auth-probe";
+    private static final String PURCHASES = "/api/group-purchases";
+    private static final String MINE = PURCHASES + "/mine";
     private static final String ID = "126260b2-de13-43b6-8503-a76ad6974d5a";
     private static final String SUCCESS = "{\"memberId\":\"" + ID + "\",\"roles\":[\"SELLER\",\"BUYER\"]}";
     private static final String GROUP_SECRET = "isolated-group-purchase-test-credential";
@@ -64,7 +65,7 @@ class GatewayAuthIntegrationTests {
     void verifiesBeforeForwardingAndOnlySendsAllowedHeaders() throws Exception {
         int memberBefore = MEMBERS.size();
         int groupBefore = GROUPS.size();
-        var response = request(PROBE + "?source=client", "POST", "original body", Map.of(
+        var response = request(PURCHASES + "?source=client", "POST", "original body", Map.of(
                 "Cookie", "other=secret; GP_SESSION=valid==", "X-CSRF-TOKEN", "token",
                 "Authorization", "Bearer client", "x-iNtErNaL-cReDeNtIaL", "forged",
                 "X-Authenticated-Member-Id", "forged", "X-Authenticated-Custom", "forged",
@@ -84,7 +85,7 @@ class GatewayAuthIntegrationTests {
         assertThat(internal.headers().getFirst("X-Internal-Credential")).isEqualTo(MEMBER_SECRET);
         assertThat(internal.headers().getFirst("Authorization")).isNull();
         var downstream = GROUPS.stream().skip(groupBefore).findFirst().orElseThrow();
-        assertThat(downstream.path()).isEqualTo(PROBE + "?source=client");
+        assertThat(downstream.path()).isEqualTo(PURCHASES + "?source=client");
         assertThat(downstream.method()).isEqualTo("POST");
         assertThat(downstream.body()).isEqualTo("original body");
         assertThat(downstream.headers().getFirst("X-Request-Id"))
@@ -102,10 +103,10 @@ class GatewayAuthIntegrationTests {
     void rejectsInvalidOrUnavailableAuthenticationWithoutForwardingOrRetrying() throws Exception {
         int groupBefore = GROUPS.size();
         int memberBefore = MEMBERS.size();
-        assertProblem(request(PROBE, "GET", "", Map.of()), 401, "UNAUTHENTICATED");
-        assertProblem(request(PROBE, "GET", "", Map.of("Cookie", "GP_SESSION=one; GP_SESSION=two")),
+        assertProblem(request(MINE, "GET", "", Map.of()), 401, "UNAUTHENTICATED");
+        assertProblem(request(MINE, "GET", "", Map.of("Cookie", "GP_SESSION=one; GP_SESSION=two")),
                 400, "INVALID_REQUEST");
-        assertProblem(request(PROBE, "GET", "", Map.of("Cookie", "GP_SESSION=\"invalid\"")),
+        assertProblem(request(MINE, "GET", "", Map.of("Cookie", "GP_SESSION=\"invalid\"")),
                 400, "INVALID_REQUEST");
         assertThat(MEMBERS).hasSize(memberBefore);
         for (var scenario : Map.ofEntries(
@@ -114,17 +115,63 @@ class GatewayAuthIntegrationTests {
                 Map.entry("denied", "502:BAD_GATEWAY"), Map.entry("redirect", "502:BAD_GATEWAY"),
                 Map.entry("duplicate", "502:BAD_GATEWAY"), Map.entry("trailing", "502:BAD_GATEWAY"),
                 Map.entry("large", "502:BAD_GATEWAY"), Map.entry("empty", "502:BAD_GATEWAY"),
-                Map.entry("role", "502:BAD_GATEWAY"), Map.entry("broken", "502:BAD_GATEWAY")).entrySet()) {
+                Map.entry("role", "502:BAD_GATEWAY"), Map.entry("buyer", "403:SELLER_ROLE_REQUIRED"),
+                Map.entry("broken", "502:BAD_GATEWAY")).entrySet()) {
             String[] expected = scenario.getValue().split(":");
-            assertProblem(request(PROBE, "GET", "", Map.of("Cookie", "GP_SESSION=" + scenario.getKey())),
+            assertProblem(request(MINE, "GET", "", Map.of("Cookie", "GP_SESSION=" + scenario.getKey())),
                     Integer.parseInt(expected[0]), expected[1]);
             assertThat(MEMBERS).as(scenario.getKey()).hasSize(++memberBefore);
             assertThat(GROUPS).as(scenario.getKey()).hasSize(groupBefore);
         }
-        var head = request(PROBE, "HEAD", "", Map.of());
+        var head = request(MINE, "HEAD", "", Map.of());
         assertThat(head.statusCode()).isEqualTo(401);
         assertThat(head.body()).isEmpty();
-        assertThat(request(PROBE, "GET", "", Map.of("Cookie", "GP_SESSION=valid")).statusCode()).isEqualTo(200);
+        assertThat(request(MINE, "GET", "", Map.of("Cookie", "GP_SESSION=valid")).statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void forwardsPublicPurchasePathsWithoutAuthenticationOrCredentials() throws Exception {
+        int memberBefore = MEMBERS.size();
+        int groupBefore = GROUPS.size();
+        var detail = PURCHASES + "/" + ID;
+        var supplied = Map.of("Cookie", "GP_SESSION=unavailable", "Authorization", "Bearer client",
+                "X-CSRF-TOKEN", "forged", "X-Authenticated-Roles", "SELLER", "X-Internal-Caller", "api-gateway");
+        for (String path : new String[]{PURCHASES, detail}) {
+            for (String method : new String[]{"GET", "HEAD"}) {
+                var response = request(path, method, "", supplied);
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.headers().firstValue("Cache-Control")).contains("no-store");
+                assertThat(response.headers().allValues("Set-Cookie")).isEmpty();
+                if (method.equals("HEAD")) assertThat(response.body()).isEmpty();
+            }
+        }
+        assertThat(MEMBERS).hasSize(memberBefore);
+        assertThat(GROUPS.stream().skip(groupBefore).toList()).hasSize(4).allSatisfy(received ->
+                supplied.keySet().forEach(header -> assertThat(received.headers().getFirst(header)).isNull()));
+    }
+
+    @Test
+    void restrictsUuidRoutesToCanonicalPathsAndMethods() throws Exception {
+        int memberBefore = MEMBERS.size();
+        int groupBefore = GROUPS.size();
+        String detail = PURCHASES + "/" + ID;
+        for (String path : new String[]{detail + "/", detail + ";x", detail + "/extra",
+                PURCHASES + "//" + ID, PURCHASES + "%2f" + ID, PURCHASES + "/%31" + ID.substring(1),
+                PURCHASES + "/" + ID.toUpperCase(java.util.Locale.ROOT), MINE + "/" + ID + ";x",
+                PURCHASES + "/auth-probe"}) {
+            assertThat(request(path, "GET", "", Map.of()).statusCode()).as(path).isEqualTo(404);
+        }
+        assertThat(request(detail, "POST", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(request(detail + "/publish", "GET", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(request(detail + "%2Fpublish", "POST", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(MEMBERS).hasSize(memberBefore);
+        assertThat(GROUPS).hasSize(groupBefore);
+        var headers = Map.of("Cookie", "GP_SESSION=valid", "X-CSRF-TOKEN", "token");
+        assertThat(request(detail, "PUT", "{}", headers).statusCode()).isEqualTo(200);
+        assertThat(request(detail + "/publish", "POST", "{}", headers).statusCode()).isEqualTo(200);
+        assertThat(request(MINE + "/" + ID, "HEAD", "", headers).statusCode()).isEqualTo(200);
+        assertThat(GROUPS.stream().skip(groupBefore).map(Received::path).toList())
+                .containsExactly(detail, detail + "/publish", MINE + "/" + ID);
     }
 
     @Test
@@ -133,11 +180,11 @@ class GatewayAuthIntegrationTests {
         int groupBefore = GROUPS.size();
         for (String path : new String[] {"/api/auth/csrf/", "/api/Auth/csrf", "/api/auth%2fcsrf",
                 "/api/auth/csrf;param", "/api//auth/csrf", "/api/auth/../auth/csrf",
-                "/internal/auth/check", "/actuator/health", "/member/api/auth/csrf", PROBE + "/"}) {
+                "/internal/auth/check", "/actuator/health", "/member/api/auth/csrf", MINE + "/"}) {
             assertThat(request(path, "GET", "", Map.of()).statusCode()).as(path).isEqualTo(404);
         }
         assertThat(request("/api/auth/csrf", "POST", "", Map.of()).statusCode()).isEqualTo(404);
-        assertThat(request(PROBE, "DELETE", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(request(MINE, "DELETE", "", Map.of()).statusCode()).isEqualTo(404);
         assertThat(rawRequest("GET", "Connection: close, cOoKiE\r\nCookie: GP_SESSION=valid\r\n"))
                 .startsWith("HTTP/1.1 401");
         assertThat(rawRequest("GET", "Connection: close\r\nCookie: GP_SESSION=one\r\nCookie: GP_SESSION=two\r\n"))
@@ -179,7 +226,8 @@ class GatewayAuthIntegrationTests {
     private String rawRequest(String method, String headers) throws IOException {
         try (var socket = new Socket("127.0.0.1", port)) {
             socket.setSoTimeout(8000);
-            socket.getOutputStream().write((method + " " + PROBE + " HTTP/1.1\r\nHost: localhost\r\n"
+            String path = method.equals("POST") ? PURCHASES : MINE;
+            socket.getOutputStream().write((method + " " + path + " HTTP/1.1\r\nHost: localhost\r\n"
                     + headers + "\r\n").getBytes(StandardCharsets.US_ASCII));
             return new String(socket.getInputStream().readAllBytes(), StandardCharsets.US_ASCII);
         }
@@ -226,6 +274,7 @@ class GatewayAuthIntegrationTests {
             case "large" -> respond(exchange, 200, SUCCESS + " ".repeat(8192));
             case "empty" -> respond(exchange, 200, "");
             case "role" -> respond(exchange, 200, SUCCESS.replace("SELLER", "BUYER"));
+            case "buyer" -> respond(exchange, 200, SUCCESS.replace("\"SELLER\",", ""));
             case "redirect" -> {
                 exchange.getResponseHeaders().set("Location", "/internal/auth/check");
                 respond(exchange, 302, "{}");

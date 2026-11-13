@@ -128,7 +128,7 @@ class RoutingIntegrationTests {
         when(balancer.choose()).thenReturn(Mono.just(new DefaultResponse(stale)));
         var client = new MemberAuthClient(discovery, "isolated-member-auth-test-credential",
                 Duration.ofSeconds(1), Duration.ofSeconds(2));
-        var request = MockServerHttpRequest.get("/api/group-purchases/auth-probe")
+        var request = MockServerHttpRequest.get("/api/group-purchases/mine")
                 .header("Cookie", "GP_SESSION=valid").build();
         assertThatThrownBy(() -> client.check(request, "test-request").block())
                 .isInstanceOf(AuthCheckFailure.Rejected.class).hasMessage("BAD_GATEWAY");

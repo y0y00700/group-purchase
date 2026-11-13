@@ -74,13 +74,55 @@ spring:
               predicates:
                 - ExactPath=/api/members/me
                 - Method=GET,HEAD
-            - id: group-purchase-auth-probe
+            - id: group-purchase-public-list
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: public-purchase
+              predicates:
+                - ExactPath=/api/group-purchases
+                - Method=GET,HEAD
+            - id: group-purchase-public-detail
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: public-purchase
+              predicates:
+                - UuidPath=/api/group-purchases/{id}
+                - Method=GET,HEAD
+            - id: group-purchase-seller-list
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
               predicates:
-                - ExactPath=/api/group-purchases/auth-probe
-                - Method=GET,HEAD,POST
+                - ExactPath=/api/group-purchases/mine
+                - Method=GET,HEAD
+            - id: group-purchase-seller-detail
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - UuidPath=/api/group-purchases/mine/{id}
+                - Method=GET,HEAD
+            - id: group-purchase-register
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - ExactPath=/api/group-purchases
+                - Method=POST
+            - id: group-purchase-revise
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - UuidPath=/api/group-purchases/{id}
+                - Method=PUT
+            - id: group-purchase-publish
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - UuidPath=/api/group-purchases/{id}/publish
+                - Method=POST
           httpclient:
             connect-timeout: 1000
             response-timeout: 5s
