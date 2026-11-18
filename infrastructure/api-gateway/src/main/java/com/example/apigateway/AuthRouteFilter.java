@@ -41,23 +41,28 @@ final class AuthRouteFilter implements GlobalFilter, Ordered {
                 headers.remove(HttpHeaders.SET_COOKIE);
                 headers.remove("Set-Cookie2");
             }
-            if ("member".equals(policy) || "protected".equals(policy)) {
+            if ("member".equals(policy) || "protected".equals(policy) || "public-purchase".equals(policy)) {
                 headers.setCacheControl("no-store");
             }
             return Mono.empty();
         });
-        if (!"protected".equals(policy)) {
-            return chain.filter(exchange);
+        if ("protected".equals(policy)) {
+            return forwardAuthenticated(exchange, chain);
         }
-        return forwardAuthenticated(exchange, chain);
+        if ("public-purchase".equals(policy)) {
+            var request = exchange.getRequest().mutate().headers(AuthRouteFilter::removeClientCredentials).build();
+            return chain.filter(exchange.mutate().request(request).build());
+        }
+        return chain.filter(exchange);
     }
 
     private Mono<Void> forwardAuthenticated(ServerWebExchange exchange, GatewayFilterChain chain) {
         return member.check(exchange.getRequest(), RequestIdWebFilter.requestId(exchange)).flatMap(identity -> {
+            if (!identity.roles().contains("SELLER")) {
+                return Mono.error(AuthCheckFailure.SELLER_ROLE_REQUIRED.exception());
+            }
             var request = exchange.getRequest().mutate().headers(headers -> {
-                headers.remove(HttpHeaders.COOKIE);
-                headers.remove(HttpHeaders.AUTHORIZATION);
-                headers.remove(MemberAuthClient.CSRF_HEADER);
+                removeClientCredentials(headers);
                 headers.set(MemberAuthClient.CALLER_HEADER, MemberAuthClient.CALLER);
                 headers.set(MemberAuthClient.CREDENTIAL_HEADER, groupCredential);
                 headers.set("X-Authenticated-Member-Id", identity.memberId().toString());
@@ -65,5 +70,11 @@ final class AuthRouteFilter implements GlobalFilter, Ordered {
             }).build();
             return chain.filter(exchange.mutate().request(request).build());
         });
+    }
+
+    private static void removeClientCredentials(HttpHeaders headers) {
+        headers.remove(HttpHeaders.COOKIE);
+        headers.remove(HttpHeaders.AUTHORIZATION);
+        headers.remove(MemberAuthClient.CSRF_HEADER);
     }
 }

@@ -1,6 +1,6 @@
 # 008. Gateway 인증·내부 호출 신뢰
 
-상태 **로컬 구현·검증 완료, [PR #10](https://github.com/y0y00700/group-purchase/pull/10) 생성**
+상태 **로컬 구현·검증 완료, [PR #10](https://github.com/y0y00700/group-purchase/pull/10) 병합**
 
 [008 계획](plan/008-gateway-authentication.md#execution-summary) · [인계](../handoff.md)
 
@@ -67,7 +67,8 @@
 
 - 2026-11-12 KST에 구현 커밋 `cc36c05f15ae4e724cf8f06411a80515ea8842e7`을 `feat/gateway-authentication`에 push하고 `main` 대상 [PR #10](https://github.com/y0y00700/group-purchase/pull/10)을 열었다.
 - PR 준비 시 원격 `main`의 `d017594`와 분기 기준이 같음을 확인했다. 해당 커밋의 Build는 성공했고 Compose smoke는 Gradle 배포 파일 다운로드 HTTP 504로 실패했다. [기준 main CI](https://github.com/y0y00700/group-purchase/actions/runs/42581485872)
-- PR 최종 head의 CI는 미확인이다. [PR #10 Checks](https://github.com/y0y00700/group-purchase/pull/10/checks)
+- 2026-11-12 KST 009 계획 검토 시 PR 최종 head `20718eb8004039565983decd9ff97b5db10fb97e`의 Build and test와 Images and Compose smoke test가 모두 성공했고 PR이 병합된 것을 확인했다. [PR #10](https://github.com/y0y00700/group-purchase/pull/10) · [PR 최종 head CI](https://github.com/y0y00700/group-purchase/actions/runs/43185432231)
+- 같은 조회에서 원격 `main`은 병합 커밋 `f0a0821e4f4cc90fa2e643790aa035d3b4efe538`였고 해당 CI는 실행 중이었다. [병합 main CI](https://github.com/y0y00700/group-purchase/actions/runs/43196695980)
 
 <a id="manual-tests"></a>
 

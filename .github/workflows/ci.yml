@@ -76,7 +76,7 @@ jobs:
       - name: Check member authentication on Compose and two product JARs
         run: python3 scripts/check-member-auth.py
 
-      - name: Check Gateway authentication and caller trust on Compose
+      - name: Check purchase workflow and Gateway caller trust on Compose
         run: python3 scripts/check-gateway-auth.py
 
       - name: Check API observability and probe recovery

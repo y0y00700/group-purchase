@@ -1,11 +1,8 @@
 # 공동구매 프로젝트 인계
 
-갱신일 2026-11-12 KST
+갱신일 2026-11-13 KST
 
-- 현재 **001~008 로컬 구현·검증 완료, 008 [PR #10](https://github.com/y0y00700/group-purchase/pull/10) 생성**. 브랜치는 `feat/gateway-authentication`, 기준은 007이 병합된 `main`의 `d017594`다.
-- 먼저 `AGENTS.md` → 이 문서 → [008 실행 요약](implementation/plan/008-gateway-authentication.md#execution-summary) → [작성 위치와 검증 결과](implementation/008-gateway-authentication.md#guided-coding)를 읽는다.
-- 2026-11-09 KST에 [PR #9 병합](https://github.com/y0y00700/group-purchase/pull/9)과 [PR 최종 head CI](https://github.com/y0y00700/group-purchase/actions/runs/42015430348)의 두 job 성공을 확인했다. [병합 main CI](https://github.com/y0y00700/group-purchase/actions/runs/42581485872)는 Build 성공, 이미지 빌드 중 Gradle 배포 파일 다운로드 HTTP 504로 Compose smoke 실패였다.
-- 008 최종 소스로 전체 Gradle 69개, Compose와 Windows 제품 JAR, 인증 거절 및 회원·DB 장애의 공동구매 전달 0회와 복구를 확인했다. [008 결과와 직접 테스트](implementation/008-gateway-authentication.md)
-- 008의 [PR 기록](implementation/008-gateway-authentication.md#pull-request)과 [Checks](https://github.com/y0y00700/group-purchase/pull/10/checks)에서 원격 상태를 확인한다. PR 생성 시점의 최종 head CI는 미확인이다.
-- 다음 설계는 로드맵의 009 공동구매·상품 정보다. 008 인증 흐름은 [Gateway 학습 문서](explanations/api-gateway.md#인증된-공동구매-요청)에 있다.
-- 회원 연동 계약은 [007 내부 인증 확인](implementation/plan/007-member-session-authentication.md#내부-인증-확인과-008-인계-계약), 학습 배경은 [006→007 Security·세션 흐름](learning/007-spring-security-session-flow.md)에 있다.
+- 현재 **001~009 로컬 구현·검증 완료**. 009의 여섯 구간을 사용자 작성 코드로 리뷰·재검증하고 참고 주석과 임시 표식을 정리했다. [009 최종 결과](implementation/009-group-purchase-product.md#final-results)
+- 로컬 브랜치는 `feat/group-purchase-product`다. 분기 기준은 착수 시 CI 성공을 확인한 병합 커밋 `f0a0821`이며, 008 PR #10 최종 head는 `20718eb`였다. [착수 기준](implementation/009-group-purchase-product.md)
+- 009의 [직접 테스트](implementation/009-group-purchase-product.md#manual-tests)와 [HTTP 요청 흐름](implementation/009-group-purchase-product.md#http-request-flow)을 최종 결과에 남겼다.
+- 009의 원격 검토와 CI는 [구현 브랜치 PR 목록](https://github.com/y0y00700/group-purchase/pulls?q=is%3Apr+head%3Afeat%2Fgroup-purchase-product)에서 확인한다. 로드맵의 다음 기능은 010 참여·취소다. [구현 로드맵](implementation/plan/roadmap.md)

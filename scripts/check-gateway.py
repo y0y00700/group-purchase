@@ -60,9 +60,9 @@ def main():
                 private_status, _ = request(PING, method)
                 if private_status != 404:
                     raise ValueError(f"{method} ping returned {private_status}")
-            auth_status, auth_body = request("/api/group-purchases/auth-probe")
+            auth_status, auth_body = request("/api/group-purchases/mine")
             if auth_status != 401 or json.loads(auth_body)["code"] != "UNAUTHENTICATED":
-                raise ValueError(f"Anonymous auth probe returned {auth_status}")
+                raise ValueError(f"Anonymous seller list returned {auth_status}")
             print(f"PASS: Gateway ping {expected}; private paths and methods 404")
             return
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:

@@ -1,7 +1,8 @@
-"""Exercise 008 against real Compose services and optionally isolated product JARs."""
+"""Check purchase routes and Gateway caller trust on Compose and optional product JARs."""
 import argparse
 import base64
 from contextlib import contextmanager, ExitStack
+from datetime import datetime, timedelta, timezone
 from http.client import HTTPConnection
 from http.cookiejar import CookieJar
 import importlib.util
@@ -9,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shlex
 import subprocess
 import tempfile
 import time
@@ -19,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("member_checks", ROOT / "scripts/check-member-auth.py")
 member_checks = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(member_checks)
-PROBE = "/api/group-purchases/auth-probe"
+PURCHASES = "/api/group-purchases"
+MINE = PURCHASES + "/mine"
 
 
 def read_secret(name):
@@ -51,10 +54,10 @@ def problem(result, status, code):
     return headers["X-Request-Id"]
 
 
-def repeated_headers(port, method, headers):
+def repeated_headers(port, path, method, headers):
     connection = HTTPConnection("127.0.0.1", port, timeout=10)
     try:
-        connection.putrequest(method, PROBE)
+        connection.putrequest(method, path)
         for key, value in headers:
             connection.putheader(key, value)
         connection.endheaders()
@@ -91,7 +94,7 @@ def wait_for(check, expected, seconds=180):
 @contextmanager
 def fixture():
     tool = member_checks.tool
-    login = "probe008_" + secrets.token_hex(6)
+    login = "smoke009_" + secrets.token_hex(6)
     password = secrets.token_hex(24)
     cookie_ids = set()
     member_id = None
@@ -102,9 +105,25 @@ def fixture():
     finally:
         if member_id:
             ids = ",".join(f"'{value}'" for value in cookie_ids)
-            member_checks.sql(f"DELETE FROM app.spring_session WHERE principal_name='{member_id}'"
-                              + (f" OR session_id IN ({ids})" if ids else "") + ";"
-                              + f"DELETE FROM app.members WHERE member_id='{member_id}';")
+            try:
+                cleanup_purchases(member_id)
+            finally:
+                member_checks.sql(f"DELETE FROM app.spring_session WHERE principal_name='{member_id}'"
+                                  + (f" OR session_id IN ({ids})" if ids else "") + ";"
+                                  + f"DELETE FROM app.members WHERE member_id='{member_id}';")
+
+
+def cleanup_purchases(member_id):
+    query = ("BEGIN;"
+             f"DELETE FROM app.group_purchase_idempotency WHERE member_id='{member_id}';"
+             f"DELETE FROM app.group_purchases WHERE seller_id='{member_id}';"
+             "COMMIT;")
+    script = 'export PGPASSWORD="$(cat /run/secrets/group_purchase_password)"\n'
+    script += "psql -X -w -h 127.0.0.1 -U group_purchase_app -d group_purchase -v ON_ERROR_STOP=1 -c "
+    script += shlex.quote(query) + "\n"
+    result = subprocess.run(["docker", "compose", "exec", "-T", "postgres", "sh", "-s"],
+                            cwd=ROOT, input=script.encode(), capture_output=True, timeout=20)
+    assert result.returncode == 0, "Purchase fixture cleanup failed"
 
 
 def cookie_value(jar, ids):
@@ -113,26 +132,29 @@ def cookie_value(jar, ids):
     return value
 
 
-def check_direct(group_port, expected):
+def check_direct(group_port, member_id, draft_id):
     common = {"X-Internal-Caller": "api-gateway",
-              "X-Authenticated-Member-Id": expected["memberId"], "X-Authenticated-Roles": "BUYER"}
+              "X-Authenticated-Member-Id": member_id, "X-Authenticated-Roles": "BUYER,SELLER"}
     for credential in (None, "incorrect", read_secret("member_internal_credential")):
         headers = dict(common)
         if credential:
             headers["X-Internal-Credential"] = credential
-        problem(request(group_port, PROBE, headers=headers), 403, "INTERNAL_CALLER_DENIED")
+        problem(request(group_port, MINE, headers=headers), 403, "INTERNAL_CALLER_DENIED")
     common["X-Internal-Credential"] = read_secret("group_purchase_internal_credential")
-    assert request(group_port, PROBE, headers=common)[2] == expected
+    assert request(group_port, MINE, headers=common)[2]["items"][0]["id"] == draft_id
+    problem(request(group_port, MINE, headers=common | {"X-Authenticated-Roles": "BUYER"}),
+            403, "SELLER_ROLE_REQUIRED")
+    problem(request(group_port, f"{PURCHASES}/{draft_id}", headers=common), 404, "NOT_FOUND")
     for key, status, code in (("X-Internal-Caller", 403, "INTERNAL_CALLER_DENIED"),
                               ("X-Internal-Credential", 403, "INTERNAL_CALLER_DENIED"),
                               ("X-Authenticated-Member-Id", 400, "INVALID_REQUEST"),
                               ("X-Authenticated-Roles", 400, "INVALID_REQUEST")):
         duplicate = [*common.items(), (key.lower(), common[key])]
-        problem(repeated_headers(group_port, "GET", duplicate), status, code)
+        problem(repeated_headers(group_port, MINE, "GET", duplicate), status, code)
     for key, value in (("X-Authenticated-Member-Id", "1-1-1-1-1"),
                        ("X-Authenticated-Roles", "BUYER,BUYER"),
                        ("X-Authenticated-Roles", "ADMIN")):
-        problem(request(group_port, PROBE, headers=common | {key: value}), 400, "INVALID_REQUEST")
+        problem(request(group_port, MINE, headers=common | {key: value}), 400, "INVALID_REQUEST")
 
 
 def exercise(gateway_port, group_port, account, outage=False):
@@ -140,7 +162,7 @@ def exercise(gateway_port, group_port, account, outage=False):
     jar = CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 
-    def gateway(path=PROBE, method="GET", headers=None, body=None):
+    def gateway(path=MINE, method="GET", headers=None, body=None):
         return request(gateway_port, path, method, headers, body, opener)
 
     assert wait_for(lambda: gateway("/api/group-purchases/ping"), {200})[2]["message"] == "pong"
@@ -160,37 +182,74 @@ def exercise(gateway_port, group_port, account, outage=False):
     assert status == 200 and authenticated == expected and headers.get_all("Set-Cookie")
     rotated = cookie_value(jar, ids)
     assert rotated != old
-    stale = request(gateway_port, PROBE, headers={"Cookie": f"GP_SESSION={old}"})
+    stale = request(gateway_port, MINE, headers={"Cookie": f"GP_SESSION={old}"})
     denied_ids.append(problem(stale, 401, "UNAUTHENTICATED"))
     assert gateway("/api/members/me")[2] == expected
     assert gateway("/api/members/me", "HEAD")[2] is None
-    status, headers, identity = gateway(headers={
+    denied_ids.append(problem(gateway(headers={"X-Authenticated-Roles": "SELLER"}), 403, "SELLER_ROLE_REQUIRED"))
+    member_checks.sql(f"INSERT INTO app.member_roles(member_id, role) VALUES ('{member_id}', 'SELLER');")
+    status, headers, owned = gateway(headers={
         "X-Authenticated-Member-Id": "126260b2-de13-43b6-8503-a76ad6974d5a",
         "X-AUTHENTICATED-ROLES": "OPERATOR", "X-Internal-Caller": "api-gateway",
         "X-Internal-Credential": "forged",
     })
-    assert status == 200 and identity == expected and headers["Cache-Control"] == "no-store"
+    assert status == 200 and owned == {"items": [], "nextCursor": None} and headers["Cache-Control"] == "no-store"
     successful_id = headers["X-Request-Id"]
     status, _, body = gateway(method="HEAD")
     assert status == 200 and body is None
     _, _, csrf = gateway("/api/auth/csrf")
     token = csrf["token"]
     for token_header in ({}, {"X-CSRF-TOKEN": "wrong"}, {"X-HTTP-Method-Override": "GET"}):
-        denied_ids.append(problem(gateway(PROBE + "?_csrf=" + token, "POST", token_header,
+        denied_ids.append(problem(gateway(PURCHASES + "?_csrf=" + token, "POST", token_header,
                                           {"_csrf": token}), 403, "CSRF_INVALID"))
-    denied_ids.append(problem(repeated_headers(gateway_port, "POST", (
+    denied_ids.append(problem(repeated_headers(gateway_port, PURCHASES, "POST", (
         ("Cookie", f"GP_SESSION={rotated}"), ("X-CSRF-TOKEN", token), ("x-csrf-token", token),
         ("Content-Length", "0"),
     )), 403, "CSRF_INVALID"))
-    assert gateway(method="POST", headers={"X-CSRF-TOKEN": token}, body={"ignored": True})[2] == expected
-    check_direct(group_port, expected)
+    register_headers = {"X-CSRF-TOKEN": token, "Idempotency-Key": secrets.token_hex(16)}
+    status, headers, receipt = gateway(PURCHASES, "POST", register_headers, {})
+    assert status == 201 and headers["Location"] == receipt["detailPath"]
+    draft_id = receipt["id"]
+    public_path = f"{PURCHASES}/{draft_id}"
+    mine_path = receipt["detailPath"]
+    check_direct(group_port, member_id, draft_id)
+    assert gateway(public_path)[0] == gateway(public_path, "HEAD")[0] == 404
+    assert request(gateway_port, public_path)[0] == 404
+    assert gateway(mine_path)[2]["draftVersion"] == 1
+
+    deadline = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(timespec="seconds")
+    draft = {"productName": "Sample tea", "productDescription": "Smoke fixture", "unitPrice": 1200,
+             "baseQuantity": 11, "finalDeadline": deadline, "draftVersion": 1}
+    revise_headers = register_headers | {"Idempotency-Key": secrets.token_hex(16)}
+    status, _, revised = gateway(public_path, "PUT", revise_headers, draft)
+    assert status == 200 and revised == receipt
+    publish_headers = register_headers | {"Idempotency-Key": secrets.token_hex(16)}
+    publish_path = public_path + "/publish"
+    problem(gateway(publish_path, "POST", publish_headers, {"draftVersion": 1}),
+            409, "GROUP_PURCHASE_DRAFT_VERSION_MISMATCH")
+    current = gateway(mine_path)[2]
+    assert current["draftVersion"] == 2 and current["projectedInitialRecruitmentTarget"] == 14
+    publish = {"draftVersion": current["draftVersion"]}
+    status, _, published = gateway(publish_path, "POST", publish_headers, publish)
+    assert status == 200 and published == receipt
+    assert gateway(public_path, "PUT", revise_headers, draft)[2] == revised
+    assert gateway(publish_path, "POST", publish_headers, publish)[2] == published
+    status, headers, visible = request(gateway_port, public_path)
+    assert status == 200 and headers["Cache-Control"] == "no-store"
+    assert visible["status"] == "RECRUITING" and visible["initialRecruitmentTarget"] == 14
+    assert visible["recruitmentOpen"] and "draftVersion" not in visible
+    status, headers, body = request(gateway_port, public_path, "HEAD")
+    assert status == 200 and headers["Cache-Control"] == "no-store" and body is None
+    assert any(item["id"] == draft_id for item in request(gateway_port, PURCHASES)[2]["items"])
 
     member_checks.sql(f"UPDATE app.members SET status='DISABLED' WHERE member_id='{member_id}';")
     denied_ids.append(problem(gateway(), 401, "UNAUTHENTICATED"))
     member_checks.sql(f"UPDATE app.members SET status='ACTIVE' WHERE member_id='{member_id}';")
+    member_checks.sql(f"DELETE FROM app.member_roles WHERE member_id='{member_id}' AND role='SELLER';")
+    denied_ids.append(problem(gateway(publish_path, "POST", publish_headers, publish), 403, "SELLER_ROLE_REQUIRED"))
+    denied_ids.append(problem(gateway(PURCHASES, "POST", register_headers, {}), 403, "SELLER_ROLE_REQUIRED"))
     member_checks.sql(f"INSERT INTO app.member_roles(member_id, role) VALUES ('{member_id}', 'SELLER');")
-    changed = expected | {"roles": ["BUYER", "SELLER"]}
-    assert gateway()[2] == changed
+    assert gateway()[2]["items"][0]["id"] == draft_id
     if outage:
         try:
             compose("stop", "member-service")
@@ -198,11 +257,13 @@ def exercise(gateway_port, group_port, account, outage=False):
             unavailable = wait_for(gateway, codes)
             denied_ids.append(problem(unavailable, unavailable[0], codes[unavailable[0]]))
             assert gateway("/api/group-purchases/ping")[0] == 200
+            assert gateway(public_path)[2] == visible
+            assert gateway(PURCHASES)[0] == 200
             gateway_healthy()
         finally:
             compose("up", "-d", "--wait", "--no-deps", "member-service")
-        assert wait_for(gateway, {200})[2] == changed
-        print(f"PASS: member unavailable ({unavailable[0]}), public ping, same Gateway recovers")
+        assert wait_for(gateway, {200})[2]["items"][0]["id"] == draft_id
+        print(f"PASS: member unavailable ({unavailable[0]}), public purchase reads, same Gateway recovers")
         try:
             compose("stop", "postgres")
             unavailable = gateway()
@@ -218,12 +279,13 @@ def exercise(gateway_port, group_port, account, outage=False):
             gateway_healthy()
         finally:
             compose("up", "-d", "--wait", "--no-deps", "postgres")
-        assert wait_for(gateway, {200})[2] == changed
+        assert wait_for(gateway, {200})[2]["items"][0]["id"] == draft_id
         print(f"PASS: member DB unavailable (Gateway {unavailable[0]}, member 503), same Gateway recovers")
 
     status, headers, _ = gateway("/api/auth/logout", "POST", {"X-CSRF-TOKEN": token})
     assert status == 204 and "Max-Age=0" in headers["Set-Cookie"] and not list(jar)
-    denied_ids.append(problem(request(gateway_port, PROBE, headers={"Cookie": f"GP_SESSION={rotated}"}),
+    logged_out = publish_headers | {"Cookie": f"GP_SESSION={rotated}"}
+    denied_ids.append(problem(request(gateway_port, publish_path, "POST", logged_out, publish),
                               401, "UNAUTHENTICATED"))
     _, _, seed = gateway("/api/auth/csrf")
     cookie_value(jar, ids)
@@ -241,7 +303,7 @@ def exercise(gateway_port, group_port, account, outage=False):
             login, password, token, rotated, read_secret("member_internal_credential"),
             read_secret("group_purchase_internal_credential"),
         ))
-    print(f"PASS: Gateway {gateway_port} cookie jar, CSRF, live roles, caller validation and fail-closed forwarding")
+    print(f"PASS: Gateway {gateway_port} draft, stale version, publication, replay, current roles and caller trust")
 
 
 def stop(process):
@@ -255,7 +317,7 @@ def stop(process):
 
 def exercise_jars():
     tool = member_checks.tool
-    with tempfile.TemporaryDirectory(prefix="008-jars-") as directory, ExitStack() as processes:
+    with tempfile.TemporaryDirectory(prefix="009-jars-") as directory, ExitStack() as processes:
         environment = os.environ | {"SPRING_PROFILES_ACTIVE": "local", "CONFIG_SERVER_URL": "http://127.0.0.1:8888"}
 
         def start(name, args, env):

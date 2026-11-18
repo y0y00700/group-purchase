@@ -31,7 +31,8 @@ public final class ApiProblems {
         problem.setDetail(switch (status) {
             case 400 -> "요청 형식이 올바르지 않습니다.";
             case 401 -> "로그인이 필요합니다.";
-            case 403 -> "CSRF 토큰을 확인할 수 없습니다.";
+            case 403 -> "SELLER_ROLE_REQUIRED".equals(code)
+                    ? "판매자 권한이 필요합니다." : "CSRF 토큰을 확인할 수 없습니다.";
             case 404 -> "요청한 API를 찾을 수 없습니다.";
             case 405 -> "허용하지 않는 요청 메서드입니다.";
             case 406 -> "지원하지 않는 응답 형식입니다.";
