@@ -151,6 +151,31 @@ class GatewayAuthIntegrationTests {
     }
 
     @Test
+    void protectsParticipationRoutesWithTheBuyerRole() throws Exception {
+        String mine = "/api/participations/mine";
+        String apply = PURCHASES + "/" + ID + "/participations";
+        String cancel = "/api/participations/" + ID + "/cancel";
+        int before = GROUPS.size();
+        assertProblem(request(mine, "GET", "", Map.of()), 401, "UNAUTHENTICATED");
+        assertProblem(request(mine, "GET", "", Map.of("Cookie", "GP_SESSION=seller",
+                "X-Authenticated-Roles", "BUYER")), 403, "BUYER_ROLE_REQUIRED");
+        assertProblem(request(apply, "POST", "", Map.of("Cookie", "GP_SESSION=csrf")), 403, "CSRF_INVALID");
+        assertThat(request(apply, "GET", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(request(cancel + "/", "POST", "", Map.of()).statusCode()).isEqualTo(404);
+        assertThat(GROUPS).hasSize(before);
+
+        var buyer = Map.of("Cookie", "GP_SESSION=buyer", "X-CSRF-TOKEN", "token");
+        assertThat(request(apply, "POST", "{}", buyer).statusCode()).isEqualTo(200);
+        assertThat(request(mine, "GET", "", buyer).statusCode()).isEqualTo(200);
+        var head = request(mine + "/" + ID, "HEAD", "", buyer);
+        assertThat(head.statusCode()).isEqualTo(200);
+        assertThat(head.body()).isEmpty();
+        assertThat(request(cancel, "POST", "", buyer).statusCode()).isEqualTo(200);
+        assertThat(GROUPS.stream().skip(before).toList()).hasSize(4).allSatisfy(received ->
+                assertThat(received.headers().getFirst("X-Authenticated-Roles")).isEqualTo("BUYER"));
+    }
+
+    @Test
     void restrictsUuidRoutesToCanonicalPathsAndMethods() throws Exception {
         int memberBefore = MEMBERS.size();
         int groupBefore = GROUPS.size();
@@ -274,6 +299,7 @@ class GatewayAuthIntegrationTests {
             case "large" -> respond(exchange, 200, SUCCESS + " ".repeat(8192));
             case "empty" -> respond(exchange, 200, "");
             case "role" -> respond(exchange, 200, SUCCESS.replace("SELLER", "BUYER"));
+            case "seller" -> respond(exchange, 200, SUCCESS.replace(",\"BUYER\"", ""));
             case "buyer" -> respond(exchange, 200, SUCCESS.replace("\"SELLER\",", ""));
             case "redirect" -> {
                 exchange.getResponseHeaders().set("Location", "/internal/auth/check");

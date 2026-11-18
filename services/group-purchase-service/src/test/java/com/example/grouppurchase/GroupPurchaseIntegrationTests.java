@@ -2,6 +2,7 @@ package com.example.grouppurchase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.grouppurchase.participation.application.ChangeParticipation;
 import com.example.grouppurchase.purchase.application.ChangeGroupPurchase;
 import com.example.grouppurchase.purchase.application.PurchaseChange;
 import com.example.grouppurchase.purchase.domain.SellingTerms;
@@ -33,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 class GroupPurchaseIntegrationTests {
     private static final String ROOT = "/api/group-purchases";
+    private static final String PARTICIPATIONS = "/api/participations/mine";
     private static final String MINE = ROOT + "/mine";
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final String FUTURE = "2090-01-01T00:00:00Z";
@@ -53,11 +55,35 @@ class GroupPurchaseIntegrationTests {
             assertThat(rows.next()).isTrue();
             assertThat(rows.getBoolean(1)).isTrue();
         }
+        client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+        UUID seller = UUID.randomUUID();
+        String oldKey = key();
+        var oldTerms = terms("existing", 10, FUTURE, null);
+        String published;
+        String draft;
+        HttpResponse<String> oldReceipt;
+        try (var v2 = app("--spring.flyway.target=2")) {
+            port = ((WebServerApplicationContext) v2).getWebServer().getPort();
+            draft = register(seller, "{}");
+            oldReceipt = send("POST", ROOT, seller, oldKey, oldTerms);
+            assertThat(oldReceipt.statusCode()).isEqualTo(201);
+            published = JSON.readTree(oldReceipt.body()).path("id").stringValue();
+            ok(send("POST", ROOT + "/" + published + "/publish", seller, key(), version(1)));
+        }
         app = app();
         port = ((WebServerApplicationContext) app).getWebServer().getPort();
-        client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-        assertThat(sqlInt("SELECT count(*) FROM app.flyway_schema_history WHERE version IN ('1', '2') AND success"))
-                .isEqualTo(2);
+        assertThat(sqlInt("SELECT count(*) FROM app.flyway_schema_history WHERE version IN ('1', '2', '3') AND success"))
+                .isEqualTo(3);
+        assertRecruited(draft, 0);
+        assertRecruited(published, 0);
+        assertThat(ok(send("GET", MINE + "/" + draft, seller, null, null)).path("status").stringValue())
+                .isEqualTo("DRAFT");
+        assertThat(ok(send("GET", ROOT + "/" + published, null, null, null)).path("recruitmentOpen").booleanValue())
+                .isTrue();
+        var replay = send("POST", ROOT, seller, oldKey, oldTerms);
+        assertThat(replay.statusCode()).isEqualTo(201);
+        assertThat(replay.body()).isEqualTo(oldReceipt.body());
+        assertThat(replay.headers().firstValue("Location")).isEqualTo(oldReceipt.headers().firstValue("Location"));
     }
 
     private static ConfigurableApplicationContext app(String... extra) {
@@ -331,6 +357,231 @@ class GroupPurchaseIntegrationTests {
         }
     }
 
+    @Test
+    void participationOwnershipInputAndBuyerLimit() throws Exception {
+        String purchase = publishPurchase(25);
+        String apply = applyPath(purchase);
+        var buyer = UUID.randomUUID();
+        var other = UUID.randomUUID();
+        problem(send("GET", PARTICIPATIONS, null, null, null), 403, "INTERNAL_CALLER_DENIED");
+        problem(client.send(request("GET", PARTICIPATIONS, buyer, null, null, "SELLER").build(),
+                HttpResponse.BodyHandlers.ofString()), 403, "BUYER_ROLE_REQUIRED");
+        for (String body : List.of("{}", "{\"quantity\":0}", "{\"quantity\":1.0}", "{\"quantity\":1000001}",
+                "{\"quantity\":1,\"quantity\":1}", "{\"quantity\":1,\"other\":1}", quantity(1) + " {}")) {
+            problem(send("POST", apply, buyer, key(), body), 400, "INVALID_REQUEST");
+        }
+        problem(send("POST", apply, buyer, null, quantity(1)), 400, "INVALID_REQUEST");
+        String draft = register(other, "{}");
+        problem(send("POST", applyPath(draft), buyer, key(), quantity(1)), 404, "NOT_FOUND");
+
+        String firstKey = key();
+        var created = send("POST", apply, buyer, firstKey, quantity(1));
+        String first = participationPath(created);
+        assertThat(send("POST", apply, buyer, firstKey, "{ \"quantity\" : 1 }").body()).isEqualTo(created.body());
+        problem(send("POST", apply, buyer, firstKey, quantity(2)), 409, "IDEMPOTENCY_KEY_CONFLICT");
+        var applied = ok(send("GET", first, buyer, null, null));
+        assertThat(applied.path("groupPurchaseId").stringValue()).isEqualTo(purchase);
+        assertThat(applied.path("amount").longValue()).isEqualTo(1000);
+        assertThat(Instant.parse(applied.path("appliedAt").stringValue())).isBefore(Instant.now().plusSeconds(1));
+        assertThat(applied.path("cancelledAt").isNull()).isTrue();
+
+        String second = participationPath(send("POST", apply, buyer, key(), quantity(1)));
+        problem(send("POST", apply, buyer, key(), quantity(1)), 409, "BUYER_PARTICIPATION_LIMIT_EXCEEDED");
+        problem(send("GET", first, other, null, null), 404, "NOT_FOUND");
+        problem(send("POST", cancelPath(first), other, key(), null), 404, "NOT_FOUND");
+        assertThat(send("HEAD", first, buyer, null, null).body()).isEmpty();
+        var firstPage = ok(send("GET", PARTICIPATIONS + "?limit=1", buyer, null, null));
+        String next = PARTICIPATIONS + "?cursor=" + firstPage.path("nextCursor").stringValue();
+        var seen = new ArrayList<>(itemIds(firstPage));
+        seen.addAll(itemIds(ok(send("GET", next, buyer, null, null))));
+        assertThat(seen).containsExactlyInAnyOrder(first.substring(PARTICIPATIONS.length() + 1),
+                second.substring(PARTICIPATIONS.length() + 1));
+        assertThat(itemIds(ok(send("GET", next, other, null, null)))).isEmpty();
+
+        problem(send("POST", cancelPath(first), buyer, key(), "{}"), 400, "INVALID_REQUEST");
+        String cancelKey = key();
+        var cancelled = send("POST", cancelPath(first), buyer, cancelKey, null);
+        assertThat(ok(cancelled).path("detailPath").stringValue()).isEqualTo(first);
+        assertThat(send("POST", cancelPath(first), buyer, cancelKey, null).body()).isEqualTo(cancelled.body());
+        problem(send("POST", cancelPath(first), buyer, key(), null), 409, "PARTICIPATION_ALREADY_CANCELLED");
+        problem(send("POST", cancelPath(second), buyer, cancelKey, null), 409, "IDEMPOTENCY_KEY_CONFLICT");
+        assertThat(ok(send("GET", first, buyer, null, null)).path("status").stringValue()).isEqualTo("CANCELLED");
+        assertThat(participationPath(send("POST", apply, buyer, key(), quantity(1)))).isNotEqualTo(first);
+        assertThat(send("POST", apply, buyer, firstKey, quantity(1)).body()).isEqualTo(created.body());
+        assertRecruited(purchase, 2);
+    }
+
+    @Test
+    void twoBuyersCompeteForTheLastSeatAndCancellationOnlyReopensBeforeDeadline() throws Exception {
+        String purchase = publishPurchase(10);
+        String apply = applyPath(purchase);
+        for (int i = 0; i < 11; i++) {
+            participationPath(send("POST", apply, UUID.randomUUID(), key(), quantity(1)));
+        }
+        UUID firstBuyer = UUID.randomUUID();
+        UUID secondBuyer = UUID.randomUUID();
+        var first = pending("POST", apply, firstBuyer, key(), quantity(1));
+        var second = pending("POST", apply, secondBuyer, key(), quantity(1));
+        var left = first.get(8, TimeUnit.SECONDS);
+        var right = second.get(8, TimeUnit.SECONDS);
+        assertThat(List.of(left.statusCode(), right.statusCode())).containsExactlyInAnyOrder(201, 409);
+        boolean firstWon = left.statusCode() == 201;
+        var winner = firstWon ? firstBuyer : secondBuyer;
+        var successful = participationPath(firstWon ? left : right);
+        problem(firstWon ? right : left, 409, "RECRUITMENT_QUANTITY_EXCEEDED");
+        assertThat(ok(send("GET", ROOT + "/" + purchase, null, null, null)).path("recruitmentOpen").booleanValue())
+                .isFalse();
+        assertThat(itemIds(ok(send("GET", ROOT, null, null, null)))).doesNotContain(purchase);
+        assertRecruited(purchase, 12);
+
+        var cancelOne = pending("POST", cancelPath(successful), winner, key(), null);
+        var cancelTwo = pending("POST", cancelPath(successful), winner, key(), null);
+        var cancelLeft = cancelOne.get(8, TimeUnit.SECONDS);
+        var cancelRight = cancelTwo.get(8, TimeUnit.SECONDS);
+        assertThat(List.of(cancelLeft.statusCode(), cancelRight.statusCode())).containsExactlyInAnyOrder(200, 409);
+        problem(cancelLeft.statusCode() == 409 ? cancelLeft : cancelRight, 409, "PARTICIPATION_ALREADY_CANCELLED");
+        assertRecruited(purchase, 11);
+        assertThat(itemIds(ok(send("GET", ROOT, null, null, null)))).contains(purchase);
+        String finalKey = key();
+        var reapplied = send("POST", apply, winner, finalKey, quantity(1));
+        String last = participationPath(reapplied);
+
+        try (var holder = database.connection(); var statement = holder.createStatement()) {
+            holder.setAutoCommit(false);
+            statement.executeUpdate("UPDATE app.group_purchases SET final_deadline = clock_timestamp() "
+                    + "+ interval '1 second' WHERE id = '" + purchase + "'");
+            var waiting = pending("POST", apply, winner, key(), quantity(1));
+            awaitBlocked(backendPid(holder));
+            statement.execute("SELECT pg_sleep(GREATEST(0, EXTRACT(EPOCH FROM (final_deadline - clock_timestamp()))) "
+                    + "+ 0.02) FROM app.group_purchases WHERE id = '" + purchase + "'");
+            holder.commit();
+            problem(waiting.get(8, TimeUnit.SECONDS), 409, "RECRUITMENT_CLOSED");
+        }
+        ok(send("POST", cancelPath(last), winner, key(), null));
+        assertThat(send("POST", apply, winner, finalKey, quantity(1)).body()).isEqualTo(reapplied.body());
+        var detail = ok(send("GET", ROOT + "/" + purchase, null, null, null));
+        assertThat(detail.path("status").stringValue()).isEqualTo("RECRUITING");
+        assertThat(detail.path("recruitmentOpen").booleanValue()).isFalse();
+        assertRecruited(purchase, 11);
+    }
+
+    @Test
+    void simultaneousBuyerRequestsAndIdempotencyConflictsKeepBothAggregatesConsistent() throws Exception {
+        String purchase = publishPurchase(20);
+        String secondPurchase = publishPurchase(20);
+        String apply = applyPath(purchase);
+        var buyer = UUID.randomUUID();
+        String sameKey = key();
+        var first = pending("POST", apply, buyer, sameKey, quantity(1));
+        var duplicate = pending("POST", apply, buyer, sameKey, quantity(1));
+        var prior = first.get(8, TimeUnit.SECONDS);
+        var replay = duplicate.get(8, TimeUnit.SECONDS);
+        String participation = participationPath(prior);
+        assertThat(participationPath(replay)).isEqualTo(participation);
+
+        var one = pending("POST", apply, buyer, key(), quantity(1));
+        var two = pending("POST", apply, buyer, key(), quantity(1));
+        var left = one.get(8, TimeUnit.SECONDS);
+        var right = two.get(8, TimeUnit.SECONDS);
+        assertThat(List.of(left.statusCode(), right.statusCode())).containsExactlyInAnyOrder(201, 409);
+        problem(left.statusCode() == 409 ? left : right, 409, "BUYER_PARTICIPATION_LIMIT_EXCEEDED");
+        assertRecruited(purchase, 2);
+
+        var tx = new TransactionTemplate(app.getBean(PlatformTransactionManager.class));
+        var crossBuyer = UUID.randomUUID();
+        var crossKey = key();
+        var cross = tx.execute(status -> {
+            app.getBean(ChangeParticipation.class).apply(crossBuyer, UUID.fromString(purchase), 1, crossKey);
+            int pid = app.getBean(JdbcClient.class).sql("SELECT pg_backend_pid()").query(Integer.class).single();
+            var waiting = pending("POST", applyPath(secondPurchase), crossBuyer, crossKey, quantity(1));
+            try {
+                awaitBlocked(pid);
+            } catch (Exception failure) {
+                throw new AssertionError(failure);
+            }
+            return waiting;
+        });
+        problem(cross.get(8, TimeUnit.SECONDS), 409, "IDEMPOTENCY_KEY_CONFLICT");
+        assertRecruited(purchase, 3);
+        assertRecruited(secondPurchase, 0);
+
+        var cancel = pending("POST", cancelPath(participation), buyer, key(), null);
+        var newApply = pending("POST", apply, buyer, key(), quantity(1));
+        ok(cancel.get(8, TimeUnit.SECONDS));
+        var result = newApply.get(8, TimeUnit.SECONDS);
+        if (result.statusCode() == 409) problem(result, 409, "BUYER_PARTICIPATION_LIMIT_EXCEEDED");
+        else participationPath(result);
+        assertRecruited(purchase, result.statusCode() == 201 ? 3 : 2);
+    }
+
+    @Test
+    void participationReceiptFailuresAndRowTimeoutRollBackChanges() throws Exception {
+        String purchase = publishPurchase(20);
+        String apply = applyPath(purchase);
+        var buyer = UUID.randomUUID();
+        String applyKey = key();
+        String cancelKey = key();
+        try (var holder = database.connection(); var statement = holder.createStatement()) {
+            holder.setAutoCommit(false);
+            statement.execute("SELECT id FROM app.group_purchases WHERE id = '" + purchase + "' FOR UPDATE");
+            problem(send("POST", apply, buyer, applyKey, quantity(2)), 503, "GROUP_PURCHASE_BUSY");
+            holder.rollback();
+        }
+        sql("ALTER TABLE app.participation_idempotency ADD CONSTRAINT reject_test_receipt "
+                + "CHECK (response_body IS NULL OR idempotency_key NOT IN ('" + applyKey + "','" + cancelKey + "'))");
+        String path;
+        try {
+            problem(send("POST", apply, buyer, applyKey, quantity(2)), 500, "INTERNAL_ERROR");
+            assertRecruited(purchase, 0);
+            assertThat(itemIds(ok(send("GET", PARTICIPATIONS, buyer, null, null)))).isEmpty();
+            path = participationPath(send("POST", apply, buyer, key(), quantity(2)));
+            problem(send("POST", cancelPath(path), buyer, cancelKey, null), 500, "INTERNAL_ERROR");
+            assertRecruited(purchase, 2);
+            assertThat(ok(send("GET", path, buyer, null, null)).path("status").stringValue()).isEqualTo("APPLIED");
+            assertThat(sqlInt("SELECT count(*) FROM app.participation_idempotency WHERE idempotency_key IN ('"
+                    + applyKey + "','" + cancelKey + "')")).isZero();
+        } finally {
+            sql("ALTER TABLE app.participation_idempotency DROP CONSTRAINT reject_test_receipt");
+        }
+        ok(send("POST", cancelPath(path), buyer, cancelKey, null));
+        participationPath(send("POST", apply, buyer, applyKey, quantity(2)));
+        assertRecruited(purchase, 2);
+    }
+
+    private static String publishPurchase(int baseQuantity) throws Exception {
+        var seller = UUID.randomUUID();
+        String id = register(seller, terms("participation", baseQuantity, FUTURE, null));
+        ok(send("POST", ROOT + "/" + id + "/publish", seller, key(), version(1)));
+        return id;
+    }
+
+    private static String applyPath(String id) {
+        return ROOT + "/" + id + "/participations";
+    }
+
+    private static String cancelPath(String detailPath) {
+        return detailPath.replace("/mine/", "/") + "/cancel";
+    }
+
+    private static String quantity(int quantity) {
+        return "{\"quantity\":" + quantity + "}";
+    }
+
+    private static String participationPath(HttpResponse<String> response) {
+        assertThat(response.statusCode()).as(response.body()).isEqualTo(201);
+        String path = JSON.readTree(response.body()).path("detailPath").stringValue();
+        assertThat(response.headers().firstValue("Location")).contains(path);
+        assertThat(path).startsWith(PARTICIPATIONS + "/");
+        return path;
+    }
+
+    private static void assertRecruited(String purchase, int expected) throws Exception {
+        assertThat(sqlInt("SELECT recruited_quantity FROM app.group_purchases WHERE id = '" + purchase + "'"))
+                .isEqualTo(expected);
+        assertThat(sqlInt("SELECT COALESCE(SUM(quantity),0) FROM app.participations WHERE group_purchase_id = '"
+                + purchase + "' AND status = 'APPLIED'")).isEqualTo(expected);
+    }
+
     private static HttpResponse<String> queueAfterChange(UUID seller, PurchaseChange change, String method,
             String path, String body) throws Exception {
         var tx = new TransactionTemplate(app.getBean(PlatformTransactionManager.class));
@@ -437,7 +688,7 @@ class GroupPurchaseIntegrationTests {
 
     private static CompletableFuture<HttpResponse<String>> pending(String method, String path, UUID seller, String key,
             String body) {
-        return client.sendAsync(request(method, path, seller, key, body, "SELLER").build(),
+        return client.sendAsync(request(method, path, seller, key, body, "BUYER,SELLER").build(),
                 HttpResponse.BodyHandlers.ofString());
     }
 

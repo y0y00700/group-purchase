@@ -1,6 +1,6 @@
-package com.example.grouppurchase.purchase.application;
+package com.example.grouppurchase.application;
 
-public enum PurchaseRequestFailure {
+public enum RequestFailure {
     INVALID_REQUEST, NOT_FOUND, IDEMPOTENCY_KEY_CONFLICT;
 
     public Failure exception() {
@@ -8,14 +8,14 @@ public enum PurchaseRequestFailure {
     }
 
     public static final class Failure extends RuntimeException {
-        private final PurchaseRequestFailure reason;
+        private final RequestFailure reason;
 
-        private Failure(PurchaseRequestFailure reason) {
+        private Failure(RequestFailure reason) {
             super(reason.name());
             this.reason = reason;
         }
 
-        public PurchaseRequestFailure reason() {
+        public RequestFailure reason() {
             return reason;
         }
     }

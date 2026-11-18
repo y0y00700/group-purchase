@@ -4,7 +4,9 @@
 
 | 구분 | 문서 | 상태 |
 |---|---|---|
-| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~009 로컬 구현·검증 완료 |
+| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~010 로컬 구현·검증 완료 |
+| 완료 계획 | [010 참여·조회·결제 전 취소](plan/010-participation.md#execution-summary) | 여섯 Step 작성·리뷰·재검증 완료 |
+| 완료 결과 | [010 최종 검증·직접 테스트](010-participation.md#final-results) | 전체 Gradle·PostgreSQL·Compose·Windows 제품 JAR 통과 |
 | 완료 계획 | [009 공동구매·상품 정보](plan/009-group-purchase-product.md#execution-summary) | 여섯 Step 작성·리뷰·재검증 완료 |
 | 완료 결과 | [009 최종 검증·직접 테스트](009-group-purchase-product.md) | 전체 Gradle·PostgreSQL·Compose·Windows 제품 JAR 통과 |
 | 완료 계획 | [008 Gateway 인증·내부 호출 신뢰](plan/008-gateway-authentication.md#execution-summary) | 여섯 Step 작성·리뷰·재검증 완료 |
