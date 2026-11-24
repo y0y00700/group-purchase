@@ -6,12 +6,12 @@ Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동�
 
 ## 빠른 실행과 직접 확인
 
-Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 5432·8000·8080·8081·8761·8888 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. 검사 스크립트에는 Python 3이 필요하다.
+Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 5432·8000·8080·8081·8761·8888·9092 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. Kafka 검증 JAR를 호스트에서 실행할 때는 JDK 21이 필요하다. 검사 스크립트에는 Python 3이 필요하다.
 
 ```powershell
 .\scripts\prepare-local-secrets.ps1
 docker compose config --quiet
-docker compose up --build -d --wait --wait-timeout 180
+docker compose up --build -d --wait --wait-timeout 240
 docker compose ps
 python scripts/check-postgres.py --stage application
 Invoke-RestMethod http://localhost:8888/actuator/health
@@ -32,7 +32,7 @@ Invoke-RestMethod http://localhost:8000/api/group-purchases/ping | ConvertTo-Jso
 # 실행 로그
 docker compose logs --tail=100
 
-# 종료: 컨테이너·네트워크를 제거하고 PostgreSQL 데이터 볼륨은 보존한다.
+# 종료: 컨테이너·네트워크를 제거하고 PostgreSQL·Kafka 데이터 볼륨은 보존한다.
 docker compose down
 ```
 
@@ -47,7 +47,7 @@ JDK 21을 `JAVA_HOME`에 지정하고 프로젝트 루트에서 실행한다. Wr
 .\gradlew.bat :config-server:test :eureka-server:test :group-purchase-service:test
 ```
 
-테스트는 실제 임시 Config·Eureka·앱과 설정 파일을 직접 제어한다. 공동구매 테스트에는 Docker Desktop Linux 엔진이 필요하며 격리 PostgreSQL·임시 secret을 직접 준비하고 정리한다. 일반 DB·secret과 사전 실행한 앱은 사용하지 않는다. 등록 테스트의 Eureka는 라이브러리 간섭을 피하도록 별도 Java 프로세스로 실행하고 종료한다. HTML 결과는 각 실행 모듈의 `build/reports/tests/test/index.html`에 생성된다.
+테스트는 실제 임시 Config·Eureka·앱과 설정 파일을 직접 제어한다. 공동구매 테스트에는 Docker Desktop Linux 엔진이 필요하며 격리 PostgreSQL·Kafka·임시 secret을 직접 준비하고 정리한다. 일반 DB·secret과 사전 실행한 앱은 사용하지 않는다. 등록 테스트의 Eureka는 라이브러리 간섭을 피하도록 별도 Java 프로세스로 실행하고 종료한다. HTML 결과는 각 실행 모듈의 `build/reports/tests/test/index.html`에 생성된다.
 
 호스트 개발 실행은 세 터미널에서 순서대로 수행한다. Compose를 실행 중이면 먼저 `docker compose stop api-gateway group-purchase-service eureka-server config-server`로 앱 포트를 비우고 PostgreSQL은 유지한다. DB가 없다면 빠른 실행 절의 secret 준비 후 `docker compose up -d --no-deps --wait postgres`로 시작한다. 다음 bootRun 절차는 사용자용이며 이번 연결 스텝의 실측은 격리 테스트의 local 환경변수 주입과 Compose 실행이다.
 
@@ -100,9 +100,11 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 다섯 앱 이미지 빌드·PostgreSQL 기동·임시 secret 준비·DB 권한/영속성·실제 설정값·등록 주소·Gateway 라우팅과 인증 검사·정리를 정의한다. DB 변경의 검증 범위와 원격 확인 위치는 [005 결과](Docs/implementation/005-postgresql-foundation.md)에 있다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 다섯 앱 이미지 빌드·PostgreSQL/Kafka 기동·토픽 초기화·임시 secret 준비·DB 권한/영속성·Kafka 양쪽 리스너·실제 설정값·등록 주소·Gateway 라우팅과 인증 검사·정리를 정의한다. 전체 down/up·Kafka 중단 복구는 로컬 전용 011 프로젝트에서 별도로 검증한다. 원격 실행 여부는 최신 인계에서 구분한다.
 
 ## 문서
+
+- [011 Kafka 결과·직접 작성·테스트](Docs/implementation/011-kafka-message-contract.md): 사용자 작성·묶음 리뷰·로컬 재검증을 완료했으며 기준 구현과 최종 결과를 구분한다. Kafka는 HOST `localhost:9092`, Compose INTERNAL `kafka:19092`이며 컨트롤러는 호스트에 공개하지 않는다. 상시 7개 서비스와 일회성 kafka-init(exit 0)을 구분한다.
 
 - [전체 진행 정리 · 2026-11-03](Docs/progress-summary-2026-11-03.md)
 - [프로젝트 인계·다음 작업](Docs/handoff.md)

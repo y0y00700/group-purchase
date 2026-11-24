@@ -46,7 +46,7 @@
 
 | 순서 | 작업 단위 | 구현 범위와 완료 기준 |
 |---|---|---|
-| 11 | Kafka 실행·메시지 계약 | 단일 브로커 Compose, 토픽·키·소비 그룹, JSON 메시지와 버전. 실제 발행·수신과 직렬화·호환성 검증 |
+| 11 | [Kafka 실행·메시지 계약](011-kafka-message-contract.md#execution-summary) | 단일 브로커 Compose, 토픽·키·소비 그룹, JSON 메시지와 버전. 실제 발행·수신과 직렬화·호환성 검증 |
 | 12 | Outbox 발행 | 서비스 소유 DB의 업무·Outbox 원자적 저장, 선점 ID·기한·순번, 재시도·중단·재선점. 발행 전후 중단·중복 전달·이전 선점자의 늦은 갱신 검증 |
 | 13 | 메시지 소비 안정성 | 소비 기록과 업무·후속 Outbox의 원자성, 커밋 후 오프셋 반영, 실패 분류·DLT 보관·파티션 보류. 재전달·재시작과 실패 원본을 넘기지 않는 동작 검증 |
 | 14 | PG Mock | 독립 HTTP 승인·환불·결과 조회와 멱등성, 거래 기록 및 지연·응답 유실 등 장애 재현. 재요청 결과와 거래 기록 대사 |
@@ -73,9 +73,11 @@
 
 2026-10-29 001 구현·검증 완료: [Gradle·YAML·CI 전환 결과](../001-multi-module-build.md)에 로컬 빌드·기동과 PR의 GitHub CI 성공 근거를 기록했다. 2026-10-30에는 [002 결과](../002-config-server.md)의 Config Server·첫 클라이언트·로컬 이미지·Compose 검증을 완료했다. 2026-11-02 PR #2 병합과 최종 head의 CI 성공을 확인하고 [003 Eureka 계획](003-eureka-server.md)을 작성했다.
 
+<a id="next-implementation"></a>
+
 ## 다음 구현 대상
 
-010 로컬 구현과 여섯 구간 재검증을 마쳤다. 다음 계획은 011 Kafka 실행·메시지 계약이다. [010 최종 결과](../010-participation.md#final-results) · [프로젝트 인계](../../handoff.md)
+010 로컬 구현과 여섯 구간 재검증을 마쳤다. [011 Kafka 실행·메시지 계약 계획](011-kafka-message-contract.md#execution-summary)은 2026-11-24 기준 구현·필수 로컬 검증을 마쳤고 여섯 구간 사용자 작성·묶음 리뷰·관련 재검증 및 임시 표식 정리도 마쳤다. 012는 별도 계획 검토·진행 요청 전에는 착수하지 않는다. [011 실제 결과·직접 작성](../011-kafka-message-contract.md#guided-coding) · [010 최종 결과](../010-participation.md#final-results) · [프로젝트 인계](../../handoff.md)
 
 ## 근거
 

@@ -1,0 +1,3 @@
+gp.payment.commands.v1
+gp.payment.results.v1
+gp.notification.requests.v1
