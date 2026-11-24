@@ -1,4 +1,4 @@
-"""Check purchase routes and Gateway caller trust on Compose and optional product JARs."""
+"""Check purchase and participation routes on Compose and optional product JARs."""
 import argparse
 import base64
 from contextlib import contextmanager, ExitStack
@@ -23,6 +23,8 @@ member_checks = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(member_checks)
 PURCHASES = "/api/group-purchases"
 MINE = PURCHASES + "/mine"
+PARTICIPATIONS = "/api/participations"
+PARTICIPATION_MINE = PARTICIPATIONS + "/mine"
 
 
 def read_secret(name):
@@ -94,7 +96,7 @@ def wait_for(check, expected, seconds=180):
 @contextmanager
 def fixture():
     tool = member_checks.tool
-    login = "smoke009_" + secrets.token_hex(6)
+    login = "smoke010_" + secrets.token_hex(6)
     password = secrets.token_hex(24)
     cookie_ids = set()
     member_id = None
@@ -114,7 +116,12 @@ def fixture():
 
 
 def cleanup_purchases(member_id):
+    owned = (f"buyer_id='{member_id}' OR group_purchase_id IN "
+             f"(SELECT id FROM app.group_purchases WHERE seller_id='{member_id}')")
     query = ("BEGIN;"
+             f"DELETE FROM app.participation_idempotency WHERE buyer_id='{member_id}' "
+             f"OR participation_id IN (SELECT id FROM app.participations WHERE {owned});"
+             f"DELETE FROM app.participations WHERE {owned};"
              f"DELETE FROM app.group_purchase_idempotency WHERE member_id='{member_id}';"
              f"DELETE FROM app.group_purchases WHERE seller_id='{member_id}';"
              "COMMIT;")
@@ -242,6 +249,45 @@ def exercise(gateway_port, group_port, account, outage=False):
     assert status == 200 and headers["Cache-Control"] == "no-store" and body is None
     assert any(item["id"] == draft_id for item in request(gateway_port, PURCHASES)[2]["items"])
 
+    apply_path = public_path + "/participations"
+    purchase_quantity = {"quantity": 1}
+    apply_headers = register_headers | {"Idempotency-Key": secrets.token_hex(16)}
+    denied_ids.append(problem(gateway(apply_path, "POST", {"Idempotency-Key": apply_headers["Idempotency-Key"]},
+                                      purchase_quantity), 403, "CSRF_INVALID"))
+    denied_ids.append(problem(request(gateway_port, PARTICIPATION_MINE), 401, "UNAUTHENTICATED"))
+    problem(request(group_port, PARTICIPATION_MINE), 403, "INTERNAL_CALLER_DENIED")
+    status, headers, participation = gateway(apply_path, "POST", apply_headers | {
+        "X-Authenticated-Member-Id": "126260b2-de13-43b6-8503-a76ad6974d5a",
+        "X-Authenticated-Roles": "SELLER",
+    }, purchase_quantity)
+    assert status == 201 and headers["Location"] == participation["detailPath"]
+    detail_path = participation["detailPath"]
+    assert detail_path == PARTICIPATION_MINE + "/" + participation["id"]
+    assert gateway(apply_path, "POST", apply_headers, purchase_quantity)[2] == participation
+    status, _, body = gateway(detail_path, "HEAD")
+    assert status == 200 and body is None
+    status, _, entry = gateway(detail_path)
+    assert status == 200 and entry["status"] == "APPLIED" and entry["groupPurchaseId"] == draft_id
+    assert entry["quantity"] == 1 and entry["unitPrice"] == entry["amount"] == 1200
+    assert gateway(PARTICIPATION_MINE)[2] == {"items": [entry], "nextCursor": None}
+    problem(gateway(apply_path, "POST", apply_headers | {"Idempotency-Key": secrets.token_hex(16)}, purchase_quantity),
+            409, "BUYER_PARTICIPATION_LIMIT_EXCEEDED")
+
+    member_checks.sql(f"DELETE FROM app.member_roles WHERE member_id='{member_id}' AND role='BUYER';")
+    denied_ids.append(problem(gateway(detail_path), 403, "BUYER_ROLE_REQUIRED"))
+    member_checks.sql(f"INSERT INTO app.member_roles(member_id, role) VALUES ('{member_id}', 'BUYER');")
+    cancel_path = PARTICIPATIONS + "/" + participation["id"] + "/cancel"
+    cancel_headers = register_headers | {"Idempotency-Key": secrets.token_hex(16)}
+    for _ in range(2):
+        status, _, cancelled = gateway(cancel_path, "POST", cancel_headers)
+        assert status == 200 and cancelled == participation
+    assert gateway(detail_path)[2]["status"] == "CANCELLED"
+    problem(gateway(cancel_path, "POST", cancel_headers | {"Idempotency-Key": secrets.token_hex(16)}),
+            409, "PARTICIPATION_ALREADY_CANCELLED")
+    status, _, reapplied = gateway(apply_path, "POST",
+                                  apply_headers | {"Idempotency-Key": secrets.token_hex(16)}, purchase_quantity)
+    assert status == 201 and reapplied["id"] != participation["id"]
+
     member_checks.sql(f"UPDATE app.members SET status='DISABLED' WHERE member_id='{member_id}';")
     denied_ids.append(problem(gateway(), 401, "UNAUTHENTICATED"))
     member_checks.sql(f"UPDATE app.members SET status='ACTIVE' WHERE member_id='{member_id}';")
@@ -303,7 +349,7 @@ def exercise(gateway_port, group_port, account, outage=False):
             login, password, token, rotated, read_secret("member_internal_credential"),
             read_secret("group_purchase_internal_credential"),
         ))
-    print(f"PASS: Gateway {gateway_port} draft, stale version, publication, replay, current roles and caller trust")
+    print(f"PASS: Gateway {gateway_port} publication, participation, cancellation, replay, current roles and caller trust")
 
 
 def stop(process):
@@ -317,7 +363,7 @@ def stop(process):
 
 def exercise_jars():
     tool = member_checks.tool
-    with tempfile.TemporaryDirectory(prefix="009-jars-") as directory, ExitStack() as processes:
+    with tempfile.TemporaryDirectory(prefix="010-jars-") as directory, ExitStack() as processes:
         environment = os.environ | {"SPRING_PROFILES_ACTIVE": "local", "CONFIG_SERVER_URL": "http://127.0.0.1:8888"}
 
         def start(name, args, env):

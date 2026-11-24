@@ -36,9 +36,11 @@ public final class GatewayIdentityInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
-        if (!(handler instanceof HandlerMethod method) || !method.hasMethodAnnotation(RequiresSeller.class)) {
-            return true;
-        }
+        if (!(handler instanceof HandlerMethod method)) return true;
+        RequiresRole requirement = method.getMethodAnnotation(RequiresRole.class);
+        if (requirement == null) requirement = method.getBeanType().getAnnotation(RequiresRole.class);
+        if (requirement == null) return true;
+        String requiredRole = requirement.value().name();
         response.setHeader("Cache-Control", "no-store");
         String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
         if (!validCaller(request)) {
@@ -52,8 +54,8 @@ public final class GatewayIdentityInterceptor implements HandlerInterceptor {
             ApiExceptionResolver.write(request, response, 400, requestId);
             return false;
         }
-        if (!identity.roles().contains("SELLER")) {
-            ApiExceptionResolver.write(request, response, 403, requestId, "SELLER_ROLE_REQUIRED");
+        if (!identity.roles().contains(requiredRole)) {
+            ApiExceptionResolver.write(request, response, 403, requestId, requiredRole + "_ROLE_REQUIRED");
             return false;
         }
         request.setAttribute(IDENTITY, identity);
@@ -89,9 +91,13 @@ public final class GatewayIdentityInterceptor implements HandlerInterceptor {
 
     public record Identity(UUID memberId, List<String> roles) { }
 
-    @Target(ElementType.METHOD)
+    public enum Role { BUYER, SELLER }
+
+    @Target({ElementType.METHOD, ElementType.TYPE})
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface RequiresSeller { }
+    public @interface RequiresRole {
+        Role value();
+    }
 
     @Configuration(proxyBeanMethods = false)
     static class Registration {

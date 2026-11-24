@@ -12,3 +12,4 @@
 - 상세 기준은 [사용자 직접 테스트 방법](Docs/implementation/README.md#사용자-직접-테스트-방법)을 따른다. 실제 실행한 검증과 미검증 절차를 구분한다.
 - 외부 HTTP 처리나 인증·권한 경계가 달라진 단계는 구현 결과 문서에 대표 요청의 Mermaid 시퀀스 다이어그램을 넣는다. [HTTP 요청 흐름 작성 기준](Docs/implementation/README.md#http-request-flow)을 따른다.
 - 구현·검증을 마친 단계에는 별도 설명 요청 없이 관련 `Docs/explanations/` 문서를 자동 생성·갱신한다. 기존 문서처럼 기본 개요·현재 담당하는 역할·프로젝트의 실제 적용 예시를 포함하고 코드·결과를 연결한다. 상세 기준은 [구현 완료 후 학습 문서](Docs/implementation/README.md#implementation-explanations)를 따른다.
+- 학습 질문에 답할 때는 [학습 기록 규칙](Docs/learning/AGENTS.md)과 [학습 안내](Docs/learning/README.md)를 먼저 확인하고, 별도 저장 요청 없이 질문 문서·KST 날짜별 기록·상위 질문의 후속 링크를 함께 갱신한다. 후속 질문은 날짜가 달라도 연결하고, 같은 질문의 복습은 기존 문서를 재사용한다. 사용자가 대화로만 설명하거나 저장 제외를 요청하면 그 지시를 우선한다.

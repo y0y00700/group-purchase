@@ -106,6 +106,18 @@ class RoutingIntegrationTests {
     }
 
     @Test
+    void rejectsMissingAndUnsupportedRoleConfiguration() throws Exception {
+        int before = RECEIVED.get();
+        for (String path : new String[] {"/_fixture/role-unset", "/_fixture/role-invalid"}) {
+            var result = request(path, "GET", null);
+            assertThat(result.statusCode()).isEqualTo(403);
+            assertThat(result.body()).contains("INVALID_ROUTE_POLICY");
+            assertThat(result.headers().firstValue("Cache-Control")).contains("no-store");
+        }
+        assertThat(RECEIVED.get()).isEqualTo(before);
+    }
+
+    @Test
     void rejectsAnEmptyMemberDiscoveryList() throws Exception {
         int before = RECEIVED.get();
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/_fixture/auth-missing"))

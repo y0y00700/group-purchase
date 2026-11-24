@@ -47,7 +47,7 @@ final class AuthRouteFilter implements GlobalFilter, Ordered {
             return Mono.empty();
         });
         if ("protected".equals(policy)) {
-            return forwardAuthenticated(exchange, chain);
+            return forwardAuthenticated(exchange, chain, route.getMetadata().get("required-role"));
         }
         if ("public-purchase".equals(policy)) {
             var request = exchange.getRequest().mutate().headers(AuthRouteFilter::removeClientCredentials).build();
@@ -56,11 +56,11 @@ final class AuthRouteFilter implements GlobalFilter, Ordered {
         return chain.filter(exchange);
     }
 
-    private Mono<Void> forwardAuthenticated(ServerWebExchange exchange, GatewayFilterChain chain) {
+    private Mono<Void> forwardAuthenticated(ServerWebExchange exchange, GatewayFilterChain chain, Object role) {
+        AuthCheckFailure denied = missingRoleFailure(role);
+        if (denied == AuthCheckFailure.INVALID_ROUTE_POLICY) return Mono.error(denied.exception());
         return member.check(exchange.getRequest(), RequestIdWebFilter.requestId(exchange)).flatMap(identity -> {
-            if (!identity.roles().contains("SELLER")) {
-                return Mono.error(AuthCheckFailure.SELLER_ROLE_REQUIRED.exception());
-            }
+            if (!identity.roles().contains(role)) return Mono.error(denied.exception());
             var request = exchange.getRequest().mutate().headers(headers -> {
                 removeClientCredentials(headers);
                 headers.set(MemberAuthClient.CALLER_HEADER, MemberAuthClient.CALLER);
@@ -70,6 +70,12 @@ final class AuthRouteFilter implements GlobalFilter, Ordered {
             }).build();
             return chain.filter(exchange.mutate().request(request).build());
         });
+    }
+
+    private static AuthCheckFailure missingRoleFailure(Object role) {
+        if ("SELLER".equals(role)) return AuthCheckFailure.SELLER_ROLE_REQUIRED;
+        if ("BUYER".equals(role)) return AuthCheckFailure.BUYER_ROLE_REQUIRED;
+        return AuthCheckFailure.INVALID_ROUTE_POLICY;
     }
 
     private static void removeClientCredentials(HttpHeaders headers) {

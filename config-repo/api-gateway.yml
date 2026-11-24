@@ -92,6 +92,7 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - ExactPath=/api/group-purchases/mine
                 - Method=GET,HEAD
@@ -99,6 +100,7 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - UuidPath=/api/group-purchases/mine/{id}
                 - Method=GET,HEAD
@@ -106,6 +108,7 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - ExactPath=/api/group-purchases
                 - Method=POST
@@ -113,6 +116,7 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - UuidPath=/api/group-purchases/{id}
                 - Method=PUT
@@ -120,8 +124,41 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - UuidPath=/api/group-purchases/{id}/publish
+                - Method=POST
+            - id: participation-apply
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+                required-role: BUYER
+              predicates:
+                - UuidPath=/api/group-purchases/{id}/participations
+                - Method=POST
+            - id: participation-list
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+                required-role: BUYER
+              predicates:
+                - ExactPath=/api/participations/mine
+                - Method=GET,HEAD
+            - id: participation-detail
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+                required-role: BUYER
+              predicates:
+                - UuidPath=/api/participations/mine/{id}
+                - Method=GET,HEAD
+            - id: participation-cancel
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+                required-role: BUYER
+              predicates:
+                - UuidPath=/api/participations/{id}/cancel
                 - Method=POST
           httpclient:
             connect-timeout: 1000

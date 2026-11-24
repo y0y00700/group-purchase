@@ -16,6 +16,10 @@ public interface GroupPurchases {
 
     Optional<GroupPurchase> lockOwned(UUID id, UUID sellerId);
 
+    Optional<Recruitment> lockPublished(UUID id);
+
+    void changeRecruitedQuantity(UUID id, int difference);
+
     Optional<View> findOwned(UUID id, UUID sellerId);
 
     Optional<View> findPublished(UUID id);
@@ -23,6 +27,8 @@ public interface GroupPurchases {
     List<View> listOwned(UUID sellerId, Position after, int limit);
 
     List<View> listOpen(Position after, int limit);
+
+    record Recruitment(GroupPurchase purchase, int recruitedQuantity) { }
 
     record View(GroupPurchase purchase, boolean recruitmentOpen) { }
 

@@ -35,9 +35,23 @@ spring:
               uri: lb://group-purchase
               metadata:
                 auth-policy: protected
+                required-role: SELLER
               predicates:
                 - ExactPath=/_fixture/auth-missing
                 - Method=GET
+            - id: role-unset
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+              predicates:
+                - ExactPath=/_fixture/role-unset
+            - id: role-invalid
+              uri: lb://group-purchase
+              metadata:
+                auth-policy: protected
+                required-role: OPERATOR
+              predicates:
+                - ExactPath=/_fixture/role-invalid
             - id: refused
               uri: lb://refused-service
               predicates:

@@ -6,6 +6,8 @@
 
 ## 목표와 현재 상태
 
+- 최신 구현 상태: [011 Kafka 결과·직접 작성·테스트](implementation/011-kafka-message-contract.md). 기준 구현 검증 후 여섯 구간의 **사용자 작성·묶음 리뷰·로컬 재검증을 완료**했다. [실제 설정·코드 역할](explanations/kafka-message-contract.md) · [메시지/커밋 로그 관찰](learning/questions/kafka-011-observe-message-flow.md). 최신 브랜치·PR/CI는 [인계](handoff.md)를 따른다.
+
 판매자가 상품과 기준 수량을 등록하고, 참여 모집 후 기한 안의 유효 결제가 기준 수량을 채우면 구매를 확정하는 서비스다. 미달로 무산되면 취소·환불한다. 마감 경합·장시간 업무·보상 복구를 구현·검증할 수 있어 한정 수량 주문·좌석 예약·B2B 발주 후보를 비교한 뒤 이 주제를 선택했다.
 
 취업용 개인 프로젝트로, 구현 → 정합성·장애·부하 검증 → 관측·분석 → 대안·트레이드오프 비교 → 설계·구현 변경 → 같은 조건 재검증까지 근거를 남기는 것이 목표다.
@@ -42,7 +44,11 @@
 
 파일명은 영문 kebab-case로 짓고 내용은 한국어로 작성한다. 안내는 이 문서와 구현 안내에 모으고 빈 폴더용 README는 만들지 않는다. 구현 계획·결과와 결정 근거는 목적이 달라 구분해 관리한다. 실제 수행·검증한 범위만 완료로 표시한다.
 
-협업·학습 원칙과 최신 세션 인계는 로컬 전용 `Docs/process/collaboration.md`에서 관리하고, 설명 요청이 생기면 `Docs/explanations/`에 주제별 노트를 만든다. 두 경로는 기존처럼 Git에서 제외한다. 문서 통합·이동 기록은 로컬 `Docs/process/document-migration.json`에 남긴다.
+협업·학습 원칙은 로컬 전용 `Docs/process/collaboration.md`에서, 최신 세션 인계는 `Docs/handoff.md`에서 관리한다. 질문과 날짜별 학습 기록은 `Docs/learning/`에, 구현한 기술의 역할·적용 요약은 `Docs/explanations/`에 저장한다. `Docs/process/`·`Docs/learning/`·`Docs/explanations/`의 기존 Git 제외 정책을 유지한다. 문서 구조 변경·이동 기록은 로컬 `Docs/process/document-migration.json`에 남긴다.
+
+## 질문과 날짜별 학습 기록
+
+[학습 안내](learning/README.md)에서 날짜별 기록과 최상위 질문을 찾는다. `learning/daily/YYYY-MM-DD.md`는 그날 학습한 질문의 링크를 모으고, `learning/questions/`는 질문별 답변·상위 질문·후속 질문을 관리한다. 날짜가 달라도 후속 질문을 연결하고, 복습할 때는 같은 질문 문서를 다시 연결한다. 새 질문을 기록하는 상세 순서와 양식은 학습 안내를 따른다.
 
 ## 메서드 코드 해설
 

@@ -1,6 +1,7 @@
 package com.example.grouppurchase.web;
 
-import com.example.grouppurchase.purchase.application.PurchaseRequestFailure;
+import com.example.grouppurchase.application.RequestFailure;
+import com.example.grouppurchase.participation.domain.ParticipationConflict;
 import com.example.grouppurchase.purchase.domain.DraftConflict;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,7 +30,10 @@ public class ApiExceptionResolver implements HandlerExceptionResolver, Ordered {
         if (failure instanceof DraftConflict conflict) {
             status = 409;
             code = "GROUP_PURCHASE_" + conflict.reason().name();
-        } else if (failure instanceof PurchaseRequestFailure.Failure rejected) {
+        } else if (failure instanceof ParticipationConflict conflict) {
+            status = 409;
+            code = conflict.reason().name();
+        } else if (failure instanceof RequestFailure.Failure rejected) {
             status = switch (rejected.reason()) {
                 case INVALID_REQUEST -> 400;
                 case NOT_FOUND -> 404;

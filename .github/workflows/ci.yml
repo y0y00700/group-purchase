@@ -46,8 +46,8 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Build member product JAR
-        run: bash ./gradlew :member-service:bootJar --no-daemon
+      - name: Build member product JAR and Kafka verification JAR
+        run: bash ./gradlew :member-service:bootJar :group-purchase-service:kafkaProbeJar --no-daemon
 
       - name: Prepare job-local secrets
         run: python3 scripts/prepare-ci-secrets.py
@@ -55,8 +55,11 @@ jobs:
       - name: Validate Compose definition
         run: docker compose config --quiet
 
-      - name: Build and start all six services
-        run: docker compose up --build --wait --wait-timeout 180
+      - name: Build and start seven services and topic initialization
+        run: docker compose up --build --wait --wait-timeout 240
+
+      - name: Check Kafka contracts and both listeners
+        run: python3 scripts/check-kafka.py
 
       - name: Check database boundaries and persistence
         run: python3 scripts/check-postgres.py --stage application --persistence

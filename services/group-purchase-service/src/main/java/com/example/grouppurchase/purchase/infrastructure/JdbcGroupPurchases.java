@@ -16,11 +16,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class JdbcGroupPurchases implements GroupPurchases {
-    private static final String VIEW = """
-            SELECT p.*, COALESCE(p.status = 'RECRUITING' AND p.final_deadline > statement_timestamp(), false)
-                AS recruitment_open
-            FROM app.group_purchases p
+    private static final String OPEN = """
+            p.status = 'RECRUITING' AND p.final_deadline > statement_timestamp()
+                AND p.recruited_quantity < p.initial_recruitment_target
             """;
+    private static final String VIEW =
+            "SELECT p.*, COALESCE(" + OPEN + ", false) AS recruitment_open FROM app.group_purchases p ";
 
     private final JdbcClient jdbc;
 
@@ -83,6 +84,23 @@ public class JdbcGroupPurchases implements GroupPurchases {
     }
 
     @Override
+    public Optional<Recruitment> lockPublished(UUID id) {
+        return jdbc.sql("SELECT * FROM app.group_purchases WHERE id = :id AND published_at IS NOT NULL FOR UPDATE")
+                .param("id", id)
+                .query((row, index) -> new Recruitment(readPurchase(row, index), row.getInt("recruited_quantity")))
+                .optional();
+    }
+
+    @Override
+    public void changeRecruitedQuantity(UUID id, int difference) {
+        int updated = jdbc.sql("""
+                UPDATE app.group_purchases SET recruited_quantity = recruited_quantity + :difference
+                WHERE id = :id
+                """).param("id", id).param("difference", difference).update();
+        if (updated != 1) throw new IllegalStateException("Locked purchase disappeared");
+    }
+
+    @Override
     public Optional<View> findOwned(UUID id, UUID sellerId) {
         return jdbc.sql(VIEW + "WHERE p.id = :id AND p.seller_id = :seller")
                 .param("id", id).param("seller", sellerId).query(JdbcGroupPurchases::readView).optional();
@@ -102,7 +120,7 @@ public class JdbcGroupPurchases implements GroupPurchases {
 
     @Override
     public List<View> listOpen(Position after, int limit) {
-        return list(VIEW + "WHERE p.status = 'RECRUITING' AND p.final_deadline > statement_timestamp()",
+        return list(VIEW + "WHERE " + OPEN,
                 "published_at", after, limit).query(JdbcGroupPurchases::readView).list();
     }
 
