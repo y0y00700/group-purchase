@@ -20,7 +20,7 @@
 - 012의 Outbox 원자성·선점·재발행, 013의 소비 DB 기록·DLT·파티션 보류, 014~017의 PG·결제·Saga·알림 업무는 이번 구현 범위 밖이다. [로드맵](roadmap.md#next-implementation)
 - 핵심 여섯 구간을 기준 구현·검증 후 한 번에 직접 작성하도록 준비하고, 작성 후 묶음 리뷰·재검증한다.
 - 완료 기준은 계약 테스트, 실제 Kafka 통합 테스트, 일곱 상시 Compose 서비스와 초기화 작업, Windows 검증 JAR, 기존 HTTP 기능 회귀, 직접 테스트·학습 문서 기록이다.
-- 착수 시 최신 010 PR/main/head CI를 조회했다. 010 PR·head CI가 없어 010 head에서 의존 브랜치를 만들었으며 실제 SHA·링크·CI 상태는 [결과의 착수 기준](../011-kafka-message-contract.md#착수-기준)에서 관리한다. PR/push는 아직 하지 않았다.
+- 착수 시 최신 010 PR/main/head CI를 조회했다. 010 PR·head CI가 없어 010 head에서 의존 브랜치를 만들었으며 실제 SHA·링크·CI 상태는 [결과의 착수 기준](../011-kafka-message-contract.md#착수-기준)에서 관리한다. 이후 [PR #12](https://github.com/y0y00700/group-purchase/pull/12)를 생성·push했으며 실제 범위와 원격 상태는 구현 결과에서 관리한다.
 
 ## 출발점과 범위
 

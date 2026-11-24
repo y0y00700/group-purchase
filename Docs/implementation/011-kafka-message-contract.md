@@ -1,13 +1,13 @@
 # 011 Kafka 실행·메시지 계약 구현 기록
 
-2026-11-24 KST · **로컬 구현 완료 / 여섯 구간 사용자 작성·묶음 리뷰·재검증 완료**. [확정 계획](plan/011-kafka-message-contract.md). [사용자 코드 최종 결과](#final-results). PR 생성·push 및 011 원격 CI는 아직 수행하지 않았다.
+2026-11-24 KST · **로컬 구현 완료 / 여섯 구간 사용자 작성·묶음 리뷰·재검증 완료**. [확정 계획](plan/011-kafka-message-contract.md). [사용자 코드 최종 결과](#final-results). [PR #12](https://github.com/y0y00700/group-purchase/pull/12)를 생성하고 push했다. 원격 CI 결과는 이 기록 갱신 시점에 미확인이며 완료를 기다리지 않는다.
 
 ## 착수 기준
 
 - 기존 사용자 변경: `AGENTS.md`, `Docs/README.md`, `Docs/handoff.md`, `Docs/implementation/README.md`, `Docs/implementation/plan/roadmap.md`, 새 011 계획을 보존했다. 자동 stash·reset·문서 덮어쓰기를 하지 않았다.
 - 2026-11-24 원격 fetch 및 `gh pr list --state all --head feat/group-purchase-participation`, `gh run list --commit d411960f430062fe53280bef1be5514e016d1daf` 결과는 모두 빈 목록이었다. **010 PR은 없고 head CI도 없다.** 최신 병합 PR은 [009 #11](https://github.com/y0y00700/group-purchase/pull/11)이다.
 - 원격 main `5e5c26eab4459448d312501f859f3fd528741ec3`, 최신 [main CI 실행](https://github.com/y0y00700/group-purchase/actions/runs/44251718781)은 completed/success. 010은 로컬/원격 `d411960f430062fe53280bef1be5514e016d1daf`이며 main보다 한 커밋 앞선다.
-- 010을 보존하기 위해 이 head에서 `feat/kafka-message-contract`를 만들었다. 011 PR을 준비할 때 010 선행 병합 또는 base 분리가 필요하다. 011 변경은 현재 미커밋이며 PR 생성·push는 하지 않았다.
+- 010을 보존하기 위해 이 head에서 `feat/kafka-message-contract`를 만들었다. 011 PR을 준비할 때 010 선행 병합 또는 base 분리가 필요하다. 011 구현 커밋은 `7f1c1d8`이며 이후 [PR #12](https://github.com/y0y00700/group-purchase/pull/12)로 main에 제안했다. PR에 선행 010도 포함된다.
 
 ## 구현과 경계
 
@@ -69,7 +69,7 @@ Kafka 이미지 ID와 RepoDigest는 모두 `sha256:5cc2a2fd93fa2687b44015eee04fb
 
 실제 실패와 수정도 구분한다. 최초 격리 테스트의 메타데이터 준비 지연을 유한 재시도로 처리했다. Windows 임시 목록의 CRLF로 잘못된 토픽명이 된 실패는 `write_bytes`의 LF로 수정했고 소스 셸/목록의 CR 바이트 0을 확인했다. 검증 중 JAR를 재빌드해 lazy class loading이 실패한 실행은 성공으로 세지 않고, 실행별 JAR 사본·SHA 고정 뒤 전체 lifecycle을 재실행했다. Compose 5의 `compose wait`가 이미 종료한 init을 찾지 못하는 경우는 `ps -a -q`로 ID를 얻어 `docker wait`하는 방식으로 바꿨다. 실패 실행에서 생성된 검증 토픽도 해당 runId로 정리했다.
 
-CI 두 job에는 검사 연결만 추가했으며 **011 원격 CI는 미실행/미확인**이다. job 제한시간 15/20분은 변경하지 않았다. 별도 Kafka 포트 변경 절차와 Linux 호스트에서의 CI 실행은 이번 Windows 로컬 실행 근거에 포함하지 않는다.
+CI 두 job에는 검사 연결만 추가했으며 **이 기준 구현 기록 당시 011 원격 CI는 미실행/미확인**이었다. 이후 PR 생성 기록은 아래를 따른다. job 제한시간 15/20분은 변경하지 않았다. 별도 Kafka 포트 변경 절차와 Linux 호스트에서의 CI 실행은 이번 Windows 로컬 실행 근거에 포함하지 않는다.
 
 <a id="final-results"></a>
 
@@ -88,7 +88,7 @@ CI 두 job에는 검사 연결만 추가했으며 **011 원격 CI는 미실행/�
 | 기존 유효 검증 재사용 | 기준 구현 99개 중 관련 12개를 사용자 코드로 다시 실행했고 변경과 무관한 87개는 기존 결과를 재사용했다. 볼륨 전체 down/up·broker 장애/복구·기존 DB/HTTP/Windows 제품 JAR 회귀는 관련 설정·호출 경계가 그대로여서 위 기준 구현의 유효 근거를 재사용했다. 최종 probe JAR SHA-256도 기준 구현과 같은 `b094ef2391e02d6fad4f9fe8b69763b18ea9423e848d78521267f8a50ad4f059`다 |
 | 종료 | 해당 run의 검증 토픽·그룹 정리 성공, 전용 Compose `down` 성공. PostgreSQL/Kafka 볼륨 보존, 다른 프로젝트 중단 없음. `.011-user-down.log` |
 
-현재 소스에 작성 대기 예외나 LEARN 임시 표식은 없다. 여섯 구간의 작성·리뷰·필수 재검증과 학습 문서 갱신을 마쳤으며 **011 로컬 구현 완료**다. 012 업무 Outbox와 013 DB 소비 기록/DLT, 제품 발행·소비 연결은 여전히 이번 범위 밖이다. 새 원격 CI를 실행하거나 이전 main CI를 011 CI로 간주하지 않았다.
+현재 소스에 작성 대기 예외나 LEARN 임시 표식은 없다. 여섯 구간의 작성·리뷰·필수 재검증과 학습 문서 갱신을 마쳤으며 **011 로컬 구현 완료**다. 012 업무 Outbox와 013 DB 소비 기록/DLT, 제품 발행·소비 연결은 여전히 이번 범위 밖이다. 이전 main CI를 011 CI로 간주하지 않는다. 이후 PR을 생성했으며 원격 상태는 아래에서 구분한다.
 
 <a id="guided-coding"></a>
 
@@ -175,3 +175,13 @@ docker compose -p group-purchase-011 down
 정상 검사는 자신의 검증 토픽/그룹을 정리한다. 실패 시 관찰을 위해 남기며 정확한 runId로만 정리한다. 업무 토픽·다른 실행 토픽·볼륨을 정리하지 않는다. `down -v`는 이 프로젝트의 PostgreSQL·Kafka 데이터를 모두 지우므로 일반 종료에 사용하지 않는다. Kafka 포트만 충돌하면 `$env:KAFKA_PORT='19093'`를 설정한 뒤 Compose를 재생성하고 같은 환경에서 검사를 실행한다(이 포트 변경 절차의 별도 실행 여부는 검증 근거와 구분).
 
 학습 설명: [Kafka 메시지 계약](../explanations/kafka-message-contract.md). 후속 012 Outbox·013 DB 소비 기록/오프셋/DLT는 미구현이다. 단일 broker의 acks=all은 다른 노드 복제나 디스크 유실 복구·고가용성을 보장하지 않는다.
+
+## PR·push 기록
+
+2026-11-24 사용자 요청으로 [PR #12](https://github.com/y0y00700/group-purchase/pull/12)를 main 대상으로 생성했다. 직전 원격 main은 `5e5c26eab4459448d312501f859f3fd528741ec3`이고 [main CI](https://github.com/y0y00700/group-purchase/actions/runs/44251718781)는 completed/success였다. 010의 별도 PR·head CI 목록은 비어 있었다. 따라서 PR 제목·본문에 main에 아직 없는 010 참여 처리와 011 Kafka 실행·계약을 함께 포함한다고 명시했다. 브랜치를 재작성하거나 main에 직접 push하지 않았다.
+
+- 브랜치: `feat/kafka-message-contract`
+- 010 기반: `d411960f430062fe53280bef1be5514e016d1daf`; 011 구현 커밋: `7f1c1d8`.
+- 이 기록 갱신 커밋도 같은 PR에 push한다. 최종 head는 [PR 커밋 목록](https://github.com/y0y00700/group-purchase/pull/12/commits)에서 확인한다.
+- [Checks](https://github.com/y0y00700/group-purchase/pull/12/checks): 이 문서 갱신 시점에는 결과 미확인. 최종 push 후 한 번 조회한 head·상태는 사용자 최종 안내에서 제공하며 완료 대기·반복 조회는 하지 않는다.
+- 앞서 검증한 소스·설정의 변경은 없어 로컬 기능 검사를 불필요하게 반복하지 않았다. 문서·공백 및 staging 범위만 확인했다. 로컬 학습 폴더·secret·실행 로그는 Git 제외 정책을 유지했다.
