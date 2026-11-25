@@ -2,7 +2,7 @@
 
 작성일 2026-11-25 KST · 상태 **완료 / 사용자 코드 관련 검증 완료**
 
-2026-11-25 사용자 요청으로 이 계획의 추천값·저장 모델·검증 연결에 진행 합의하고 구현에 착수했다. 미커밋 계획·안내 문서와 기존 학습 기록을 보존했다. PR #12 병합 및 head `2e4bd22` CI 성공, 최신 main `85f7be7`의 Build/Compose CI 성공을 확인했다([main CI](https://github.com/y0y00700/group-purchase/actions/runs/45431750385)). `origin/main`에서 `feat/outbox-publishing`을 만들었다. push·PR 생성은 요청 범위 밖이다. 실제 변경·검증·작성 대기는 [012 결과](../012-outbox-publishing.md)에 기록한다.
+2026-11-25 사용자 요청으로 이 계획의 추천값·저장 모델·검증 연결에 진행 합의하고 구현에 착수했다. 미커밋 계획·안내 문서와 기존 학습 기록을 보존했다. PR #12 병합 및 head `2e4bd22` CI 성공, 최신 main `85f7be7`의 Build/Compose CI 성공을 확인했다([main CI](https://github.com/y0y00700/group-purchase/actions/runs/45431750385)). `origin/main`에서 `feat/outbox-publishing`을 만들었다. 착수 당시 push·PR 생성은 요청 범위 밖이었으며, 로컬 완료 후 별도 요청으로 [PR #13](https://github.com/y0y00700/group-purchase/pull/13)을 생성했다. 실제 변경·검증·PR 근거는 [012 결과](../012-outbox-publishing.md)에 기록한다.
 
 하위 상태: **기준 구현 검증 완료 → 사용자 작성 → 묶음 리뷰·관련 재검증·임시 표식 정리 완료**. 여섯 구간을 마쳤으며 현재 제품 소스에 작성 대기 예외가 없다. 실제 근거는 [012 최종 결과](../012-outbox-publishing.md#final-results)를 따른다. 제품의 기본 정책은 유지했고 공동구매 Compose 종료 유예는 70초다. 강제 종료 검사의 선점 단축은 검증 도구에만 적용한다.
 

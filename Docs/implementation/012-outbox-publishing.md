@@ -4,6 +4,12 @@
 
 [확정 계획](plan/012-outbox-publishing.md#execution-summary) · [적용 설명](../explanations/outbox-publishing.md) · [짧은 인계](../handoff.md)
 
+## PR 생성
+
+2026-11-25 사용자 요청으로 구현 커밋 `a7d3ed3`을 `feat/outbox-publishing`에 push하고 main 대상 [PR #13](https://github.com/y0y00700/group-purchase/pull/13)을 생성했다. PR 작업 직전 fetch에서 main은 `85f7be7` 그대로이며 두 CI 성공을 다시 확인했다. 기존 미커밋 계획·안내 문서도 포함했고 로컬 학습·진단·비밀값은 Git 제외 정책을 유지했다.
+
+최종 head는 [PR 커밋](https://github.com/y0y00700/group-purchase/pull/13/commits), CI는 [PR Checks](https://github.com/y0y00700/group-purchase/pull/13/checks)를 따른다. 최종 push 후 한 번 조회한 상태는 채팅에 안내하고 완료를 기다리거나 반복 조회하지 않는다. 이 문서는 조회 전에 작성되어 CI 성공을 단정하지 않는다. GitHub 연결 도구의 PR 생성은 integration 권한 403으로 거절되어 로그인된 GitHub CLI로 생성했다.
+
 ## 작업 기준과 변경
 
 사용자의 2026-11-25 요청을 계획의 진행 합의·구현 착수로 반영했다. 기존 미커밋 012 계획·안내 문서와 Git 제외 학습 폴더를 보존했다. PR #12는 2026-11-24 병합되었고 최종 head `2e4bd22`의 [CI](https://github.com/y0y00700/group-purchase/actions/runs/45414427720)는 성공이다. 착수 시 fetch한 main `85f7be78a4c2391354c55489dc62cba30fc865e4`의 [Build/Compose CI](https://github.com/y0y00700/group-purchase/actions/runs/45431750385)도 모두 성공이다. GitHub 연결 도구가 main workflow 목록을 빈 배열로 반환해 `gh api .../commits/<sha>/check-runs`로 실제 두 check를 확인했다. 이 main에서 `feat/outbox-publishing`을 만들었으며 push·PR 생성은 하지 않았다.
@@ -49,7 +55,7 @@
 
 제품 정상 발행 검사는 첫 호출을 Compose 기동 완료 전에 시작해 준비 조건에서 중단했다(`.012-user-product-startup.log`). 7 healthy·init exit 0을 확인한 뒤 재실행했고 정상 발행 검사를 통과했다. 제품 기능 오류나 코드 수정은 없었다.
 
-이번 제품 검사 스냅샷 SHA-256: product `e49a3291c5fa188f1064f9d10cd33cc430eb5327e78c0a8ad1263f12ee1035d3`, outbox probe `ea328b810378893c0f08618ae1e874f1a40f59b915edaeaa19867a1c3350e4f6`. 같은 run의 `artifacts.json`에 기록했다. 검증 프로젝트는 `down`으로 종료하고 DB/Kafka 볼륨을 보존했다(`.012-user-shutdown.log`). 커밋·push·PR 생성은 하지 않았다. 원격 CI는 착수 때 확인한 main/head 기록이며 이번 012 원격 CI는 없다.
+이번 제품 검사 스냅샷 SHA-256: product `e49a3291c5fa188f1064f9d10cd33cc430eb5327e78c0a8ad1263f12ee1035d3`, outbox probe `ea328b810378893c0f08618ae1e874f1a40f59b915edaeaa19867a1c3350e4f6`. 같은 run의 `artifacts.json`에 기록했다. 검증 프로젝트는 `down`으로 종료하고 DB/Kafka 볼륨을 보존했다(`.012-user-shutdown.log`). 사용자 코드 검증 당시에는 커밋·push·PR 생성 전이었으며, 이후 별도 요청에 따른 PR 현황은 위 PR 생성 절을 따른다.
 
 두 JAR의 SHA-256은 기준 구현의 제품 검사 run과도 모두 동일했다. 정리한 사용자 소스로 재빌드한 제품·Outbox probe가 기존 검증 산출물과 바이트 단위로 같음을 확인했으므로 기존 Windows 제품 JAR·장애 복구 근거 재사용도 뒷받침한다.
 
@@ -78,7 +84,7 @@
 
 전환 후 `:group-purchase-service:compileJava` 성공(`.012-learning-compile.log`), 여섯 참고 본문이 검증한 본문 해시와 일치하고 여섯 입력 위치가 모두 작성 대기 예외임을 확인했다(`.tmp/outbox-baseline/learning-check.json`). `git diff --check`도 통과했다. 기능 테스트 기대값을 낮추거나 작성 대기 메서드를 우회하지 않았다.
 
-원격 CI는 착수 기준인 main/head 결과만 확인했다. 이번 012 변경은 push하지 않았으므로 012 원격 CI 결과는 없다. 역할/인증·DB 소유권 같은 변경 없는 경계의 과거 유효 근거도 유지한다. 장기 적체/처리량·운영 중단 해제·소비 업무 중복 방지·실제 결제/Saga는 이번 검증 완료 범위가 아니다.
+이 기준 구현 검증 시점에는 착수 기준 main/head CI만 확인했고 012는 push 전이었다. 이후 PR 현황은 위 PR 생성 절을 따른다. 역할/인증·DB 소유권 같은 변경 없는 경계의 과거 유효 근거도 유지한다. 장기 적체/처리량·운영 중단 해제·소비 업무 중복 방지·실제 결제/Saga는 이번 검증 완료 범위가 아니다.
 
 초기 수정 이력: 새 격리 테스트에서 Config Server 픽스처가 설정 클라이언트를 끄므로 명시 활성화했다. 기존 HTTP 오류 테스트는 DB 없는 픽스처에 새 JDBC/트랜잭션 mock을 보완했다. 강제 종료용 3초 선점이 이미지 동시 빌드 부하에서 정상 복구 발행까지 만료되는 사례를 확인해, 재시작 후 정상 발행은 제품값 60초를 사용한다. 장애 지점의 선점만 짧게 두고 실제 만료를 기다린다.
 
