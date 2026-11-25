@@ -6,6 +6,10 @@ plugins {
 description = 'Goal-based group purchase'
 
 sourceSets {
+  outboxProbe {
+    compileClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+  }
   kafkaProbe {
     compileClasspath += sourceSets.main.output
     runtimeClasspath += sourceSets.main.output
@@ -34,12 +38,14 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'org.testcontainers:testcontainers-kafka'
-  kafkaProbeImplementation 'org.apache.kafka:kafka-clients'
+  implementation 'org.apache.kafka:kafka-clients'
   testImplementation project(':config-server')
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
+  dependsOn tasks.named('outboxProbeJar')
+  systemProperty 'test.outbox-jar', layout.buildDirectory.file('libs/group-purchase-service-0.0.1-SNAPSHOT-outbox-probe.jar').get().asFile.absolutePath
   dependsOn tasks.named('kafkaProbeClasses')
   classpath += sourceSets.kafkaProbe.output
   dependsOn ':eureka-server:bootJar'
@@ -47,6 +53,14 @@ tasks.named('test') {
   systemProperty 'test.config-repo', rootProject.file('config-repo').absolutePath
   systemProperty 'test.eureka-jar', project(':eureka-server').layout.buildDirectory
       .file('libs/eureka-server-0.0.1-SNAPSHOT.jar').get().asFile.absolutePath
+}
+
+tasks.register('outboxProbeJar', org.springframework.boot.gradle.tasks.bundling.BootJar) {
+  dependsOn tasks.named('outboxProbeClasses')
+  archiveClassifier = 'outbox-probe'
+  mainClass = 'com.example.grouppurchase.outboxprobe.OutboxProbe'
+  targetJavaVersion = JavaVersion.VERSION_21
+  classpath = sourceSets.outboxProbe.runtimeClasspath
 }
 
 tasks.register('kafkaProbeJar', org.springframework.boot.gradle.tasks.bundling.BootJar) {
@@ -61,8 +75,10 @@ tasks.register('verifyKafkaIsolation') {
   dependsOn tasks.named('bootJar'), tasks.named('kafkaProbeJar')
   doLast {
     def product = zipTree(tasks.named('bootJar').get().archiveFile.get().asFile)
-    assert product.matching { include '**/kafkaprobe/**', 'BOOT-INF/lib/kafka-clients-*' }.isEmpty():
-        'Product JAR must not contain Kafka probe or client'
+    assert product.matching { include '**/kafkaprobe/**', '**/outboxprobe/**', '**/runtimeprobe/**', 'BOOT-INF/lib/junit-*', 'BOOT-INF/lib/testcontainers-*' }.isEmpty():
+        'Product JAR must not contain probes or test libraries'
+    assert !product.matching { include 'BOOT-INF/lib/kafka-clients-*' }.isEmpty()
+    assert !product.matching { include '**/KafkaOutboxTransport.class' }.isEmpty()
     def probe = zipTree(tasks.named('kafkaProbeJar').get().archiveFile.get().asFile)
     assert !probe.matching { include 'BOOT-INF/lib/kafka-clients-*' }.isEmpty()
     assert !probe.matching { include '**/kafkaprobe/KafkaProbe.class' }.isEmpty()

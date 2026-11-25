@@ -2,6 +2,18 @@ server:
   port: 8080
 
 app:
+  outbox:
+    enabled: true
+    poll-ms: 10000
+    maximum: 50
+    budget-ms: 10000
+    lease-ms: 60000
+  messaging:
+    kafka:
+      max-block-ms: 10000
+      request-timeout-ms: 10000
+      delivery-timeout-ms: 30000
+      future-wait-ms: 35000
   configuration:
     service: group-purchase
     revision: "002-v1"

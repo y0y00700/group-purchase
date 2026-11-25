@@ -30,7 +30,7 @@ class ApiObservabilityTests {
     static final HttpClient CLIENT = HttpClient.newHttpClient();
     @BeforeAll static void start() {
         app = new SpringApplicationBuilder(GroupPurchaseApplication.class, Fixtures.class).run(
-                "--test.api-fixture=true", "--spring.profiles.active=local", "--server.port=0", "--spring.cloud.config.enabled=false", "--spring.config.location=classpath:/api-observability-test.yml",
+                "--test.api-fixture=true", "--app.outbox.enabled=false", "--spring.profiles.active=local", "--server.port=0", "--spring.cloud.config.enabled=false", "--spring.config.location=classpath:/api-observability-test.yml",
                 "--eureka.client.enabled=false", "--spring.autoconfigure.exclude="
                         + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
                         + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
@@ -122,6 +122,12 @@ class ApiObservabilityTests {
     }
     @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="test.api-fixture", havingValue="true")
     @Configuration(proxyBeanMethods = false) @Import(FixtureController.class) static class Fixtures {
+        @Bean org.springframework.jdbc.core.JdbcTemplate unusedOutboxStorage() {
+            return org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        }
+        @Bean org.springframework.transaction.PlatformTransactionManager unusedTransactions() {
+            return org.mockito.Mockito.mock(org.springframework.transaction.PlatformTransactionManager.class);
+        }
         @Bean JdbcClient unusedPurchaseStorage() {
             return org.mockito.Mockito.mock(JdbcClient.class);
         }
