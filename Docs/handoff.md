@@ -1,16 +1,13 @@
 # 공동구매 프로젝트 인계
 
-갱신일 2026-11-25 KST
+갱신일 2026-11-26 KST
 
-- **001~012 로컬 구현·사용자 작성·검증 완료**를 유지한다. [010 최종 결과](implementation/010-participation.md#final-results) · [011 사용자 코드 최종 결과](implementation/011-kafka-message-contract.md#final-results)
-- **012 사용자 작성·묶음 리뷰·관련 재검증·임시 표식 정리 완료**다. [계획](implementation/plan/012-outbox-publishing.md#execution-summary) · [사용자 코드 최종 결과·직접 테스트](implementation/012-outbox-publishing.md#final-results)
-- 최신 병합은 [PR #12](https://github.com/y0y00700/group-purchase/pull/12)(010·011)다. 착수 조회에서 head `2e4bd22`의 [CI](https://github.com/y0y00700/group-purchase/actions/runs/45414427720) 및 main `85f7be7`의 [두 CI](https://github.com/y0y00700/group-purchase/actions/runs/45431750385) 성공을 확인했다. 과거 PR #11/011 근거도 기존 결과 문서에 유지한다.
-- 현재 `feat/outbox-publishing`, 기준 main `85f7be78a4c2391354c55489dc62cba30fc865e4`, 012 구현 커밋 `a7d3ed3`. 기존 미커밋 계획·안내 문서도 함께 커밋했고 학습 기록·Git 제외 정책은 보존했다. 사용자 요청으로 [PR #13](https://github.com/y0y00700/group-purchase/pull/13)을 main 대상으로 생성·push했다. 최종 head는 [PR 커밋](https://github.com/y0y00700/group-purchase/pull/13/commits)을 따른다.
-- PR 작업 때 main이 `85f7be7` 그대로이며 두 CI 성공인 것을 다시 확인했다. [012 PR Checks](https://github.com/y0y00700/group-purchase/pull/13/checks)는 최종 push 뒤 한 번 조회한 당시 상태를 채팅에 안내하며, 완료 대기·반복 조회는 하지 않는다. 이 문서는 조회 전 작성되어 012 CI 결과를 성공으로 표시하지 않는다.
-- 업무·Outbox 저장 원자성, 스트림 순번, 선점·재선점·만료 이력, DB 트랜잭션 밖 Kafka 원본 전송, 조건부 완료/실패, 영속 재시도·중단과 전용 스케줄러를 구현했다. 기존 참여 API는 유지하고 원자성은 격리 테스트의 조합 서비스로 확인했다.
-- 기준 구현 전체 build 성공: 유효 114개·실패/오류/skip 0. 공동구매 71개 새 실행, 변경 없는 43개 결과 재사용. Outbox 13개·실패 정책 2개와 보강 후 실제 프로세스 검사 재실행까지 통과했다.
-- 제품/probe JAR 경계, 다섯 이미지·7 healthy/init 0, 제품 발행·브로커/DB 복구·Windows 제품 JAR·전체 down/up, Compose/Windows HTTP 회귀, Kafka HOST/INTERNAL 22개 검사를 통과했다. 상세 명령·해시·로그는 012 결과가 소유한다.
-- 사용자 여섯 구간은 기준과 실행 행이 일치했고 오류 없이 관련 15개를 새 실행했다. 나머지 99개는 변경 없는 기존 유효 근거를 재사용했다. 임시 주석 30줄만 제거했으며 정리 전후 실행 텍스트가 동일하다. 현재 작성 대기 예외는 없다. 원문·대조 근거는 `.tmp/012-user-review/`에 보존했다.
-- 정리한 사용자 소스로 JAR 경계 검사·이미지 재빌드·7 healthy/init 0·제품 스케줄러 정상 발행과 원본/시도 이력을 확인했다. 012의 남은 작성 작업은 없으며 소비 안정성·실제 결제/Saga·운영 중단 해제는 후속 요청 범위다.
-- [Outbox 적용 설명](explanations/outbox-publishing.md)을 추가했다. [Kafka 설명](explanations/kafka-message-contract.md)·[기존 로그 관찰 학습 기록](learning/questions/kafka-011-observe-message-flow.md)은 보존하고 로컬 학습 폴더 Git 제외 정책을 유지했다.
-- 전용 `group-purchase-012`는 검증 토픽/그룹 정리 후 `down`으로 종료했다. PostgreSQL/Kafka 볼륨 두 개와 진단·기준 소스/JAR를 보존했다. 기존 `group-purchase-011` 종료·볼륨 보존 기록은 유지하며 다른 프로젝트/사용자 데이터는 중단·삭제하지 않았다.
+- **001~012 로컬 구현·사용자 작성·검증 완료**, **013 로컬 구현·검증·임시 표식 정리 완료**. 이번 013의 직접 작성은 사용자 요청으로 생략했다. [최종 결과·직접 테스트](implementation/013-message-consumption-reliability.md#final-results) · [계획](implementation/plan/013-message-consumption-reliability.md#execution-summary).
+- 사용자 요청으로 검증한 여섯 본문을 복원하고 참고/흐름 주석·LEARN 표식·작성 대기 예외를 제거했다. 다섯 파일 내용과 제품/inbox probe/Outbox probe JAR 해시가 기준과 같다. 사용자 작성 완료로 기록하지 않는다.
+- 정리한 활성 코드의 관련 22개를 캐시 없이 새 실행해 실패/오류/skip 0, JAR 격리 통과. 전체 유효 136개·Kafka 22개·제품 Outbox·Compose/Windows HTTP·소비 수명 28개는 동일 코드/JAR의 기존 근거를 유지한다.
+- PR 준비 최신 확인: [PR #13](https://github.com/y0y00700/group-purchase/pull/13) 병합, main `356bcd5005ac984327abd98881dcc4aa7d03f435` [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45837640728), 이전 PR head CI도 성공. 기존 기준과 main의 트리가 같아 `feat/message-consumption-reliability`를 main으로 fast-forward했다.
+- 이번 요청으로 커밋·push·main 대상 PR을 진행한다. PR 생성 후 최종 head/Checks와 조회 당시 상태를 안내하고 CI 완료를 기다리거나 반복 조회하지 않는다. 병합은 하지 않는다.
+- 미커밋 설계 문서도 포함해 보존·커밋한다. 학습/설명 폴더 Git 제외 정책과 원문·기준 소스/JAR·검증 로그 `.tmp/013-baseline/`을 유지한다. [적용 설명](explanations/message-consumption-reliability.md).
+- V5 네 테이블·업무/소비/Outbox 원자성·DB 후 명시 커밋·영속 재시도·DB 선보관 DLT·독립 HALTED·재시작/재할당·보존 범위 검사 완료. 제품 소비 기본 비활성·실제 핸들러 없는 활성화 기동 실패를 유지한다. 결제/Saga 016·운영 복구 API 018 범위는 남아 있다.
+- 전용 `group-purchase-013`은 종료·볼륨 보존 상태다. 이번 재검증은 격리 Testcontainers에서 실행했고 해당 컨테이너도 정리되었다. 다른 프로젝트·일반 DB/토픽을 중단/삭제하지 않았다.
+- 다음은 014 PG Mock 상세 계획 검토다. 새 요청 전에는 후속 구현에 착수하지 않는다. 원격 CI 결과는 사용자가 확인하며 문제가 전달되면 해당 범위를 진행한다.

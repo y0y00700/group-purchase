@@ -71,7 +71,10 @@ public final class KafkaProbe {
             require(desc.partitions().size() == 3 && desc.partitions().stream().allMatch(p -> p.replicas().size() == 1), "topic topology " + name);
             ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, name);
             Config config = admin.describeConfigs(List.of(resource)).all().get(20, TimeUnit.SECONDS).get(resource);
-            for (var setting : SETTINGS.entrySet()) require(setting.getValue().equals(config.get(setting.getKey()).value()), "config " + name + " " + setting);
+            for (var setting : SETTINGS.entrySet()) {
+                String expected=name.equals("gp.payment.results.dlt.v1") && setting.getKey().equals("max.message.bytes") ? "4194304" : setting.getValue();
+                require(expected.equals(config.get(setting.getKey()).value()), "config " + name + " " + setting);
+            }
             System.out.println("TOPIC_OK " + name + " partitions=3 replicas=1 " + SETTINGS);
         }
     }
@@ -125,6 +128,7 @@ public final class KafkaProbe {
     public void business() throws Exception {
         try (Admin admin = admin()) {
             checkTopics(admin, Arrays.stream(MessageKind.values()).map(MessageKind::topic).distinct().toList());
+            checkTopics(admin, List.of("gp.payment.results.dlt.v1"));
         }
     }
     private Set<String> readGroup(String topic, String group, int expected) {
