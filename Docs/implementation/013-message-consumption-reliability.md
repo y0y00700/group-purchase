@@ -71,7 +71,7 @@ V5는 소비 완료, 파티션 진행/보류, 실패 원본, 시도 이력의 �
 - **013 로컬 구현·필수 검증·임시 표식 정리 완료**. 사용자 직접 작성은 명시적 요청으로 생략했으며 작성 완료로 표시하지 않는다.
 - PR 준비 최신 확인에서 [PR #13](https://github.com/y0y00700/group-purchase/pull/13) 병합과 main `356bcd5005ac984327abd98881dcc4aa7d03f435`의 [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45837640728)을 확인했다. 기존 PR head CI도 성공이다.
 - main의 코드 트리가 기존 기준 head와 같음을 확인하고 `feat/message-consumption-reliability`를 main으로 fast-forward했다. 미커밋 설계·구현·제외 학습 자료를 보존했다.
-- 이번 요청에 따라 커밋·push·main 대상 PR을 진행한다. PR 생성 후 CI는 최종 head에서 한 번만 확인하며 완료를 기다리거나 반복 조회하지 않는다. 병합은 하지 않는다.
+- 구현 커밋 `24853ed`를 push하고 main 대상 [PR #14](https://github.com/y0y00700/group-purchase/pull/14)를 생성했다. 최종 head는 [PR commits](https://github.com/y0y00700/group-purchase/pull/14/commits)를 따른다. 인계 문서의 PR 기록을 추가 push한 뒤 [Checks](https://github.com/y0y00700/group-purchase/pull/14/checks)를 한 번 확인해 당시 상태만 채팅에 안내한다. 이 문서는 조회 전 작성했으므로 013 원격 CI 성공을 주장하지 않는다. 완료를 기다리거나 반복 조회·병합하지 않는다.
 - 제품 소비 기본 비활성·실제 핸들러 없는 활성화의 기동 실패, 실제 결제/Saga 016·운영 복구 API 018 경계를 유지한다. 원격 CI 조회 당시 상태와 최종 PR/head/Checks는 채팅 및 짧은 인계에서 안내한다.
 
 <a id="manual-tests"></a>

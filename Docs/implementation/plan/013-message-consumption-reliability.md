@@ -9,7 +9,7 @@
 ## 실행 요약
 
 - 현재는 **013 로컬 구현·검증·임시 표식 정리 완료**다. 사용자 요청으로 이번 직접 작성을 생략하고 검증한 여섯 본문을 복원했다. 활성 코드의 관련 22개를 새 실행하고 JAR 격리를 확인했다. 제품/probe JAR가 기준과 같아 기존 환경 검증 근거를 재사용한다. [최종 결과·직접 테스트](../013-message-consumption-reliability.md#final-results)를 따른다. 사용자 작성 완료로 기록하지 않는다.
-- PR 준비 최신 확인: PR #13 병합·main `356bcd5` [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45837640728). main과 기존 기준의 트리가 같아 미커밋 자료를 보존하며 fast-forward했다. 커밋·push·main 대상 PR 생성 후 최종 head CI 상태만 안내하고 병합하지 않는다.
+- PR 준비 최신 확인: PR #13 병합·main `356bcd5` [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45837640728). main과 기존 기준의 트리가 같아 미커밋 자료를 보존하며 fast-forward했다. 구현 커밋 `24853ed` push·main 대상 [PR #14](https://github.com/y0y00700/group-purchase/pull/14) 생성. 최종 문서 push 뒤 CI는 한 번 조회한 당시 상태만 안내하고 대기·반복 조회·병합하지 않는다.
 
 - 착수 확인: PR #13은 open/unmerged, head `0e6ccbd1a53e12022bdd723e8a3891b31ecaa8a4` [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45624698724). fetch한 최신 main `85f7be78a4c2391354c55489dc62cba30fc865e4` [CI 성공](https://github.com/y0y00700/group-purchase/actions/runs/45431750385). 012 의존 코드가 있는 PR head에서 로컬 `feat/message-consumption-reliability`를 만들었다. PR 병합은 하지 않았다.
 - 기존 미커밋 설계 다섯 파일을 보존했다. 변경 전 patch·013 원문은 Git 제외 `.tmp/013-baseline/`에 보존하며 `Docs/learning/`·`Docs/explanations/` 제외 정책을 유지한다.
