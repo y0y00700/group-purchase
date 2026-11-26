@@ -1,4 +1,7 @@
 app:
+  messaging:
+    kafka:
+      bootstrap-servers: kafka:19092
   configuration:
     environment: docker
 

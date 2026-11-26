@@ -1,4 +1,7 @@
 app:
+  messaging:
+    kafka:
+      bootstrap-servers: localhost:${KAFKA_PORT:9092}
   configuration:
     environment: local
 

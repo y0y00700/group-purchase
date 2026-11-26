@@ -6,7 +6,8 @@
 
 ## 목표와 현재 상태
 
-- 최신 구현 상태: [011 Kafka 결과·직접 작성·테스트](implementation/011-kafka-message-contract.md). 기준 구현 검증 후 여섯 구간의 **사용자 작성·묶음 리뷰·로컬 재검증을 완료**했다. [실제 설정·코드 역할](explanations/kafka-message-contract.md) · [메시지/커밋 로그 관찰](learning/questions/kafka-011-observe-message-flow.md). 최신 브랜치·PR/CI는 [인계](handoff.md)를 따른다.
+- 이전 완료: [011 Kafka 결과·직접 작성·테스트](implementation/011-kafka-message-contract.md). 기준 구현 검증 후 여섯 구간의 **사용자 작성·묶음 리뷰·로컬 재검증을 완료**했다. [실제 설정·코드 역할](explanations/kafka-message-contract.md) · [메시지/커밋 로그 관찰](learning/questions/kafka-011-observe-message-flow.md). 최신 브랜치·PR/CI는 [인계](handoff.md)를 따른다.
+- 최신 구현 상태: [012 Outbox 발행](implementation/plan/012-outbox-publishing.md#execution-summary), 2026-11-25 사용자 작성·묶음 리뷰·관련 재검증·임시 표식 정리 완료. [최종 결과·직접 테스트](implementation/012-outbox-publishing.md#final-results) · [실제 적용 설명](explanations/outbox-publishing.md).
 
 판매자가 상품과 기준 수량을 등록하고, 참여 모집 후 기한 안의 유효 결제가 기준 수량을 채우면 구매를 확정하는 서비스다. 미달로 무산되면 취소·환불한다. 마감 경합·장시간 업무·보상 복구를 구현·검증할 수 있어 한정 수량 주문·좌석 예약·B2B 발주 후보를 비교한 뒤 이 주제를 선택했다.
 
