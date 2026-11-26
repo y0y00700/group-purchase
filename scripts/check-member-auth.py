@@ -62,6 +62,27 @@ def wait(port):
     raise AssertionError('Member product JAR did not become healthy')
 
 
+def wait_for_gateway_member(timeout=180):
+    # A DB recreation can temporarily mark MEMBER DOWN in Eureka. Direct member
+    # health and the purchase route do not prove the Gateway's member cache recovered.
+    end = time.monotonic() + timeout
+    last_error = 'No Gateway member response'
+    while time.monotonic() < end:
+        try:
+            status, body, _ = request(8000, '/api/members/me')
+            if status == 401:
+                assert body.get('code') == 'UNAUTHENTICATED', 'Unexpected member authentication error'
+                print('PASS: Gateway member route recovered; anonymous request is 401', flush=True)
+                return
+            if status not in (502, 503, 504):
+                raise AssertionError(f'Unexpected Gateway member status: {status}')
+            last_error = f'HTTP {status}, code={body.get("code", "missing")}'
+        except OSError as error:
+            last_error = type(error).__name__
+        time.sleep(min(1, max(0, end - time.monotonic())))
+    raise AssertionError(f'Gateway member route did not recover within {timeout}s: {last_error}')
+
+
 def sql(query):
     # Password stays inside PostgreSQL container. SQL is only server-generated fixture identifiers.
     script = 'export PGPASSWORD="$(cat /run/secrets/member_password)"\n' + (
@@ -118,7 +139,7 @@ def main():
                 processes.append(subprocess.Popen(args, cwd=ROOT, env=tool.environment(), stdout=stream, stderr=stream))
                 wait(port)
             exercise(18081, 18082)
-            assert request(8000, '/api/members/me')[0] == 401
+            wait_for_gateway_member()
             exercise(8000, 8081)
             assert request(8000, '/internal/auth/check', 'POST', body={'method': 'GET'})[0] == 404
             raw = subprocess.run(['docker', 'compose', 'logs', '--no-color', 'member-service'], cwd=ROOT,

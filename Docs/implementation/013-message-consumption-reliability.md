@@ -74,6 +74,49 @@ V5는 소비 완료, 파티션 진행/보류, 실패 원본, 시도 이력의 �
 - 구현 커밋 `24853ed`를 push하고 main 대상 [PR #14](https://github.com/y0y00700/group-purchase/pull/14)를 생성했다. 최종 head는 [PR commits](https://github.com/y0y00700/group-purchase/pull/14/commits)를 따른다. 인계 문서의 PR 기록을 추가 push한 뒤 [Checks](https://github.com/y0y00700/group-purchase/pull/14/checks)를 한 번 확인해 당시 상태만 채팅에 안내한다. 이 문서는 조회 전 작성했으므로 013 원격 CI 성공을 주장하지 않는다. 완료를 기다리거나 반복 조회·병합하지 않는다.
 - 제품 소비 기본 비활성·실제 핸들러 없는 활성화의 기동 실패, 실제 결제/Saga 016·운영 복구 API 018 경계를 유지한다. 원격 CI 조회 당시 상태와 최종 PR/head/Checks는 채팅 및 짧은 인계에서 안내한다.
 
+<a id="ci-member-route-recovery"></a>
+
+## 2026-11-27 PR #14 CI 실패 확인·보정
+
+[실패한 CI](https://github.com/y0y00700/group-purchase/actions/runs/45839840971/job/139978293040)의 대상 head는 `5b8e8dcb7b7b1d50f846dc3d16b1f1c9aceac585`다. Build and test는 성공했고, Compose의 Kafka·Outbox·Inbox 검사도 성공했다. 실패 지점은 `check-member-auth.py`의 Gateway 익명 회원 조회를 즉시 401로 기대한 검사다. 이후 공동구매 인증·관측 검사는 실행되지 않았다.
+
+직전 `check-postgres.py --persistence`가 PostgreSQL 컨테이너를 재생성했다. 로그에서 회원 서비스는 14:38:22 UTC에 DOWN, 14:38:55에 UP으로 등록됐지만 Gateway는 14:39:10에 `No servers available for service: member`와 `member-me` 503을 기록했다. 회원 직접 호출과 두 제품 JAR의 세션 검사는 이미 통과했다. DB·직접 서비스·Eureka UP·Gateway가 사용하는 대상 목록은 복구 확인 지점이 서로 다르다. 기존 discovery 검사는 공동구매 등록만, ping 검사는 공동구매 라우트만 확인하므로 회원 라우트의 복구를 증명하지 못한다.
+
+`check-member-auth.py`에 `wait_for_gateway_member`를 추가했다. 부작용 없는 익명 `GET /api/members/me`를 호출해 최대 180초 동안 실제 Gateway 회원 라우트의 복구를 확인한다. 일시적인 502/503/504·연결 오류만 재확인하고, 401과 `UNAUTHENTICATED`를 확인한 뒤 기존 로그인·세션 공유·CSRF·로그아웃 검사를 그대로 실행한다. 예상하지 않은 상태, 잘못된 401 코드, 오류 응답 계약 위반, 제한시간 초과는 실패다. 임의의 고정 sleep으로 성공을 가정하거나 503을 성공으로 허용하지 않는다. 제품 코드·인증 정책·발견 캐시 설정·013 소비 기반은 변경하지 않았다.
+
+이번 수정의 실행 근거는 Git 제외 `.tmp/013-ci-recovery/`에 남겼다. 아래 검사는 2026-11-27 수정한 스크립트와 기존 013 제품 이미지/JAR에서 실제 실행했다. 기존 전체 Gradle·Inbox 검증은 실패한 CI head에서도 성공한 근거를 재사용하며, 제품 소스·JAR를 바꾸지 않은 이번 Python 검사 변경으로 전체 빌드를 반복하지 않았다.
+
+| 검사 | 실제 결과·진단 |
+|---|---|
+| 복구 확인 분기 여섯 개 | 즉시 정상, 502→503→504→401 복구, 연결 오류 후 복구, 제한시간 소진, 예상 밖 200, 잘못된 401 코드의 통과/실패를 확인. `readiness-cases.log` |
+| 실제 DB 장애·발견 지연 재현 | 전용 DB를 중단해 실제 Eureka MEMBER DOWN·Gateway 503 SERVICE_UNAVAILABLE까지 확인한 뒤 PostgreSQL을 재생성했다. 직접 회원 헬스가 UP이어도 Gateway 503인 구간을 재현했고, 수정한 확인이 앱 재시작 없이 **65.9초 후 401**을 확인했다. `db-route-reproduction-final.log` |
+| CI 순서의 DB·발견·라우팅 | `check-postgres.py --stage application --persistence`, `check-discovery.py`, `check-gateway.py` exit 0. `postgres-persistence.log`, `discovery.log`, `gateway-routing.log` |
+| 실패했던 회원 인증 | `check-member-auth.py` exit 0. Compose 회원·두 Windows 제품 JAR·Gateway의 세션 회전/공유·CSRF·로그아웃, 로그 개인정보 검사와 회원 등록·내부 경로 차단 통과. `member-auth.log` |
+| CI에서 건너뛴 후속 검사 | `check-gateway-auth.py`, `check-api-observability.py --db-recovery` exit 0. 공동구매/참여·호출자 신뢰·오류/로그/지표·동일 앱의 DB 복구 통과. `gateway-auth.log`, `observability.log` |
+
+전용 `group-purchase-013`의 컨테이너·네트워크는 검증 뒤 down으로 종료했고 데이터 볼륨을 보존했다(`shutdown.log`). 다른 프로젝트·일반 DB·토픽은 정리하지 않았다. 원격의 새 CI 결과는 수정 커밋 push 후 한 번 조회한 당시 상태만 안내하며, 위 로컬 성공을 새 CI 성공으로 표시하지 않는다.
+
+### 사용자 직접 재현
+
+아래는 **준비된 전용 `group-purchase-013` 환경**에서 실행한다. 기존 직접 테스트 절의 JDK 21·Python·secret·제품 JAR와 일곱 서비스 준비 조건을 따른다. 일반 개발 프로젝트에 적용하지 않는다. PostgreSQL 재생성으로 전용 환경의 DB 연결이 잠시 끊기지만 데이터 볼륨은 유지된다.
+
+```powershell
+Set-Location 'C:\Users\권민혁\Desktop\공부\개인프로젝트\group-purchase'
+$env:JAVA_HOME='C:\Users\권민혁\.jdks\ms-21.0.12.1'
+$env:COMPOSE_PROJECT_NAME='group-purchase-013'
+
+python scripts/check-postgres.py --stage application --persistence
+if ($LASTEXITCODE -ne 0) { throw 'DB 재생성 검사 실패' }
+python scripts/check-member-auth.py
+if ($LASTEXITCODE -ne 0) { throw '회원 인증·라우팅 복구 검사 실패' }
+python scripts/check-gateway-auth.py
+if ($LASTEXITCODE -ne 0) { throw '공동구매 인증 회귀 실패' }
+python scripts/check-api-observability.py --db-recovery
+if ($LASTEXITCODE -ne 0) { throw '관측·DB 복구 회귀 실패' }
+```
+
+기대 결과는 `Gateway member route recovered; anonymous request is 401`, 기존 세 경로(Compose 회원·두 제품 JAR·Gateway)의 세션 회전/공유·CSRF·로그아웃 성공과 후속 인증/관측 검사 성공이다. 잘못된 인증 결과나 복구되지 않는 회원 라우트는 계속 실패해야 한다. 검사 도구가 만든 계정·세션·자식 JAR는 도구가 정리한다. 실패 시 `docker compose up -d --wait --wait-timeout 240`으로 해당 전용 서비스를 복구하고 로그를 확인한다. 종료는 기존 절처럼 `docker compose down`으로 볼륨을 보존하며, 마지막에 이번에 설정한 `COMPOSE_PROJECT_NAME` 환경변수를 원복한다.
+
 <a id="manual-tests"></a>
 
 ## 사용자 직접 테스트
