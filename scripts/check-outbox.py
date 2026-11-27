@@ -21,7 +21,7 @@ LIBS = ROOT / 'services/group-purchase-service/build/libs'
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--project', default='group-purchase-012', choices=['group-purchase-012'])
+    parser.add_argument('--project', default='group-purchase-012', choices=['group-purchase-012', 'group-purchase-013'])
     parser.add_argument('--lifecycle', action='store_true')
     args = parser.parse_args()
     directory = ROOT / '.tmp/outbox' / uuid.uuid4().hex

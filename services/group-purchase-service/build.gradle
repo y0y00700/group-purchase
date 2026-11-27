@@ -6,6 +6,10 @@ plugins {
 description = 'Goal-based group purchase'
 
 sourceSets {
+  inboxProbe {
+    compileClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+  }
   outboxProbe {
     compileClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
@@ -21,6 +25,7 @@ configurations {
   testImplementation.extendsFrom kafkaProbeImplementation
 }
 sourceSets.test.compileClasspath += sourceSets.kafkaProbe.output
+sourceSets.test.compileClasspath += sourceSets.inboxProbe.output
 
 dependencies {
   implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
@@ -44,10 +49,13 @@ dependencies {
 }
 
 tasks.named('test') {
+  dependsOn tasks.named('inboxProbeJar')
+  systemProperty 'test.inbox-jar', layout.buildDirectory.file('libs/group-purchase-service-0.0.1-SNAPSHOT-inbox-probe.jar').get().asFile.absolutePath
   dependsOn tasks.named('outboxProbeJar')
   systemProperty 'test.outbox-jar', layout.buildDirectory.file('libs/group-purchase-service-0.0.1-SNAPSHOT-outbox-probe.jar').get().asFile.absolutePath
   dependsOn tasks.named('kafkaProbeClasses')
   classpath += sourceSets.kafkaProbe.output
+  classpath += sourceSets.inboxProbe.output
   dependsOn ':eureka-server:bootJar'
   systemProperty 'test.postgres-init', rootProject.file('infrastructure/postgres/init/010-service-databases.sh').absolutePath
   systemProperty 'test.config-repo', rootProject.file('config-repo').absolutePath
@@ -72,16 +80,29 @@ tasks.register('kafkaProbeJar', org.springframework.boot.gradle.tasks.bundling.B
 }
 
 tasks.register('verifyKafkaIsolation') {
-  dependsOn tasks.named('bootJar'), tasks.named('kafkaProbeJar')
+  dependsOn tasks.named('bootJar'), tasks.named('kafkaProbeJar'), tasks.named('inboxProbeJar')
   doLast {
     def product = zipTree(tasks.named('bootJar').get().archiveFile.get().asFile)
-    assert product.matching { include '**/kafkaprobe/**', '**/outboxprobe/**', '**/runtimeprobe/**', 'BOOT-INF/lib/junit-*', 'BOOT-INF/lib/testcontainers-*' }.isEmpty():
+    assert product.matching { include '**/kafkaprobe/**', '**/outboxprobe/**', '**/inboxprobe/**', '**/runtimeprobe/**', 'BOOT-INF/lib/junit-*', 'BOOT-INF/lib/testcontainers-*' }.isEmpty():
         'Product JAR must not contain probes or test libraries'
     assert !product.matching { include 'BOOT-INF/lib/kafka-clients-*' }.isEmpty()
     assert !product.matching { include '**/KafkaOutboxTransport.class' }.isEmpty()
+    assert !product.matching { include '**/InboxConsumerLoop.class' }.isEmpty()
+    assert !product.matching { include '**/KafkaDltTransport.class' }.isEmpty()
+    def inboxProbe = zipTree(tasks.named('inboxProbeJar').get().archiveFile.get().asFile)
+    assert !inboxProbe.matching { include '**/inboxprobe/InboxProbe.class' }.isEmpty()
+    assert inboxProbe.matching { include 'BOOT-INF/lib/junit-*', 'BOOT-INF/lib/testcontainers-*' }.isEmpty()
     def probe = zipTree(tasks.named('kafkaProbeJar').get().archiveFile.get().asFile)
     assert !probe.matching { include 'BOOT-INF/lib/kafka-clients-*' }.isEmpty()
     assert !probe.matching { include '**/kafkaprobe/KafkaProbe.class' }.isEmpty()
   }
+}
+
+tasks.register('inboxProbeJar', org.springframework.boot.gradle.tasks.bundling.BootJar) {
+  dependsOn tasks.named('inboxProbeClasses')
+  archiveClassifier = 'inbox-probe'
+  mainClass = 'com.example.grouppurchase.inboxprobe.InboxProbe'
+  targetJavaVersion = JavaVersion.VERSION_21
+  classpath = sourceSets.inboxProbe.runtimeClasspath
 }
 tasks.named('check') { dependsOn tasks.named('verifyKafkaIsolation') }

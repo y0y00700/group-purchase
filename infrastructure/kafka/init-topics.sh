@@ -3,9 +3,11 @@ set -euo pipefail
 bootstrap=${KAFKA_BOOTSTRAP_SERVERS:-kafka:19092}
 topics=/opt/kafka/bin/kafka-topics.sh
 configs=/opt/kafka/bin/kafka-configs.sh
-settings=(min.insync.replicas=1 cleanup.policy=delete retention.ms=604800000 retention.bytes=-1 segment.ms=3600000 max.message.bytes=1048576)
 while IFS= read -r topic; do
   [[ -z "$topic" || "$topic" == \#* ]] && continue
+  maximum=1048576
+  [[ "$topic" == gp.payment.results.dlt.v1 ]] && maximum=4194304
+  settings=(min.insync.replicas=1 cleanup.policy=delete retention.ms=604800000 retention.bytes=-1 segment.ms=3600000 max.message.bytes="$maximum")
   args=()
   for setting in "${settings[@]}"; do args+=(--config "$setting"); done
   "$topics" --bootstrap-server "$bootstrap" --create --if-not-exists --topic "$topic" --partitions 3 --replication-factor 1 "${args[@]}"
