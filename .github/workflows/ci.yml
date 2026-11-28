@@ -35,7 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      COMPOSE_PROJECT_NAME: group-purchase-013
+      COMPOSE_PROJECT_NAME: group-purchase-014
+      COMPOSE_FILE: compose.yml:infrastructure/pg-mock/compose-verification.yml
 
     steps:
       - name: Check out repository
@@ -49,7 +50,7 @@ jobs:
           cache: gradle
 
       - name: Build member product JAR and Kafka verification JAR
-        run: bash ./gradlew :member-service:bootJar :group-purchase-service:bootJar :group-purchase-service:kafkaProbeJar :group-purchase-service:outboxProbeJar :group-purchase-service:inboxProbeJar --no-daemon
+        run: bash ./gradlew :pg-mock:bootJar :member-service:bootJar :group-purchase-service:bootJar :group-purchase-service:kafkaProbeJar :group-purchase-service:outboxProbeJar :group-purchase-service:inboxProbeJar --no-daemon
 
       - name: Prepare job-local secrets
         run: python3 scripts/prepare-ci-secrets.py
@@ -57,17 +58,20 @@ jobs:
       - name: Validate Compose definition
         run: docker compose config --quiet
 
-      - name: Build and start seven services and topic initialization
+      - name: Build and start nine services and topic initialization
         run: docker compose up --build --wait --wait-timeout 240
 
       - name: Check Kafka contracts and both listeners
-        run: python3 scripts/check-kafka.py --project group-purchase-013
+        run: python3 scripts/check-kafka.py --project group-purchase-014
 
       - name: Check product Outbox scheduler and original Kafka bytes
-        run: python3 scripts/check-outbox.py --project group-purchase-013
+        run: python3 scripts/check-outbox.py --project group-purchase-014
 
       - name: Check inbox transactions, held source and DLT on both listeners
-        run: python3 scripts/check-inbox.py --project group-purchase-013
+        run: python3 scripts/check-inbox.py --project group-purchase-014
+
+      - name: Check PG approval refund conflicts retries and actual response loss
+        run: python3 scripts/check-pg-mock.py
 
       - name: Check database boundaries and persistence
         run: python3 scripts/check-postgres.py --stage application --persistence
@@ -103,5 +107,5 @@ jobs:
       - name: Stop services
         if: always()
         run: |
-          docker compose down -v
+          docker compose down
           python3 -c 'import shutil; shutil.rmtree("secrets", ignore_errors=True)'

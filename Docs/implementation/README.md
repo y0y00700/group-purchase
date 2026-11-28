@@ -4,9 +4,11 @@
 
 | 구분 | 문서 | 상태 |
 |---|---|---|
-| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~013 로컬 구현·검증 완료 |
+| 전체 순서 | [구현 로드맵](plan/roadmap.md) | 001~014 로컬 구현·검증 완료 |
+| 완료 계획 | [014 PG Mock 계획](plan/014-pg-mock.md#execution-summary) | 핵심 6개 사용자 작성·묶음 리뷰/재검증·임시 표식 정리 완료 |
+| 완료 결과 | [014 최종 검증·PowerShell 테스트](014-pg-mock.md#final-results) | PG 25개 새 실행·유효 전체 161개, 기준 수명 14묶음 재사용 근거 기록. 원격 CI는 인계 참조 |
 | 완료 계획 | [013 메시지 소비 안정성](plan/013-message-consumption-reliability.md#execution-summary) | 직접 작성 생략 요청 반영·활성 코드 재검증·임시 표식 정리 완료 |
-| 완료 결과 | [013 최종 결과·직접 테스트](013-message-consumption-reliability.md#final-results) | 관련 22개 새 실행·JAR 격리 통과, 유효 136개·수명 28개 근거 유지. 커밋·main 대상 PR 진행 |
+| 완료 결과 | [013 최종 결과·직접 테스트](013-message-consumption-reliability.md#final-results) | 관련 22개 새 실행·JAR 격리 통과, 유효 136개·수명 28개 근거 유지. PR #14 병합, 최신 CI는 인계 참조 |
 | 완료 계획 | [012 Outbox 발행](plan/012-outbox-publishing.md#execution-summary) | 사용자 코드 기준 저장 원자성·순번·선점·재발행·영속 재시도/중단 검증 완료 |
 | 완료 결과 | [012 결과·직접 작성·테스트](012-outbox-publishing.md#final-results) | 여섯 구간 사용자 작성·묶음 리뷰·관련 재검증·임시 표식 정리 완료 |
 | 완료 계획 | [011 Kafka 실행·메시지 계약](plan/011-kafka-message-contract.md#execution-summary) | 여섯 구간 사용자 작성·묶음 리뷰·관련 로컬 재검증 완료 |

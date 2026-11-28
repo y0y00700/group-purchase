@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: pg-mock
+  profiles:
+    default: local
+  main:
+    banner-mode: off
+  datasource:
+    username: mock_pg_app
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 1000
+      validation-timeout: 500
+  flyway:
+    enabled: true
+server:
+  address: ${PG_MOCK_BIND_ADDRESS:127.0.0.1}
+  port: ${PG_MOCK_PORT:8082}
+  error:
+    include-message: never
+    include-stacktrace: never
+app:
+  mock-control:
+    enabled: false
+  configuration:
+    environment: ${SPRING_PROFILES_ACTIVE:local}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: pg-mock
+        environment: ${app.configuration.environment}

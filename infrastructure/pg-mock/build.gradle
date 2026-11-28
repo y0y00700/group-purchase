@@ -1,0 +1,33 @@
+plugins {
+  id 'java'
+  id 'org.springframework.boot'
+}
+dependencies {
+  implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+  implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-validation'
+  implementation 'org.springframework.boot:spring-boot-starter-security'
+  implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+  implementation 'org.springframework.boot:spring-boot-starter-flyway'
+  implementation 'org.flywaydb:flyway-database-postgresql'
+  runtimeOnly 'org.postgresql:postgresql'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.testcontainers:testcontainers-postgresql'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Explicit verification artifact; crash barriers are absent from the product JAR/image.
+def probe = sourceSets.create('crashProbe')
+probe.java.srcDir rootProject.file('scripts/pg-crash-probe')
+probe.compileClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+probe.runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+def bootJarType = plugins.getPlugin('org.springframework.boot').class.classLoader
+    .loadClass('org.springframework.boot.gradle.tasks.bundling.BootJar')
+tasks.register('crashProbeJar', bootJarType) {
+  dependsOn tasks.named('crashProbeClasses'), tasks.named('classes')
+  archiveClassifier = 'crash-probe'
+  mainClass = 'com.example.pgprobe.PgCrashProbe'
+  targetJavaVersion = JavaVersion.VERSION_21
+  classpath = probe.runtimeClasspath
+}

@@ -2,11 +2,13 @@
 
 Java 21 · Spring Boot 4.0.9 · Spring Cloud 2025.1.4 · Gradle Wrapper 9.8.2
 
-Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매 초기 앱·회원 서비스를 둔다. PostgreSQL에 서비스별 DB와 계정을 두고 공동구매·회원의 JDBC와 Flyway를 연결한다. Gateway는 공개 ping과 회원 API를 라우팅하고, 공동구매 보호 경로에서는 회원 세션과 CSRF를 확인한 뒤 검증된 신원을 전달한다.
+Gradle 멀티 프로젝트에 Config Server·Eureka Server·API Gateway·공동구매·회원 서비스와 독립 PG Mock을 둔다. PostgreSQL에 서비스별 DB와 계정을 두고 공동구매·회원의 JDBC와 Flyway를 연결한다. Gateway는 공개 ping과 회원 API를 라우팅하고, 공동구매 보호 경로에서는 회원 세션과 CSRF를 확인한 뒤 검증된 신원을 전달한다.
+
+**014 PG Mock의 로컬 구현·핵심 6개 사용자 작성·리뷰/재검증을 완료했다.** [최종 검증](Docs/implementation/014-pg-mock.md#final-results)과 [현재 소스의 PowerShell 직접 테스트](Docs/implementation/014-pg-mock.md#manual-tests)를 따른다. 원격 PR/CI는 로컬 성공과 구분한다.
 
 ## 빠른 실행과 직접 확인
 
-Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 5432·8000·8080·8081·8761·8888·9092 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. Kafka 검증 JAR를 호스트에서 실행할 때는 JDK 21이 필요하다. 검사 스크립트에는 Python 3이 필요하다.
+Docker Desktop의 Linux 컨테이너 엔진을 실행하고 프로젝트 루트에서 PowerShell로 수행한다. 5432·55433·8000·8080·8081·8082·8761·8888·9092 포트가 비어 있어야 하며 첫 빌드에는 인터넷 연결이 필요하다. 이미지 내부에서 Java·Gradle을 사용하므로 Compose 실행에는 호스트 JDK가 필요하지 않다. Kafka 검증 JAR를 호스트에서 실행할 때는 JDK 21이 필요하다. 검사 스크립트에는 Python 3이 필요하다.
 
 ```powershell
 .\scripts\prepare-local-secrets.ps1
@@ -24,7 +26,7 @@ python scripts/check-gateway.py
 Invoke-RestMethod http://localhost:8000/api/group-purchases/ping | ConvertTo-Json
 ```
 
-여섯 서비스가 `healthy`이고 헬스 응답의 `status`가 `UP`이어야 한다. 공동구매 `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. 등록 검사는 UP 인스턴스와 주소 도달성을 확인하고 Gateway 검사는 실제 ping 200과 비공개 경로 404를 확인한다. Eureka 대시보드는 `http://localhost:8761/`, Config 조회는 `http://localhost:8888/group-purchase/docker`다. 공동구매 `/`에 사용자 화면은 없다.
+상시 아홉 서비스가 `healthy`, 일회성 `kafka-init`이 exit 0이고 헬스 응답의 `status`가 `UP`이어야 한다. 공동구매 `info`의 `configuration`에는 `service=group-purchase`, `environment=docker`, `revision=002-v1`이 표시된다. 등록 검사는 UP 인스턴스와 주소 도달성을 확인하고 Gateway 검사는 실제 ping 200과 비공개 경로 404를 확인한다. Eureka 대시보드는 `http://localhost:8761/`, Config 조회는 `http://localhost:8888/group-purchase/docker`다. 공동구매 `/`에 사용자 화면은 없다.
 
 회원과 보호 API는 Gateway `http://localhost:8000`을 통해 호출한다. 로그인부터 보호 요청과 거절 확인까지는 [008 직접 테스트](Docs/implementation/008-gateway-authentication.md#manual-tests)를 따른다. 회원 직접 호출과 두 인스턴스 세션 공유는 [007 직접 테스트](Docs/implementation/007-member-session-authentication.md#사용자-직접-테스트-방법)에 있다. 제품 JAR 검사에는 Java 21과 `JAVA_HOME`이 필요하다.
 
@@ -83,6 +85,8 @@ group-purchase/
 ├── config-repo/                     # 공통·서비스별·환경별 일반 YAML
 ├── infrastructure/config-server/    # native 파일 백엔드·저장소 헬스
 ├── infrastructure/eureka-server/    # Config 수신·단독 서비스 등록소
+├── infrastructure/pg-mock/          # 자체 YAML·승인/환불/조회·영속 원장
+├── infrastructure/pg-mock-postgres/ # 독립 PG DB·제한 계정 bootstrap
 ├── services/group-purchase-service/ # Config 수신·필수 설정 검증·헬스/info
 ├── scripts/check-discovery.py       # 등록·주소 도달성·정상 해제 확인
 ├── .github/workflows/ci.yml
@@ -100,11 +104,13 @@ group-purchase/
 
 ## CI
 
-GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 다섯 앱 이미지 빌드·PostgreSQL/Kafka 기동·토픽 초기화·임시 secret 준비·DB 권한/영속성·Kafka 양쪽 리스너·실제 설정값·등록 주소·Gateway 라우팅과 인증 검사·정리를 정의한다. 전체 down/up·Kafka 중단 복구는 로컬 전용 011 프로젝트에서 별도로 검증한다. 원격 실행 여부는 최신 인계에서 구분한다.
+GitHub Actions는 `main` 대상 PR·`main` push·수동 실행에서 `Build and test`와 `Images and Compose smoke test`를 수행한다. Compose job은 여섯 앱 이미지 빌드·업무/PG PostgreSQL·Kafka 기동·토픽 초기화·임시 secret 준비·DB 권한/영속성·Kafka 양쪽 리스너·실제 설정값·등록 주소·Gateway 라우팅과 인증·PG 승인/환불/멱등성/실제 유실 검사·정리를 정의한다. 전체 down/up·Kafka 중단 복구는 로컬 전용 011 프로젝트에서 별도로 검증한다. 원격 실행 여부는 최신 인계에서 구분한다.
+
+PG Mock은 `localhost:8082`/Compose `pg-mock:8082`, 전용 DB는 호스트 55433이다. 일반 기동은 제어 비활성이며 별도 검증 override에서만 켠다. Config/Eureka/Gateway/Kafka 연결 없이 실행한다. 독립 DB의 `mock_pg_app`과 전용 secret/볼륨을 사용하며 기존 업무 DB는 유지한다.
 
 ## 문서
 
-- [011 Kafka 결과·직접 작성·테스트](Docs/implementation/011-kafka-message-contract.md): 사용자 작성·묶음 리뷰·로컬 재검증을 완료했으며 기준 구현과 최종 결과를 구분한다. Kafka는 HOST `localhost:9092`, Compose INTERNAL `kafka:19092`이며 컨트롤러는 호스트에 공개하지 않는다. 상시 7개 서비스와 일회성 kafka-init(exit 0)을 구분한다.
+- [011 Kafka 결과·직접 작성·테스트](Docs/implementation/011-kafka-message-contract.md): 사용자 작성·묶음 리뷰·로컬 재검증을 완료했으며 기준 구현과 최종 결과를 구분한다. Kafka는 HOST `localhost:9092`, Compose INTERNAL `kafka:19092`이며 컨트롤러는 호스트에 공개하지 않는다. 011 당시 상시 7개였으며, 현재 014는 PG 앱/DB를 더한 9개와 일회성 kafka-init(exit 0)을 구분한다.
 
 - [전체 진행 정리 · 2026-11-03](Docs/progress-summary-2026-11-03.md)
 - [프로젝트 인계·다음 작업](Docs/handoff.md)

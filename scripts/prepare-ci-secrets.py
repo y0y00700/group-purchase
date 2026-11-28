@@ -10,6 +10,7 @@ def main():
     for filename in (
         "postgres_password", "member_password", "group_purchase_password", "payment_password",
         "notification_password", "member_internal_credential", "group_purchase_internal_credential",
+        "pg_mock_postgres_password", "pg_mock_password", "pg_mock_api_credential", "pg_mock_control_credential",
     ):
         path = directory / filename
         try:

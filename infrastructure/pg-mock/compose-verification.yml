@@ -1,0 +1,11 @@
+# Explicit opt-in only. Use with compose.yml in a dedicated verification project.
+services:
+  pg-mock:
+    environment:
+      APP_MOCK_CONTROL_ENABLED: 'true'
+    secrets:
+      - source: pg_mock_control_credential
+        target: app.auth.control-credential
+secrets:
+  pg_mock_control_credential:
+    file: ./secrets/pg_mock_control_credential

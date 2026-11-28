@@ -1,0 +1,10 @@
+spring:
+  config:
+    import: "configtree:./secrets/"
+  datasource:
+    url: jdbc:postgresql://localhost:${PG_MOCK_POSTGRES_PORT:55433}/pg_mock?connectTimeout=1&socketTimeout=3
+    password: ${pg_mock_password}
+app:
+  auth:
+    api-credential: ${pg_mock_api_credential}
+    control-credential: ${pg_mock_control_credential:}
