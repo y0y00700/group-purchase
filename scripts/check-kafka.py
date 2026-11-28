@@ -86,8 +86,10 @@ def main():
         state = run(compose + ['ps', '-a', '--format', '{{.Service}} {{.State}} {{.Health}} {{.ExitCode}}'], label + '-services')
         actual = {parts[0]: parts[1:] for line in state.splitlines() if (parts := line.split())}
         expected = {'postgres', 'config-server', 'eureka-server', 'api-gateway', 'group-purchase-service', 'member-service', 'kafka'}
+        if args.project == 'group-purchase-014':
+            expected.update({'pg-mock', 'pg-mock-postgres'})
         if any(actual.get(name) != ['running', 'healthy', '0'] for name in expected) or actual.get('kafka-init') != ['exited', '0']:
-            raise RuntimeError('expected seven healthy services and kafka-init exited 0: ' + state)
+            raise RuntimeError(f'expected {len(expected)} healthy services and kafka-init exited 0: ' + state)
 
     try:
         if args.cleanup_run:

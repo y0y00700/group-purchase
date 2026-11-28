@@ -21,7 +21,7 @@ LIBS = ROOT / 'services/group-purchase-service/build/libs'
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--project', default='group-purchase-012', choices=['group-purchase-012', 'group-purchase-013'])
+    parser.add_argument('--project', default='group-purchase-012', choices=['group-purchase-012', 'group-purchase-013', 'group-purchase-014'])
     parser.add_argument('--lifecycle', action='store_true')
     args = parser.parse_args()
     directory = ROOT / '.tmp/outbox' / uuid.uuid4().hex
@@ -84,8 +84,10 @@ def main():
         containers = run(compose + ['ps', '-a', '--format', '{{.Service}} {{.State}} {{.Health}} {{.ExitCode}}'], 'services')
         actual = {p[0]: p[1:] for line in containers.splitlines() if (p := line.split())}
         expected = {'kafka', 'postgres', 'config-server', 'eureka-server', 'api-gateway', 'member-service', 'group-purchase-service'}
+        if args.project == 'group-purchase-014':
+            expected.update({'pg-mock', 'pg-mock-postgres'})
         if any(actual.get(s) != ['running', 'healthy', '0'] for s in expected) or actual.get('kafka-init') != ['exited', '0']:
-            raise RuntimeError('expected seven healthy services and kafka-init exit 0')
+            raise RuntimeError(f'expected {len(expected)} healthy services and kafka-init exit 0')
         if sql("SELECT count(*) FROM app.flyway_schema_history WHERE version='4' AND success;") != '1':
             raise RuntimeError('V4 not applied')
         target = directory / 'compose'

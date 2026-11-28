@@ -5,6 +5,7 @@ COPY gradle ./gradle
 COPY infrastructure/config-server ./infrastructure/config-server
 COPY infrastructure/eureka-server ./infrastructure/eureka-server
 COPY infrastructure/api-gateway ./infrastructure/api-gateway
+COPY infrastructure/pg-mock/build.gradle ./infrastructure/pg-mock/build.gradle
 COPY services/group-purchase-service ./services/group-purchase-service
 COPY services/member-service ./services/member-service
 RUN bash ./gradlew :eureka-server:bootJar --no-daemon

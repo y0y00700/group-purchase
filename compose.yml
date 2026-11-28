@@ -1,6 +1,56 @@
 name: group-purchase
 
 services:
+  pg-mock-postgres:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_mock_postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    secrets:
+      - pg_mock_postgres_password
+      - pg_mock_password
+    volumes:
+      - pg-mock-postgres-data:/var/lib/postgresql
+      - ./infrastructure/pg-mock-postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${PG_MOCK_POSTGRES_PORT:-55433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  pg-mock:
+    build:
+      context: .
+      dockerfile: infrastructure/pg-mock/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    secrets:
+      - source: pg_mock_password
+        target: spring.datasource.password
+      - source: pg_mock_api_credential
+        target: app.auth.api-credential
+    depends_on:
+      pg-mock-postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${PG_MOCK_PORT:-8082}:8082"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "4", "http://localhost:8082/actuator/health/readiness"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 30s
+
   kafka:
     image: apache/kafka:4.1.2
     environment:
@@ -218,6 +268,12 @@ services:
 
 # PostgreSQL receives bootstrap credentials; each app receives only its own secret.
 secrets:
+  pg_mock_postgres_password:
+    file: ./secrets/pg_mock_postgres_password
+  pg_mock_password:
+    file: ./secrets/pg_mock_password
+  pg_mock_api_credential:
+    file: ./secrets/pg_mock_api_credential
   postgres_password:
     file: ./secrets/postgres_password
   member_password:
@@ -234,5 +290,6 @@ secrets:
     file: ./secrets/notification_password
 
 volumes:
+  pg-mock-postgres-data:
   kafka-data:
   postgres-data:

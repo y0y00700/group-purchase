@@ -1,4 +1,4 @@
-"""Finite inbox checks restricted to the isolated group-purchase-013 Compose project.
+"""Finite inbox checks restricted to isolated group-purchase-013/014 Compose projects.
 
 Uses a snapshot of the verification JAR. --lifecycle includes DB/broker outages
 in the same consumer process, two real members and full down/up with volumes kept.
@@ -21,7 +21,7 @@ LIBS = ROOT / 'services/group-purchase-service/build/libs'
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--project', default='group-purchase-013', choices=['group-purchase-013'])
+    parser.add_argument('--project', default='group-purchase-013', choices=['group-purchase-013', 'group-purchase-014'])
     parser.add_argument('--lifecycle', action='store_true')
     args = parser.parse_args()
     run_id = uuid.uuid4().hex
@@ -83,6 +83,10 @@ def main():
         for name in ['postgres', 'kafka', 'config-server', 'eureka-server', 'api-gateway', 'member-service', 'group-purchase-service']:
             if actual.get(name) != ['running', 'healthy', '0']:
                 raise RuntimeError('expected seven healthy services')
+        if args.project == 'group-purchase-014':
+            for name in ['pg-mock', 'pg-mock-postgres']:
+                if actual.get(name) != ['running', 'healthy', '0']:
+                    raise RuntimeError('expected nine healthy services in 014')
         if actual.get('kafka-init') != ['exited', '0']:
             raise RuntimeError('topic initializer must exit zero')
         with urllib.request.urlopen('http://localhost:8080/actuator/info', timeout=5) as response:

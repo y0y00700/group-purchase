@@ -13,6 +13,9 @@ dependencyResolutionManagement {
 
 rootProject.name = 'group-purchase'
 
+include 'pg-mock'
+project(':pg-mock').projectDir = file('infrastructure/pg-mock')
+
 include 'group-purchase-service'
 project(':group-purchase-service').projectDir = file('services/group-purchase-service')
 

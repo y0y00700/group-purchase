@@ -8,7 +8,8 @@
 
 - 이전 완료: [011 Kafka 결과·직접 작성·테스트](implementation/011-kafka-message-contract.md). 기준 구현 검증 후 여섯 구간의 **사용자 작성·묶음 리뷰·로컬 재검증을 완료**했다. [실제 설정·코드 역할](explanations/kafka-message-contract.md) · [메시지/커밋 로그 관찰](learning/questions/kafka-011-observe-message-flow.md). 최신 브랜치·PR/CI는 [인계](handoff.md)를 따른다.
 - 최근 완료: [012 Outbox 발행](implementation/plan/012-outbox-publishing.md#execution-summary), 2026-11-25 사용자 작성·묶음 리뷰·관련 재검증·임시 표식 정리 완료. [최종 결과·직접 테스트](implementation/012-outbox-publishing.md#final-results) · [실제 적용 설명](explanations/outbox-publishing.md).
-- 최근 완료: [013 메시지 소비 안정성](implementation/plan/013-message-consumption-reliability.md#execution-summary), 2026-11-26 사용자 요청으로 직접 작성 생략·활성 코드 복원·관련 재검증·임시 주석 정리 완료. [최종 결과·직접 테스트](implementation/013-message-consumption-reliability.md#final-results) · [적용 설명](explanations/message-consumption-reliability.md). 제품 소비는 기본 비활성, 실제 결제/Saga 016·운영 복구 API 018 경계를 유지한다. 커밋·main 대상 PR을 진행하며 최신 원격 상태는 [인계](handoff.md)를 따른다.
+- 최근 완료: [013 메시지 소비 안정성](implementation/plan/013-message-consumption-reliability.md#execution-summary), 2026-11-26 사용자 요청으로 직접 작성 생략·활성 코드 복원·관련 재검증·임시 주석 정리 완료. [최종 결과·직접 테스트](implementation/013-message-consumption-reliability.md#final-results) · [적용 설명](explanations/message-consumption-reliability.md). 제품 소비는 기본 비활성, 실제 결제/Saga 016·운영 복구 API 018 경계를 유지한다. PR #14 병합을 확인했으며 최신 CI는 [인계](handoff.md)를 따른다.
+- 현재 구현: [014 PG Mock](implementation/plan/014-pg-mock.md#execution-summary), **로컬 구현·핵심 6개 사용자 작성·묶음 리뷰/재검증·임시 표식 정리 완료**. [최종 결과·PowerShell 직접 테스트](implementation/014-pg-mock.md) · [실제 적용 설명](explanations/pg-mock.md). 원격 CI는 [인계](handoff.md)와 PR Checks에서 구분한다.
 
 판매자가 상품과 기준 수량을 등록하고, 참여 모집 후 기한 안의 유효 결제가 기준 수량을 채우면 구매를 확정하는 서비스다. 미달로 무산되면 취소·환불한다. 마감 경합·장시간 업무·보상 복구를 구현·검증할 수 있어 한정 수량 주문·좌석 예약·B2B 발주 후보를 비교한 뒤 이 주제를 선택했다.
 
